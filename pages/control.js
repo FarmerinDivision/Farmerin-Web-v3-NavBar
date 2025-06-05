@@ -404,7 +404,9 @@ const Control = () => {
                 {tamboSel ? (
                     animales.length == 0 ? (
                         <Mensaje>
-                            <Alert variant="warning">No se encontraron resultados</Alert>
+                            <div className={styles.mensajeCaja}>
+                                <h2 className={styles.tituloSinResultados}>No se encontraron resultados</h2>
+                            </div>
                         </Mensaje>
                     ) : (
                         <Contenedor>
@@ -412,19 +414,130 @@ const Control = () => {
                                 <Table responsive>
                                     <thead>
                                         <tr>
-                                            <th onClick={handleClickRP}>RP <FaSort size={15} /></th>
-                                            <th onClick={handleClickLact}>Lact. <FaSort size={15} /></th>
-                                            <th onClick={handleClickGr}>Categ <FaSort size={15} /></th>
-                                            <th onClick={handleClickRo}>Rodeo <FaSort size={15} /></th>
-                                            <th onClick={handleClickUC}>Le.UC <FaSort size={15} /></th>
-                                            <th>F.UC</th>
-                                            <th onClick={handleClickCA}>Le.CA <FaSort size={15} /></th>
-                                            <th onClick={handleClickAn}>Anorm. <FaSort size={15} /></th>
-                                            <th onClick={handleClickDl}>Días Lact. <FaSort size={15} /></th>
-                                            <th onClick={handleClickER}>Est. Rep. <FaSort size={15} /></th>
-                                            <th onClick={handleClickDP}>Días Preñ. <FaSort size={15} /></th>
-                                            <th onClick={handleClickRac}>Ración <FaSort size={15} /></th>
-                                            <th>F.Racion</th>
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickRP}>
+                                                    <span className={styles.thContent}>
+                                                        RP
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Caravana</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickLact}>
+                                                    <span className={styles.thContent}>
+                                                        Lact.
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Número de lactancia</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickGr}>
+                                                    <span className={styles.thContent}>
+                                                        Categ
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Categoría del animal</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickRo}>
+                                                    <span className={styles.thContent}>
+                                                        Rodeo
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Rodeo asignado</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickUC}>
+                                                    <span className={styles.thContent}>
+                                                        Le.UC
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Litros Último Control</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper}>
+                                                    <span className={styles.thContent}>F.UC</span>
+                                                    <span className={styles.thTooltipText}>Fecha de Último Control</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickCA}>
+                                                    <span className={styles.thContent}>
+                                                        Le.CA
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Litros Control Anterior</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickAn}>
+                                                    <span className={styles.thContent}>
+                                                        Anorm.
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Anomalías</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickDl}>
+                                                    <span className={styles.thContent}>
+                                                        Días Lact.
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Días en lactancia</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickER}>
+                                                    <span className={styles.thContent}>
+                                                        Est. Rep.
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Estado Reproductivo</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickDP}>
+                                                    <span className={styles.thContent}>
+                                                        Días Preñ.
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Días de preñez</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickRac}>
+                                                    <span className={styles.thContent}>
+                                                        Ración
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Ración actual (Kg)</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper}>
+                                                    <span className={styles.thContent}>F.Racion</span>
+                                                    <span className={styles.thTooltipText}>Fecha última modificación de ración</span>
+                                                </div>
+                                            </th>
+
                                             <th>
                                                 <div className={styles.controlTooltip}>
                                                     <Button
@@ -433,12 +546,19 @@ const Control = () => {
                                                     >
                                                         <RiSendPlaneLine />
                                                     </Button>
-                                                    <span className={styles.controlTooltipText}>Asignar la ración sugerida a todos.</span>
+                                                    <span className={styles.controlTooltipText}>Asignar la ración sugerida a todos</span>
                                                 </div>
                                             </th>
-                                            <th>Racion Sugerida</th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper}>
+                                                    <span className={styles.thContent}>R.Sugerida</span>
+                                                    <span className={styles.thTooltipText}>Ración Sugerida</span>
+                                                </div>
+                                            </th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
                                         {animales.map(a => (
                                             <DetalleControl

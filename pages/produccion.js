@@ -11,7 +11,7 @@ import { format, subDays } from 'date-fns';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import GraficoProduccion from '../components/layout/GraficoProduccion';
-
+import styles from '../styles/Produccion.module.scss';
 
 const Produccion = () => {
   const { firebase, tamboSel } = useContext(FirebaseContext);
@@ -253,30 +253,29 @@ const Produccion = () => {
 
   return (
     <Layout titulo="Producción">
-      <>
-        <Botonera>
-          <Form onSubmit={(e) => { e.preventDefault(); handleSubmit(valores); }}>
-            <Row className="Repo-produ-filtros">
+      <Botonera>
+        <Form onSubmit={(e) => { e.preventDefault(); handleSubmit(valores); }}>
+          <Row className={styles.RepoProduFiltros}>
             <Col lg>
               <Form.Label>Desde</Form.Label>
-              <ButtonGroup className="produccion-botonera">
-                <div className="produccion-tooltip">
-                  <Button className={`produccion-btn ${valores.tipoFecha === 'ud' ? 'activo' : ''}`} variant="info" onClick={() => realizarBusqueda('ud')}>1 DÍA</Button>
-                  <span className="produccion-tooltip-text">Último día</span>
+              <ButtonGroup className={styles.RepoProduBotonera}>
+                <div className={styles.RepoProduTooltip}>
+                  <Button className={`${valores.tipoFecha === 'ud' ? 'activo' : ''}`} variant="info" onClick={() => realizarBusqueda('ud')}>1 DÍA</Button>
+                  <span className={styles.RepoProduTooltipText}>Último día</span>
                 </div>
-                <div className="produccion-tooltip">
-                  <Button className={`produccion-btn ${valores.tipoFecha === 'mv' ? 'activo' : ''}`} variant="info" onClick={() => realizarBusqueda('mv')}>MES EN CURSO</Button>
-                  <span className="produccion-tooltip-text">Mes actual</span>
+                <div className={styles.RepoProduTooltip}>
+                  <Button className={`${valores.tipoFecha === 'mv' ? 'activo' : ''}`} variant="info" onClick={() => realizarBusqueda('mv')}>MES EN CURSO</Button>
+                  <span className={styles.RepoProduTooltipText}>Mes actual</span>
                 </div>
-                <div className="produccion-tooltip">
+                <div className={styles.RepoProduTooltip}>
                   <Button
-                    className={`produccion-btn ${valores.tipoFecha === 'ef' ? 'activo' : ''}`}
+                    className={`${valores.tipoFecha === 'ef' ? 'activo' : ''}`}
                     variant="info"
                     onClick={() => setValores({ ...valores, tipoFecha: 'ef' })}
                   >
                     POR FECHA
                   </Button>
-                  <span className="produccion-tooltip-text">Selecciona un rango</span>
+                  <span className={styles.RepoProduTooltipText}>Selecciona un rango</span>
                 </div>
               </ButtonGroup>
             </Col>
@@ -294,7 +293,7 @@ const Produccion = () => {
               </>
             )}
 
-            <Col lg className="Repo-produ-acciones">
+            <Col lg className={styles.RepoProduAcciones}>
               <Button variant="info" type="submit" block>
                 <RiSearchLine size={22} /> Buscar
               </Button>
@@ -313,42 +312,51 @@ const Produccion = () => {
       ) : tamboSel ? (
         producciones.length === 0 ? (
           <Mensaje>
-            <Alert variant="warning">No se encontraron resultados</Alert>
+            <div className={styles.mensajeCaja}>
+              <h2 className={styles.tituloSinResultados}>Sin resultados</h2>
+              <p className={styles.textoSecundario}>
+                Presione el rango de fecha que quiere mostrar para ver los resultados
+              </p>
+            </div>
           </Mensaje>
         ) : (
-          <Contenedor className="Repo-produ-wrapper">
-            <div className="Repo-produ-topbar">
-              <div className="Repo-produ-resumen">
-                <span><strong>Total Producido:</strong> {formatMiles(totales.produccion)}</span>
-                <span><strong>Total Descarte:</strong> {formatMiles(totales.descarte)}</span>
-                <span><strong>Total Guachera:</strong> {formatMiles(totales.guachera)}</span>
-                <span><strong>Total Entregado:</strong> {formatMiles(totales.entregado)}</span>
-                <span><strong>Total Prom. Individual:</strong> {typeof totales.promedioIndividual === 'number'
-                  ? totales.promedioIndividual.toFixed(1)
-                  : '-'}</span>
+          <Contenedor className={styles.RepoProduWrapper}>
+            {/* Encabezado fijo */}
+            <div className={styles.RepoProduEncabezado}>
+              <div className={styles.RepoProduTopbar}>
+                <div className={styles.RepoProduResumen}>
+                  <span><strong>Total Producido:</strong> {formatMiles(totales.produccion)}</span>
+                  <span><strong>Total Descarte:</strong> {formatMiles(totales.descarte)}</span>
+                  <span><strong>Total Guachera:</strong> {formatMiles(totales.guachera)}</span>
+                  <span><strong>Total Entregado:</strong> {formatMiles(totales.entregado)}</span>
+                  <span><strong>Total Prom. Individual:</strong> {typeof totales.promedioIndividual === 'number'
+                    ? totales.promedioIndividual.toFixed(1)
+                    : '-'}</span>
+                </div>
+
+                <div className={styles.RepoProduTopbarRight}>
+                  <Button
+                    className={styles.RepoProduGrafico}
+                    onClick={() => setMostrarGrafico(!mostrarGrafico)}
+                    variant="dark"
+                  >
+                    {mostrarGrafico ? 'Ocultar gráfico' : 'Ver gráfico prod. individual'}
+                  </Button>
+                </div>
               </div>
 
-              <div className="Repo-produ-topbar-right">
-                <Button
-                  className="Repo-produ-grafico"
-                  onClick={() => setMostrarGrafico(!mostrarGrafico)}
-                  variant="dark"
-                >
-                  {mostrarGrafico ? 'Ocultar gráfico' : 'Ver gráfico prod. individual'}
-                </Button>
-              </div>
+              {mostrarGrafico && (
+                <GraficoProduccion
+                  data={producciones}
+                  promedioTotal={totales.promedioIndividual}
+                />
+              )}
             </div>
 
+            {/* Tabla con scroll */}
+            <div className={styles.RepoProduTablaWrapper}>
+              <Table bordered hover className={styles.RepoProduTabla}>
 
-            {mostrarGrafico && (
-              <GraficoProduccion
-                data={producciones}
-                promedioTotal={totales.promedioIndividual}
-              />
-            )}
-
-            <div className="Repo-produ-tabla-wrapper">
-              <Table responsive bordered hover className="Repo-produ-tabla">
                 <thead>
                   <tr>
                     <th>Fecha</th>
@@ -374,17 +382,14 @@ const Produccion = () => {
                 </tbody>
               </Table>
             </div>
-
           </Contenedor>
-
         )
       ) : (
         <SelectTambo />
       )}
-      </>
     </Layout>
+  );
 
-  )
 
 }
 

@@ -12,37 +12,39 @@
 }
 
 // Botón flotante con tooltip
-.control-tooltip {
+.controlTooltip {
   position: relative;
   display: inline-block;
 }
 
-.control-tooltip .control-tooltip-text {
+.controlTooltip .controlTooltipText {
   visibility: hidden;
-  width: 180px;
-  background-color: #333;
+  width: 220px;
+  /* Ajusta según el texto */
+  background-color: #000a11;
   color: #fff;
   text-align: center;
-  font-size: 13px;
+  padding: 5px;
   border-radius: 6px;
-  padding: 6px 10px;
   position: absolute;
-  z-index: 2;
-  bottom: 125%;
+  bottom: -35px;
+  /* Hace que aparezca debajo */
   left: 50%;
   transform: translateX(-50%);
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 10;
   opacity: 0;
-  transition: all 0.3s ease;
-  pointer-events: none;
+  transition: opacity 0.3s;
 }
 
-.control-tooltip:hover .control-tooltip-text {
+.controlTooltip:hover .controlTooltipText {
   visibility: visible;
   opacity: 1;
 }
 
 // Botón de aplicar ración
-.control-btn {
+.controlBtn {
   border: none;
   color: white;
   background-color: #4cb04f;
@@ -58,43 +60,100 @@
 }
 
 // Tabla sticky
-.sticky-table {
-  overflow: auto;
-  max-height: 550px;
+.stickyTable {
+  width: 200%;
+  overflow-x: auto;
 }
 
-.sticky-table thead {
-  background-color: #f1f3f5;
-  font-weight: bold;
-  font-size: 14px;
+.stickyTable table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; // <- hace que cada columna ocupe su espacio real
 }
 
-.sticky-table th {
-  position: sticky;
-  top: 0;
-  background-color: #f1f3f5;
-  z-index: 2;
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
-  text-align: center;
-}
-
-.sticky-table td {
-  font-size: 14px;
-  text-align: center;
+.stickyTable th,
+.stickyTable td {
   padding: 8px;
-  vertical-align: middle;
-  background-color: #fff;
-  border-bottom: 1px solid #e6e6e6;
+  text-align: center;
+  font-size: 14px;
+  word-wrap: break-word;
+  white-space: nowrap;
 }
 
-.sticky-table tr:hover td {
+.stickyTable tr:hover td {
   background-color: #f7f9fa;
 }
 
+/////// TOOLTIP DE LOS TITULOS DE LAS COLUMNAS 
+.thTooltipWrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  text-align: center;
+
+  &:hover .thTooltipText {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.thContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #333;
+}
+
+.sortIcon {
+  margin-left: 4px;
+}
+
+.thTooltipText {
+   visibility: hidden;
+  width: 220px;
+  /* Ajusta según el texto */
+  background-color: #00111c;
+  color: #fff;
+  text-align: center;
+  padding: 5px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: -35px;
+  /* Hace que aparezca debajo */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+
+
 // Modal
-.modal-body ul {
+.modalBody ul {
   padding-left: 20px;
   font-size: 14px;
+}
+
+// Mensaje sin resultados
+.mensajeSinResultados {
+  padding: 2rem;
+  text-align: center;
+}
+
+.mensajeCaja {
+  background-color: #f8f9fa;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.tituloSinResultados {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
 }
