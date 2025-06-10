@@ -14,7 +14,17 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
   console.log("📥 Evento recibido:", evento);
 
   const rpMadre = limpiarTexto(getValor(evento, "RP")).replace(/\s/g, "");
-  const fechaEvento = getValor(evento, "FECHA DE EVENTO (xx/xx/xxxx)") || new Date().toISOString().split("T")[0];
+  if (!rpMadre) throw new Error("RP madre no encontrado o vacío");
+
+  const fechaEventoStrRaw = getValor(evento, "FECHA DE EVENTO (xx/xx/xxxx)") || getValor(evento, "Fecha");
+  const fechaEventoStr = limpiarTexto((fechaEventoStrRaw || "").toString().trim());
+
+  if (!fechaEventoStr) throw new Error("Fecha de evento no encontrada");
+
+  // ✅ Convertir a Timestamp como lo hacés en procesarEventosTambo.js
+  const fechaEventoTimestamp = firebase.fechaDesdeDDMMYYYY(fechaEventoStr);
+  if (!fechaEventoTimestamp) throw new Error(`Fecha inválida o mal formada: ${fechaEventoStr}`);
+
   const tipoParto = getValor(evento, "TIPO DE PARTO");
   const observ = getValor(evento, "OBSERV");
   const sexoCria = getValor(evento, "SEXO CRIA");
@@ -43,7 +53,7 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
     await madreRef.update({
       estpro: "En Ordeñe",
       estrep: "vacia",
-      fparto: fechaEvento,
+      fparto: fechaEventoStr, // ⬅️ como string dd/mm/yyyy
       nservicios: 0,
       lactancia: (madreData.lactancia || 0) + 1,
       fservicio: ""
@@ -62,7 +72,7 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
         console.warn(`⚠️ Cría con RP ${rp} ya existe. Solo se registrará el evento.`);
       } else {
         const nuevaCria = {
-          ingreso: fechaEvento,
+          ingreso: fechaEventoStr, // ⬅️ como string dd/mm/yyyy
           idtambo: tamboSel.id,
           rp,
           erp: "",
@@ -106,7 +116,7 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
       crias,
       rp: rpMadre,
       tipo: "Parto",
-      fecha: firebase.fechaTimeStamp(fechaEvento), // ✅ ahora como Timestamp ajustado
+      fecha: fechaEventoTimestamp, // ⬅️ como Timestamp
       tambo: tamboSel.id,
       detalle: `${observ} - ${tipoParto}`,
       usuario: `${usuario.displayName} - Dirsa`,

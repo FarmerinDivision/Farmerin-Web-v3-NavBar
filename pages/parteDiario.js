@@ -10,6 +10,8 @@ import { RiSearchLine } from 'react-icons/ri';
 import { format, subDays, addDays } from 'date-fns'
 import ReactExport from "react-export-excel";
 import { FaSort } from 'react-icons/fa';
+import styles from '../styles/ParteDiario.module.scss'
+
 
 const ParteDiario = () => {
 
@@ -79,48 +81,48 @@ const ParteDiario = () => {
 
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  guardarProcesando(true);
-  guardarEventos([]); // limpiamos los eventos antes de la búsqueda
+    e.preventDefault();
+    guardarProcesando(true);
+    guardarEventos([]); // limpiamos los eventos antes de la búsqueda
 
-  let iniciob, finb;
-  let inicioAux;
-  let finAux = format(Date.now(), 'yyyy-MM-dd');
-  finAux = finAux + 'T21:59:00';
-  let ff = valores.ffin + 'T21:59:00';
+    let iniciob, finb;
+    let inicioAux;
+    let finAux = format(Date.now(), 'yyyy-MM-dd');
+    finAux = finAux + 'T21:59:00';
+    let ff = valores.ffin + 'T21:59:00';
 
-  if (tipoFecha === "ef") {
-    iniciob = firebase.fechaTimeStamp(valores.fini);
-    finb = firebase.fechaTimeStamp(ff);
-  }
+    if (tipoFecha === "ef") {
+      iniciob = firebase.fechaTimeStamp(valores.fini);
+      finb = firebase.fechaTimeStamp(ff);
+    }
 
-  if (tipoFecha === "ud") {
-    inicioAux = subDays(Date.now(), 1);
-    inicioAux = format(inicioAux, 'yyyy-MM-dd');
-    iniciob = firebase.fechaTimeStamp(inicioAux);
-    finb = firebase.fechaTimeStamp(finAux);
-  }
+    if (tipoFecha === "ud") {
+      inicioAux = subDays(Date.now(), 1);
+      inicioAux = format(inicioAux, 'yyyy-MM-dd');
+      iniciob = firebase.fechaTimeStamp(inicioAux);
+      finb = firebase.fechaTimeStamp(finAux);
+    }
 
-  if (tipoFecha === "mv") {
-    const primerDiaMes = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
-    iniciob = firebase.fechaTimeStamp(primerDiaMes);
-    finb = firebase.fechaTimeStamp(ff);
-  }
+    if (tipoFecha === "mv") {
+      const primerDiaMes = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
+      iniciob = firebase.fechaTimeStamp(primerDiaMes);
+      finb = firebase.fechaTimeStamp(ff);
+    }
 
-  // Ejecutamos la búsqueda de eventos por animal
-  animales.forEach(a => {
-    buscarEventos(a, iniciob, finb);
-  });
+    // Ejecutamos la búsqueda de eventos por animal
+    animales.forEach(a => {
+      buscarEventos(a, iniciob, finb);
+    });
 
-  // Esperamos a que se completen las búsquedas (espera artificial)
-await timeout(3000);
+    // Esperamos a que se completen las búsquedas (espera artificial)
+    await timeout(3000);
 
-// Eliminar duplicados antes de guardar
-guardarEventos(eventosPrevios => eliminarEventosDuplicados(eventosPrevios));
+    // Eliminar duplicados antes de guardar
+    guardarEventos(eventosPrevios => eliminarEventosDuplicados(eventosPrevios));
 
-guardarProcesando(false);
+    guardarProcesando(false);
 
-};
+  };
 
 
   const handleChange = e => {
@@ -133,75 +135,75 @@ guardarProcesando(false);
   }
 
 
-function buscarEventos(an, iniciob, finb) {
-  try {
-    let query = firebase.db.collection('animal').doc(an.id).collection('eventos')
-      .where('fecha', '>=', iniciob)
-      .where('fecha', '<=', finb);
+  function buscarEventos(an, iniciob, finb) {
+    try {
+      let query = firebase.db.collection('animal').doc(an.id).collection('eventos')
+        .where('fecha', '>=', iniciob)
+        .where('fecha', '<=', finb);
 
-    // Filtro de visto
-    if (visto !== 'todos') {
-      if (visto === 'true') query = query.where('vistoUsuario', 'array-contains', usuario.uid);
-    }
+      // Filtro de visto
+      if (visto !== 'todos') {
+        if (visto === 'true') query = query.where('vistoUsuario', 'array-contains', usuario.uid);
+      }
 
-    // Filtro de tipo de evento
-    if (tipo !== 'todos') {
-      query = query.where('tipo', '==', tipo);
-    }
+      // Filtro de tipo de evento
+      if (tipo !== 'todos') {
+        query = query.where('tipo', '==', tipo);
+      }
 
-    function snapshotEventos(snapshot) {
-      const nuevosEventos = [];
+      function snapshotEventos(snapshot) {
+        const nuevosEventos = [];
 
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
+        snapshot.docs.forEach(doc => {
+          const data = doc.data();
 
-        if ((tipo === 'todos' && data.tipo !== 'Control Lechero') || tipo !== 'todos') {
-          let fevento;
-          try {
-            fevento = format(firebase.timeStampToDate(data.fecha), 'dd/MM/yyyy');
-          } catch (error) {
-            fevento = 'error';
+          if ((tipo === 'todos' && data.tipo !== 'Control Lechero') || tipo !== 'todos') {
+            let fevento;
+            try {
+              fevento = format(firebase.timeStampToDate(data.fecha), 'dd/MM/yyyy');
+            } catch (error) {
+              fevento = 'error';
+            }
+
+            let erp;
+            try {
+              erp = an.erp.toString();
+            } catch (error) {
+              erp = '';
+            }
+
+            const e = {
+              id: doc.id,
+              animal: an,
+              rp: an.rp,
+              erp: erp,
+              fevento: fevento,
+              ...data
+            };
+
+            const noVisto = visto === 'false' && (!e.vistoUsuario || e.vistoUsuario.indexOf(usuario.uid) === -1);
+            const todoVisto = visto !== 'false';
+
+            if (noVisto || todoVisto) {
+              nuevosEventos.push(e);
+            }
           }
+        });
 
-          let erp;
-          try {
-            erp = an.erp.toString();
-          } catch (error) {
-            erp = '';
-          }
+        // Fusionar con eventos actuales y eliminar duplicados
+        guardarEventos(eventosPrevios => {
+          const todos = [...eventosPrevios, ...nuevosEventos];
+          return eliminarEventosDuplicados(todos);
+        });
+      }
 
-          const e = {
-            id: doc.id,
-            animal: an,
-            rp: an.rp,
-            erp: erp,
-            fevento: fevento,
-            ...data
-          };
+      query.get().then(snapshotEventos);
 
-          const noVisto = visto === 'false' && (!e.vistoUsuario || e.vistoUsuario.indexOf(usuario.uid) === -1);
-          const todoVisto = visto !== 'false';
-
-          if (noVisto || todoVisto) {
-            nuevosEventos.push(e);
-          }
-        }
-      });
-
-      // Fusionar con eventos actuales y eliminar duplicados
-      guardarEventos(eventosPrevios => {
-        const todos = [...eventosPrevios, ...nuevosEventos];
-        return eliminarEventosDuplicados(todos);
-      });
+    } catch (error) {
+      setMensajeAlert(error.message);
+      setShowAlert(true);
     }
-
-    query.get().then(snapshotEventos);
-
-  } catch (error) {
-    setMensajeAlert(error.message);
-    setShowAlert(true);
   }
-}
 
 
   const handleClickRP = e => {
@@ -243,38 +245,38 @@ function buscarEventos(an, iniciob, finb) {
   }
 
   /* ELIMINAR DUPLICADOS */
-function eliminarEventosDuplicados(eventos) {
-  const mapa = new Map();
+  function eliminarEventosDuplicados(eventos) {
+    const mapa = new Map();
 
-  eventos.forEach(evento => {
-    let fechaMillis;
+    eventos.forEach(evento => {
+      let fechaMillis;
 
-    if (evento.fecha?.toDate) {
-      fechaMillis = evento.fecha.toDate().setHours(0, 0, 0, 0);
-    } else if (evento.fecha instanceof Date) {
-      fechaMillis = evento.fecha.setHours(0, 0, 0, 0);
-    } else if (typeof evento.fecha === 'number') {
-      const d = new Date(evento.fecha);
-      fechaMillis = d.setHours(0, 0, 0, 0);
-    } else {
-      try {
-        const partes = evento.fevento.split('/');
-        const d = new Date(`${partes[2]}-${partes[1]}-${partes[0]}`);
+      if (evento.fecha?.toDate) {
+        fechaMillis = evento.fecha.toDate().setHours(0, 0, 0, 0);
+      } else if (evento.fecha instanceof Date) {
+        fechaMillis = evento.fecha.setHours(0, 0, 0, 0);
+      } else if (typeof evento.fecha === 'number') {
+        const d = new Date(evento.fecha);
         fechaMillis = d.setHours(0, 0, 0, 0);
-      } catch {
-        fechaMillis = evento.fevento;
+      } else {
+        try {
+          const partes = evento.fevento.split('/');
+          const d = new Date(`${partes[2]}-${partes[1]}-${partes[0]}`);
+          fechaMillis = d.setHours(0, 0, 0, 0);
+        } catch {
+          fechaMillis = evento.fevento;
+        }
       }
-    }
 
-    const clave = `${fechaMillis}-${evento.rp}-${evento.tipo}`;
+      const clave = `${fechaMillis}-${evento.rp}-${evento.tipo}`;
 
-    if (!mapa.has(clave)) {
-      mapa.set(clave, evento);
-    }
-  });
+      if (!mapa.has(clave)) {
+        mapa.set(clave, evento);
+      }
+    });
 
-  return Array.from(mapa.values());
-}
+    return Array.from(mapa.values());
+  }
 
 
 
@@ -304,16 +306,16 @@ function eliminarEventosDuplicados(eventos) {
             <Col lg={true}>
               <Form.Label>Desde</Form.Label>
               <br />
-              <ButtonGroup className="produccion-botonera">
-                <div className="produccion-tooltip">
-                  <Button className={`produccion-btn ${valores.tipoFecha === 'ud' ? 'activo' : ''}`} variant="info" name="tipoFecha" value="ud" onClick={handleChange}>
+              <ButtonGroup className={styles.parteBotonera}>
+                <div className={styles.parteTooltip}>
+                  <Button className={`${styles.parteBtn} ${valores.tipoFecha === 'ud' ? 'activo' : ''}`} variant="info" name="tipoFecha" value="ud" onClick={handleChange}>
                     1 DÍA
                   </Button>
-                  <span className="produccion-tooltip-text">Último dia</span>
+                  <span className={styles.parteTooltipText}>Último dia</span>
                 </div>
-                <div className="produccion-tooltip">
+                <div className={styles.parteTooltip}>
                   <Button
-                    className={`produccion-btn ${valores.tipoFecha === 'mv' ? 'activo' : ''}`}
+                    className={`${styles.parteBtn} ${valores.tipoFecha === 'mv' ? 'activo' : ''}`}
                     variant="info"
                     name="tipoFecha"
                     value="mv"
@@ -321,13 +323,13 @@ function eliminarEventosDuplicados(eventos) {
                   >
                     MES EN CURSO
                   </Button>
-                  <span className="produccion-tooltip-text">Mes en curso</span>
+                  <span className={styles.parteTooltipText}>Mes en curso</span>
                 </div>
-                <div className="produccion-tooltip">
-                  <Button className={`produccion-btn ${valores.tipoFecha === 'ef' ? 'activo' : ''}`} variant="info" name="tipoFecha" value="ef" onClick={handleChange}>
+                <div className={styles.parteTooltip}>
+                  <Button className={`${styles.parteBtn} ${valores.tipoFecha === 'ef' ? 'activo' : ''}`} variant="info" name="tipoFecha" value="ef" onClick={handleChange}>
                     POR FECHA
                   </Button>
-                  <span className="produccion-tooltip-text">Selecciona un rango de fechas</span>
+                  <span className={styles.parteTooltipText}>Selecciona un rango de fechas</span>
                 </div>
               </ButtonGroup>
             </Col>
@@ -416,20 +418,29 @@ function eliminarEventosDuplicados(eventos) {
       </Botonera>
 
 
-      {procesando ? <ContenedorSpinner> <Spinner animation="border" variant="info" /></ContenedorSpinner> :
+      {procesando ? 
+      <div className={styles.spinnerOverlay}>
+        <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem' }} />
+        <div className={styles.spinnerText}>Procesando datos de parte diario...</div>
+      </div> :
         //si hay tambo
 
         tamboSel ?
 
           eventos.length == 0 ?
             <Mensaje>
-              <Alert variant="warning" >No se encontraron resultados</Alert>
+              <div className={styles.mensajeCaja}>
+                <h2 className={styles.tituloSinResultados}>Sin resultados</h2>
+                <p className={styles.textoSecundario}>
+                  Presione el rango de fecha que quiere mostrar para ver los resultados
+                </p>
+              </div>
             </Mensaje>
             :
 
             <Contenedor>
 
-              <StickyTable height={380}>
+              <StickyTable height={450}>
                 <Table responsive>
                   <thead>
                     <tr>

@@ -87,6 +87,32 @@ class Firebase {
 
     }
 
+    // ✅ Convierte string "dd/mm/yyyy" a Timestamp correcto
+fechaDesdeDDMMYYYY(fechaStr) {
+    if (!fechaStr || typeof fechaStr !== "string") return null;
+
+    const partes = fechaStr.trim().split(/[\/\-]/);
+    if (partes.length !== 3) return null;
+
+    let [d, m, y] = partes.map(p => parseInt(p, 10));
+    if (y < 100) y += 2000;
+
+    // Validar que sea una fecha real
+    const fecha = new Date(y, m - 1, d);
+    if (
+        fecha.getFullYear() !== y ||
+        fecha.getMonth() !== m - 1 ||
+        fecha.getDate() !== d
+    ) return null;
+
+    // 🔄 Ajuste UTC-3 si querés mantener zona local (opcional)
+    fecha.setTime(fecha.getTime() + 10800000); // UTC-3
+
+    return app.firestore.Timestamp.fromDate(fecha);
+}
+
+
+
     subirArchivo(file) {
         let storageRef = app.storage().ref();
         let archivoRef = storageRef.child(file.name);

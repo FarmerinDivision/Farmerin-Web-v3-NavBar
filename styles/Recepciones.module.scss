@@ -2,11 +2,11 @@
 /* Estilos para los botones de Producción */
 /* Estilos para los botones de Producción */
 
-.RepoProduBotonera {
+.recepcionBotonera {
   display: flex;
   gap: 10px;
 
-   .produccionBtn {
+   .recepcionBtn {
     padding: 10px 20px;
     border: 2px solid transparent;
     border-radius: 8px;
@@ -35,16 +35,16 @@
 }
 
 /* Estilos para el Tooltip */
-.RepoProduTooltip {
+.recepcionTooltip {
   position: relative;
   display: inline-block;
 
-  &:hover .RepoProduTooltipText {
+  &:hover .recepcionTooltipText {
     visibility: visible;
     opacity: 1;
   }
 
-  .RepoProduTooltipText {
+  .recepcionTooltipText {
     visibility: hidden;
     background-color: #297fba;
     color: #fff;
@@ -73,92 +73,7 @@
   }
 }
 
-/////////////////////// REPORTES PRODUCCION ///////////////////////////////////////
-.RepoProduWrapper {
-  padding: 1rem;
-}
 
-.RepoProduTopbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.RepoProduResumen {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2.5rem;
-  background: #f8f9fa;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
-
-  span {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-    white-space: nowrap;
-
-    strong {
-      color: #495057;
-    }
-  }
-}
-
-.RepoProduTopbarRight {
-  display: flex;
-  align-items: center;
-}
-
-.RepoProduGrafico {
-  padding: 0.5rem 1.2rem;
-  font-size: 0.9rem;
-  border-radius: 8px;
-  white-space: nowrap;
-  margin-right: 25px;
-}
-
-.RepoProduTablaWrapper {
-  overflow-x: auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-.RepoProduTabla {
-  font-size: 0.95rem; // reducido desde 1.1rem
-  border-collapse: collapse;
-
-  thead th {
-    background-color: #f1f3f5;
-    color: #212529;
-    font-weight: 700;
-    text-align: center;
-    padding: 0.75rem;
-    font-size: 1rem;
-    border-bottom: 2px solid #dee2e6;
-  }
-
-  tbody td {
-    padding: 0.6rem 0.5rem;
-    text-align: center;
-    color: #343a40;
-    font-size: 0.95rem;
-    font-weight: 500;
-    border-top: 1px solid #dee2e6;
-  }
-
-  tbody tr:nth-child(even) {
-    background-color: #f8f9fa;
-  }
-
-  tbody tr:hover {
-    background-color: #e9ecef;
-  }
-}
 
 // Mensaje sin resultados
 .mensajeSinResultados {

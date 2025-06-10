@@ -9,6 +9,8 @@ import { Button, Form, Row, Col, Alert, Spinner, Table, ButtonGroup } from 'reac
 import { RiSearchLine } from 'react-icons/ri';
 import { format, subDays } from 'date-fns';
 import * as XLSX from 'xlsx';
+import styles from '../styles/Recepciones.module.scss'
+
 
 const Recepciones = () => {
   const [recepciones, guardarRecepciones] = useState([]);
@@ -97,12 +99,12 @@ const Recepciones = () => {
       ...valores,
       [e.target.name]: e.target.value,
     };
-  
+
     guardarValores(newValores);
-  
+
     // Si el usuario selecciona "ULTIMO DÍA" o "MES EN CURSO", ejecuta la búsqueda automáticamente
     if (e.target.value === "ud" || e.target.value === "mv") {
-      setTimeout(() => handleSubmit(new Event("submit")), 0); 
+      setTimeout(() => handleSubmit(new Event("submit")), 0);
     }
   };
 
@@ -119,13 +121,13 @@ const Recepciones = () => {
 
   const exportToExcel = () => {
     const wsData = [
-      ["Fecha", "Tipo", "Remito", "Observacion","Usuario"]
+      ["Fecha", "Tipo", "Remito", "Observacion", "Usuario"]
     ];
 
     recepciones.forEach(r => {
       const fechaFormateada = r.fecha.toDate ? format(r.fecha.toDate(), 'yyyy-MM-dd') : r.fecha;
       const remitoConFecha = `${fechaFormateada} - ${r.remito}`;
-  
+
       wsData.push([
         fechaFormateada,
         r.tipo,
@@ -146,196 +148,206 @@ const Recepciones = () => {
       titulo="Recepciones"
     >
       <>
-      <Botonera>
+        <Botonera>
 
-        <Form
-          onSubmit={handleSubmit}
-        >
+          <Form
+            onSubmit={handleSubmit}
+          >
 
-          <Row>
-            <Col lg={true}>
+            <Row>
+              <Col lg={true}>
 
-              <Form.Label>Desde</Form.Label>
-              <br></br>
-              <ButtonGroup className="produccion-botonera">
-              <div className="produccion-tooltip">
-                  <Button
-                    className={`produccion-btn ${valores.tipoFecha === 'ud' ? 'activo' : ''}`}
-                    variant="info"
-                    name="tipoFecha"
-                    value="ud"
-                    onClick={handleChange}
-                  >
-                    ULTIMO DÍA
-                  </Button>
-                  <span className="produccion-tooltip-text">Ultimas 24 horas</span>
-                </div>
-                <div className="produccion-tooltip">
-                  <Button
-                    className={`produccion-btn ${valores.tipoFecha === 'mv' ? 'activo' : ''}`}
-                    variant="info"
-                    name="tipoFecha"
-                    value="mv"
-                    onClick={handleChange}
-                  >
-                    MES EN CURSO
-                  </Button>
-                  <span className="produccion-tooltip-text">Eventos del ultimo mes</span>
-                </div>
-                 <div className="produccion-tooltip">
-                  <Button
-                    className={`produccion-btn ${valores.tipoFecha === 'ef' ? 'activo' : ''}`}
-                    variant="info"
-                    name="tipoFecha"
-                    value="ef"
-                    onClick={handleChange}
-                  >
-                    POR FECHA
-                  </Button>
-                  <span className="produccion-tooltip-text">Selecciona un rango de fechas</span>
-                </div>
-              </ButtonGroup>
-            </Col>
-
-            {(valores.tipoFecha == 'ef') ?
-              <>
-                <Col lg={true}>
-                  <Form.Group>
-                    <Form.Label>Inicio</Form.Label>
-                    <Form.Control
-                      type="date"
-                      id="fini"
-                      name="fini"
-                      value={fini}
-                      onChange={handleChange}
-                      required
-
-                    />
-                  </Form.Group>
-                </Col>
-                <Col lg={true}>
-                  <Form.Group>
-                    <Form.Label>Fin</Form.Label>
-                    <Form.Control
-                      type="date"
-                      id="ffin"
-                      name="ffin"
-                      value={ffin}
-                      onChange={handleChange}
-                      required
-
-                    />
-                  </Form.Group>
-                </Col>
-
-              </>
-              :
-              <>
-                <Col lg={true}></Col>
-                <Col lg={true}></Col>
-              </>
-
-            }
-          </Row>
-          <Row>
-            <Col lg={true}>
-              <Form.Group>
-                <Form.Label>Estado</Form.Label>
-                <Form.Control
-                  as="select"
-                  id="visto"
-                  name="visto"
-                  value={visto}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="todos" >Todos</option>
-                  <option value="false">Pendientes</option>
-                  <option value="true" >Vistos</option>
-
-                </Form.Control>
-              </Form.Group>
-            </Col>
-            <Col lg={true}>
-              <Form.Group>
-                <Form.Label>Tipo</Form.Label>
-                <Form.Control
-                  as="select"
-                  id="tipo"
-                  name="tipo"
-                  value={tipo}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="todos" >Todos</option>
-                  <option value="Racion" >Racion</option>
-                  <option value="Art. Limpieza" >Art. Limpieza</option>
-                  <option value="Art. Veterinaria" >Art. Veterinaria</option>
-                  <option value="Semen" >Semen</option>
-
-                </Form.Control>
-              </Form.Group>
-            </Col>
-            <Col lg={true}>
-              <Form.Group>
+                <Form.Label>Desde</Form.Label>
                 <br></br>
-                <Button
-                  variant="info" block
-                  type="submit"
-                >
-                  <RiSearchLine size={22} />
-                      Buscar
+                <ButtonGroup className={styles.recepcionBotonera}>
+                  <div className={styles.recepcionTooltip}>
+                    <Button
+                      className={`${styles.recepcionBtn} ${valores.tipoFecha === 'ud' ? 'activo' : ''}`}
+                      variant="info"
+                      name="tipoFecha"
+                      value="ud"
+                      onClick={handleChange}
+                    >
+                      ULTIMO DÍA
                     </Button>
-              </Form.Group>
-              <Button variant="success" block onClick={exportToExcel}>Descargar Excel</Button>
-            </Col>
-          </Row>
+                    <span className={styles.recepcionTooltipText}>Ultimas 24 horas</span>
+                  </div>
+                  <div className={styles.recepcionTooltip}>
+                    <Button
+                      className={`${styles.recepcionBtn} ${valores.tipoFecha === 'mv' ? 'activo' : ''}`}
+                      variant="info"
+                      name="tipoFecha"
+                      value="mv"
+                      onClick={handleChange}
+                    >
+                      MES EN CURSO
+                    </Button>
+                    <span className={styles.recepcionTooltipText}>Eventos del ultimo mes</span>
+                  </div>
+                  <div className={styles.recepcionTooltip}>
+                    <Button
+                      className={`${styles.recepcionBtn} ${valores.tipoFecha === 'ef' ? 'activo' : ''}`}
+                      variant="info"
+                      name="tipoFecha"
+                      value="ef"
+                      onClick={handleChange}
+                    >
+                      POR FECHA
+                    </Button>
+                    <span className={styles.recepcionTooltipText}>Selecciona un rango de fechas</span>
+                  </div>
+                </ButtonGroup>
+              </Col>
 
-        </Form>
-      </Botonera >
-
-      {procesando ? <ContenedorSpinner> <Spinner animation="border" variant="info" /></ContenedorSpinner> :
-        //si hay tambo
-
-        tamboSel ?
-
-          recepciones.length == 0 ?
-            <Mensaje>
-              <Alert variant="warning" >No se encontraron resultados</Alert>
-            </Mensaje>
-            :
-
-            <Contenedor>
-              <StickyTable height={300}>
-                <Table responsive>
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Tipo</th>
-                      <th>Remito</th>
-                      <th>Observacion</th>
-                      <th>Foto</th>
-                      <th>Usuario</th>
-                      <th>Visto</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recepciones.map(r => (
-                      <DetalleRecepciones
-                        key={r.id}
-                        recepcion={r}
+              {(valores.tipoFecha == 'ef') ?
+                <>
+                  <Col lg={true}>
+                    <Form.Group>
+                      <Form.Label>Inicio</Form.Label>
+                      <Form.Control
+                        type="date"
+                        id="fini"
+                        name="fini"
+                        value={fini}
+                        onChange={handleChange}
+                        required
 
                       />
-                    )
-                    )}
-                  </tbody>
-                </Table>
-              </StickyTable>
-            </Contenedor>
-          :
-          <SelectTambo />
+                    </Form.Group>
+                  </Col>
+                  <Col lg={true}>
+                    <Form.Group>
+                      <Form.Label>Fin</Form.Label>
+                      <Form.Control
+                        type="date"
+                        id="ffin"
+                        name="ffin"
+                        value={ffin}
+                        onChange={handleChange}
+                        required
 
-      }
+                      />
+                    </Form.Group>
+                  </Col>
+
+                </>
+                :
+                <>
+                  <Col lg={true}></Col>
+                  <Col lg={true}></Col>
+                </>
+
+              }
+            </Row>
+            <Row>
+              <Col lg={true}>
+                <Form.Group>
+                  <Form.Label>Estado</Form.Label>
+                  <Form.Control
+                    as="select"
+                    id="visto"
+                    name="visto"
+                    value={visto}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="todos" >Todos</option>
+                    <option value="false">Pendientes</option>
+                    <option value="true" >Vistos</option>
+
+                  </Form.Control>
+                </Form.Group>
+              </Col>
+              <Col lg={true}>
+                <Form.Group>
+                  <Form.Label>Tipo</Form.Label>
+                  <Form.Control
+                    as="select"
+                    id="tipo"
+                    name="tipo"
+                    value={tipo}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="todos" >Todos</option>
+                    <option value="Racion" >Racion</option>
+                    <option value="Art. Limpieza" >Art. Limpieza</option>
+                    <option value="Art. Veterinaria" >Art. Veterinaria</option>
+                    <option value="Semen" >Semen</option>
+
+                  </Form.Control>
+                </Form.Group>
+              </Col>
+              <Col lg={true}>
+                <Form.Group>
+                  <br></br>
+                  <Button
+                    variant="info" block
+                    type="submit"
+                  >
+                    <RiSearchLine size={22} />
+                    Buscar
+                  </Button>
+                </Form.Group>
+                <Button variant="success" block onClick={exportToExcel}>Descargar Excel</Button>
+              </Col>
+            </Row>
+
+          </Form>
+        </Botonera >
+
+        {procesando ?
+          <div className={styles.spinnerOverlay}>
+            <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem' }} />
+            <div className={styles.spinnerText}>Procesando datos de recepciones...</div>
+          </div>
+          :
+          //si hay tambo
+
+          tamboSel ?
+
+            recepciones.length == 0 ?
+              <Mensaje>
+                <div className={styles.mensajeCaja}>
+                  <h2 className={styles.tituloSinResultados}>Sin resultados</h2>
+                  <p className={styles.textoSecundario}>
+                    Presione el rango de fecha que quiere mostrar para ver los resultados
+                  </p>
+                </div>
+              </Mensaje>
+              :
+
+              <Contenedor>
+                <StickyTable height={400}>
+                  <Table responsive>
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Remito</th>
+                        <th>Observacion</th>
+                        <th>Foto</th>
+                        <th>Usuario</th>
+                        <th>Visto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recepciones.map(r => (
+                        <DetalleRecepciones
+                          key={r.id}
+                          recepcion={r}
+
+                        />
+                      )
+                      )}
+                    </tbody>
+                  </Table>
+                </StickyTable>
+              </Contenedor>
+            :
+            <SelectTambo />
+
+        }
       </>
     </Layout >
 
