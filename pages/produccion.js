@@ -260,16 +260,27 @@ const Produccion = () => {
               <Form.Label>Desde</Form.Label>
               <ButtonGroup className={styles.RepoProduBotonera}>
                 <div className={styles.RepoProduTooltip}>
-                  <Button className={`${valores.tipoFecha === 'ud' ? 'activo' : ''}`} variant="info" onClick={() => realizarBusqueda('ud')}>1 DÍA</Button>
+                  <Button
+                    className={`${styles.produccionBtn} ${valores.tipoFecha === 'ud' ? 'activo' : ''}`}
+                    variant="info"
+                    onClick={() => realizarBusqueda('ud')}
+                  >
+                    1 DÍA
+                  </Button>
                   <span className={styles.RepoProduTooltipText}>Último día</span>
                 </div>
                 <div className={styles.RepoProduTooltip}>
-                  <Button className={`${valores.tipoFecha === 'mv' ? 'activo' : ''}`} variant="info" onClick={() => realizarBusqueda('mv')}>MES EN CURSO</Button>
+                  <Button className={`${styles.produccionBtn}
+                  ${valores.tipoFecha === 'mv' ? 'activo' : ''}`}
+                    variant="info"
+                    onClick={() => realizarBusqueda('mv')}>
+                    MES EN CURSO
+                  </Button>
                   <span className={styles.RepoProduTooltipText}>Mes actual</span>
                 </div>
                 <div className={styles.RepoProduTooltip}>
                   <Button
-                    className={`${valores.tipoFecha === 'ef' ? 'activo' : ''}`}
+                    className={`${styles.produccionBtn} ${valores.tipoFecha === 'ef' ? 'activo' : ''}`}
                     variant="info"
                     onClick={() => setValores({ ...valores, tipoFecha: 'ef' })}
                   >
@@ -306,9 +317,10 @@ const Produccion = () => {
       </Botonera>
 
       {procesando ? (
-        <ContenedorSpinner>
-          <Spinner animation="border" variant="info" />
-        </ContenedorSpinner>
+        <div className={styles.spinnerOverlay}>
+          <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem' }} />
+          <div className={styles.spinnerText}>Procesando datos de producción...</div>
+        </div>
       ) : tamboSel ? (
         producciones.length === 0 ? (
           <Mensaje>
