@@ -397,7 +397,7 @@ const Control = () => {
             <>
                 <Botonera>
                     <h6 className={styles.resumenNutricion}>
-                        Control de alimentación: {animales.length} animales - Promedio actual: {promRacMod} Kgs.- Promedio Sugerido: {promSug} Kgs.- Promedio Dias Lact.: {promLac} Dias.
+                        <strong className={styles.nombreControl}>Control de alimentación:</strong> <strong>{animales.length}</strong> animales -  <strong className={styles.nombreControl}>Promedio actual:</strong> <strong>{promRacMod}</strong> Kgs.- <strong className={styles.nombreControl}>Promedio Sugerido:</strong> <strong>{promSug} </strong> Kgs.- <strong className={styles.nombreControl}>Promedio Dias Lact.:</strong> <strong>{promLac}</strong> Dias.
                     </h6>
                 </Botonera>
 

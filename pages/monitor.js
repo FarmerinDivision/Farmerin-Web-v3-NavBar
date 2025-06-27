@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import Layout from '../components/layout/layout';
 import { FirebaseContext } from '../firebase2';
-
+import styles from '../styles/Monitor.module.scss'
 const Monitor = () => {
   const { tamboSel } = useContext(FirebaseContext);
   const [iframeUrl, setIframeUrl] = useState('');
@@ -9,41 +9,57 @@ const Monitor = () => {
   const [linkValido, setLinkValido] = useState(true);
 
   useEffect(() => {
-    if (tamboSel?.id) {
-      const cloudFunctionUrl = `https://us-central1-farmerin-navarro.cloudfunctions.net/proxyMonitor?id=${tamboSel.id}`;
-      setIframeUrl(cloudFunctionUrl);
+    if (!tamboSel?.id) {
+      console.warn("⚠️ No hay tambo seleccionado.");
+      return;
     }
+
+    console.log("📌 Tambo seleccionado:", tamboSel.id);
+
+    // Construir la URL del proxy (la Cloud Function)
+    const cloudFunctionUrl = `https://us-central1-farmerin-navarro.cloudfunctions.net/proxyMonitor?id=${tamboSel.id}`;
+    console.log("🔗 URL generada para iframe:", cloudFunctionUrl);
+
+    setIframeUrl(cloudFunctionUrl);
+    setLoading(true); // por si se vuelve a montar
+    setLinkValido(true);
   }, [tamboSel]);
 
   const handleIframeLoad = () => {
+    console.log("✅ Iframe cargado correctamente.");
     setLoading(false);
+    setLinkValido(true);
   };
 
   const handleIframeError = () => {
+    console.error("❌ Error al cargar el iframe.");
     setLoading(false);
     setLinkValido(false);
   };
 
   const Loader = () => (
-    <div className="spinnerContainer-Monitor">
-      <div className="spinner-Monitor"></div>
-      <div className="loader-Monitor">
+    <div className={styles.spinnerContainerMonitor}>
+      <div className={styles.spinnerMonitor}></div>
+      <div className={styles.loaderMonitor}>
         <p>Cargando</p>
-        <div className="words-Monitor">
-          <span className="word-Monitor">Datos del tambo</span>
-          <span className="word-Monitor">Cantidad de tolvas</span>
-          <span className="word-Monitor">Estado de barrera</span>
-          <span className="word-Monitor">Activando modo lectura</span>
-          <span className="word-Monitor">Datos del tambo</span>
+        <div className={styles.wordsMonitor}>
+          <span className={styles.wordMonitor}>Datos del tambo</span>
+          <span className={styles.wordMonitor}>Cantidad de tolvas</span>
+          <span className={styles.wordMonitor}>Estado de barrera</span>
+          <span className={styles.wordMonitor}>Activando modo lectura</span>
+          <span className={styles.wordMonitor}>Datos del tambo</span>
         </div>
       </div>
     </div>
   );
 
   const ErrorMessage = () => (
-    <div className="divRaciones">
-      <h1 className="tituloRacionesAviso">Aviso</h1>
-      <h2 className="tituloRacionesAviso">No se pudo conectar con el Monitor de Ingreso</h2>
+    <div className={styles.tvContainer}>
+      <div className={styles.tvScreen}>
+        <div className={styles.static}></div>
+        <div className={styles.errorText}>AVISO: Error al obtener datos de monitor</div>
+      </div>
+      <div className={styles.tvStand}></div>
     </div>
   );
 

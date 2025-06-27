@@ -5,14 +5,13 @@ import { FirebaseContext } from '../../firebase2';
 import { ContenedorSpinner } from '../ui/Elementos';
 import MapContainer from './MapContainer';
 import DetalleHorario from './detalleHorario';
+import ModalTamboForm from '../../pages/tambos/ModalTamboForm'; // Nuevo
 
 import { format } from 'date-fns';
 import {
   Card,
   Button,
   Modal,
-  OverlayTrigger,
-  Tooltip,
   Row,
   Col,
   Form,
@@ -33,7 +32,7 @@ const DetalleTambos = ({ tambo }) => {
   const fetch = require('node-fetch');
 
   const { id, nombre, ubicacion, bajadas, turnos, tolvas, link } = tambo;
-  const { usuario, firebase, guardarTamboSel, tamboSel} = useContext(FirebaseContext);
+  const { usuario, firebase, guardarTamboSel, tamboSel } = useContext(FirebaseContext);
   const router = useRouter();
 
   const [error, guardarError] = useState(false);
@@ -44,6 +43,7 @@ const DetalleTambos = ({ tambo }) => {
   const [estadoApi, guardarEstadoApi] = useState(null);
   const [show, setShow] = useState(false);
   const [showData, setShowData] = useState(false);
+  const [showEditar, setShowEditar] = useState(false); // Nuevo
   const [cargando, setCargando] = useState(false);
 
   useEffect(() => {
@@ -65,15 +65,8 @@ const DetalleTambos = ({ tambo }) => {
   };
 
   const handleChange = e => guardarFecha(e.target.value);
-
-  const handleClose = () => {
-    setShow(false);
-    guardarError(false);
-  };
-  const handleShow = () => {
-    setShow(true);
-    guardarError(false);
-  };
+  const handleClose = () => { setShow(false); guardarError(false); };
+  const handleShow = () => { setShow(true); guardarError(false); };
   const handleShowData = () => setShowData(true);
   const handleCloseData = () => setShowData(false);
 
@@ -120,18 +113,9 @@ const DetalleTambos = ({ tambo }) => {
   }
 
   function snapshotAnimal(snapshot) {
-    const animales = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const animales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     guardarAnimales(animales);
   }
-
-  const CustomTooltip = (text, id) => (
-    <Tooltip id={id} className="tooltip">
-      {text}
-    </Tooltip>
-  );
 
   return (
     <>
@@ -143,11 +127,7 @@ const DetalleTambos = ({ tambo }) => {
           </div>
 
           <div className={styles.botonCentro}>
-            <Button
-              className={styles.botonIngresar}
-              onClick={selecTambo}
-              disabled={cargando}
-            >
+            <Button className={styles.botonIngresar} onClick={selecTambo} disabled={cargando}>
               Ingresar al tambo
             </Button>
           </div>
@@ -161,11 +141,9 @@ const DetalleTambos = ({ tambo }) => {
             </div>
 
             <div className={styles.tooltipWrapper}>
-              <Link href={`/tambos/${id}`} legacyBehavior passHref>
-                <Button className={styles.btnIconoEditar}>
-                  <RiEdit2Line size={20} />
-                </Button>
-              </Link>
+              <Button className={styles.btnIconoEditar} onClick={() => setShowEditar(true)}>
+                <RiEdit2Line size={20} />
+              </Button>
               <span className={styles.tooltipText}>Editar tambo</span>
             </div>
 
@@ -179,7 +157,7 @@ const DetalleTambos = ({ tambo }) => {
         </div>
       </Card>
 
-      {/* Modal de Confirmación */}
+      {/* Modal Confirmación */}
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>Atención!</Modal.Title>
@@ -197,7 +175,7 @@ const DetalleTambos = ({ tambo }) => {
         </Modal.Footer>
       </Modal>
 
-      {/* Modal de Info */}
+      {/* Modal Información */}
       <Modal show={showData} onHide={handleCloseData}>
         <Modal.Header closeButton>
           <Modal.Title>Tambo {nombre}</Modal.Title>
@@ -224,9 +202,7 @@ const DetalleTambos = ({ tambo }) => {
                 <Spinner animation="border" variant="info" />
               </ContenedorSpinner>
             )}
-            {estadoApi === 'error' && (
-              <Alert variant="danger">No se puede acceder al tambo</Alert>
-            )}
+            {estadoApi === 'error' && <Alert variant="danger">No se puede acceder al tambo</Alert>}
             {estadoApi === 'resultados' && horarios?.length === 0 && (
               <Alert variant="success">No hay resultados para la fecha seleccionada</Alert>
             )}
@@ -253,11 +229,23 @@ const DetalleTambos = ({ tambo }) => {
         </Modal.Footer>
       </Modal>
 
+      {/* Modal Edición */}
+      {showEditar && (
+        <ModalTamboForm
+          tamboData={tambo}
+          show={showEditar}
+          onHide={() => setShowEditar(false)}
+        />
+      )}
+
       {/* Modal de carga bloqueante */}
       <Modal show={cargando} backdrop="static" keyboard={false} centered>
         <Modal.Body className="text-center">
           <Spinner animation="border" role="status" variant="primary" />
-          <p className="mt-3">Ingresando a <strong>{tamboSel?.nombre}</strong>...</p>
+          <p className="mt-3">
+            Ingresando a  <strong>  {tamboSel?.nombre}</strong>...
+          </p>
+
         </Modal.Body>
       </Modal>
     </>

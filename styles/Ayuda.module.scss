@@ -1,0 +1,152 @@
+.contactPage {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+  background-color: #f0f0f0;
+}
+
+
+.contactSection,
+.socialSection {
+  width: 45%;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px #020014;
+}
+
+.contactSection,
+.mapSection {
+  width: 95%;
+  background-color: #ffffff;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px #020014;
+}
+
+// TITULOS CONTACTO - REDES 
+.tituloAyuda {
+  font-family: 'Roboto', sans-serif;
+  /* Fuente moderna */
+  font-size: 2.5rem;
+  /* Tamaño del texto */
+  font-weight: 700;
+  /* Grosor del texto */
+  line-height: 1.2;
+  /* Espaciado entre líneas */
+  letter-spacing: -0.5px;
+  /* Espaciado entre letras */
+  margin: 0.5em 0;
+  /* Márgenes superior e inferior */
+  padding: 0.2em 0.5em;
+  /* Relleno adicional para el fondo */
+  color: #1b89a5;
+  /* Color del texto: Gris oscuro */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  /* Sombra suave */
+  border-bottom: 2px solid #1b89a5;
+  /* Línea inferior */
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+  .tituloAyuda {
+    font-size: 2rem;
+    /* Tamaño del texto para dispositivos medianos */
+  }
+}
+
+@media (max-width: 480px) {
+  .tituloAyuda {
+    font-size: 1.5rem;
+    /* Tamaño del texto para dispositivos pequeños */
+  }
+}
+// TITULOS UBICACION 
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
+
+.tituloAyudaUbi {
+  font-family: 'Roboto', sans-serif;
+  /* Fuente moderna y legible */
+  font-size: 2.5rem;
+  /* Tamaño del texto ajustable */
+  font-weight: 700;
+  /* Grosor del texto */
+  line-height: 1.2;
+  /* Espaciado entre líneas */
+  letter-spacing: -0.5px;
+  /* Espaciado entre letras */
+  margin: 0.5em 0;
+  /* Márgenes superior e inferior */
+  padding: 0;
+  /* Sin relleno adicional */
+}
+
+/* Colores */
+.tituloAyudaUbi {
+  color: #1b89a5;
+  /* Color del texto: Gris oscuro */
+  padding: 0.2em 0.5em;
+  /* Relleno para el fondo */
+}
+
+/* Sombra de texto */
+.tituloAyudaUbi {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  /* Sombra suave */
+}
+
+/* Bordes */
+.tituloAyudaUbi {
+  border-bottom: 2px solid #1b89a5;
+  /* Línea en la parte inferior */
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+    .tituloAyudaUbi {
+    font-size: 2rem;
+    /* Tamaño del texto para dispositivos medianos */
+  }
+}
+
+@media (max-width: 480px) {
+  .tituloAyudaUbi {
+    font-size: 1.5rem;
+    /* Tamaño del texto para dispositivos pequeños */
+  }
+}
+
+.contactItem {
+  margin-bottom: 15px;
+}
+
+.contactItem a {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  color: #020014;
+  /* Color del texto */
+  font-size: 20px;
+  /* Tamaño del texto */
+  font-weight: 500;
+  /* Peso del texto */
+}
+
+.contactItem a i,
+.contactItem a svg {
+  margin-right: 15px;
+  /* Espacio entre el icono y el texto */
+  font-size: 28px;
+  /* Tamaño del icono */
+  color: #1a8aa4;
+  /* Color del icono */
+}
+
+.contactItem a:hover {
+  color: #1a8aa4;
+  /* Color del texto al pasar el mouse */
+  text-decoration: underline;
+  /* Subraya al pasar el mouse */
+}

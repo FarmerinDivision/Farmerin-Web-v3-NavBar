@@ -43,9 +43,7 @@ const Layout = props => {
       <main className="mainContent" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       
 
-        <div style={{
-          paddingTop: "30px"
-        }}>
+        <div >
           {/* Permitir múltiples hijos, fragmentos, etc. */}
           {props.children}
         </div>

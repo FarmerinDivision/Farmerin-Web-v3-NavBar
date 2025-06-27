@@ -1,0 +1,176 @@
+// Listados.module.scss
+.nombreTambo {
+  color: #000; // Texto negro
+  text-decoration: underline;
+  text-decoration-color: #4cb151; // Verde moderno (Tailwind Emerald-500)
+  font-weight: 600;
+}
+
+.listadosContainer {
+  padding: 30px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.tituloSeccion {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2f3e46;
+  margin-bottom: 20px;
+}
+
+.botoneraTipo {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.selectorTipo {
+  font-size: 16px;
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  width: 100%;
+  max-width: 300px;
+}
+
+.botonNuevo {
+  background-color: #1b9c85;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.botonNuevo:hover {
+  background-color: #157f6f;
+}
+
+.tablaContainer {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.tablaListados {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+}
+
+.tablaListados th,
+.tablaListados td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 15px;
+  color: #2f3e46;
+}
+
+.tablaListados th {
+  background-color: #f0f2f5;
+  font-weight: 600;
+}
+
+/////////// DETALLE DE LOS BOTONES 
+.tooltipWrapper {
+  position: relative;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.tooltipText {
+  visibility: hidden;
+  background-color: #333;
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tooltipWrapper:hover .tooltipText {
+  visibility: visible;
+  opacity: 1;
+}
+
+.btnIconoEditar {
+  background-color: #4cb151;
+  color: white;
+  border: none;
+  padding: 0.4rem;
+  border-radius: 6px;
+
+  &:hover {
+    background-color:#337a37;
+  }
+}
+
+.btnIconoEliminar {
+  background-color: #b52b39;
+  color: white;
+  border: none;
+  padding: 0.4rem;
+  border-radius: 6px;
+
+  &:hover {
+    background-color: #750e18;
+  }
+}
+///// MODAL 
+.modalContent {
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modalBody {
+  padding-top: 10px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+ 
+
+  label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 14px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+
+    &:focus {
+      border-color: #1b829b;
+      box-shadow: 0 0 0 2px rgba(27, 130, 155, 0.2);
+    }
+  }
+}
+
+.buttonRow {
+  margin-top: 30px;
+}

@@ -4,11 +4,11 @@ import FichaAnimal from './fichaAnimal';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import differenceInDays from 'date-fns/differenceInDays'
 import { format } from 'date-fns'
-
+import styles from '../../styles/gralAnimales.module.scss'
 
 const DetalleGralAnimal = ({ animal }) => {
 
-   const { id, idtambo, rp, erp, racion, lactancia, ingreso, observaciones, estpro, estrep, fparto, fservicio, categoria, uc, ca, rodeo, nservicio,diasLact } = animal;
+   const { id, idtambo, rp, erp, racion, lactancia, ingreso, observaciones, estpro, estrep, fparto, fservicio, categoria, uc, ca, rodeo, nservicio, diasLact } = animal;
    const [show, setShow] = useState(false);
    const [calculado, guardarCalculado] = useState({})
    const handleShow = () => { setShow(true) };
@@ -76,21 +76,15 @@ const DetalleGralAnimal = ({ animal }) => {
             </td>
 
             <td>
-               <Button
-                  variant="link"
-                  onClick={handleShow}
-               >
-                  <OverlayTrigger
-                     placement="bottom"
-                     overlay={<Tooltip >Ficha</Tooltip>}
-                  >
-                     <RiAddBoxLine size={22} />
-                  </OverlayTrigger>
-               </Button>
-
+               <div className={styles.tooltipWrapper}>
+                  <Button className={styles.btnIconoInfo} onClick={handleShow}>
+                     <RiAddBoxLine size={20} />
+                  </Button>
+                  <span className={styles.tooltipText}>Ver ficha</span>
+               </div>
             </td>
          </tr>
-         { show &&
+         {show &&
             <FichaAnimal
                animal={animal}
                show={show}

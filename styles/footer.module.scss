@@ -16,10 +16,22 @@
 .content {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
   font-size: 0.85rem;
   color: #6c757d;
   font-weight: 500;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem; // espaciado entre íconos y texto
+  }
+
+  svg {
+    vertical-align: middle;
+    font-size: 1rem;
+  }
 }
 
 .link {
@@ -37,4 +49,17 @@
   color: #adb5bd;
   font-size: 0.85rem;
 }
+.devSignature {
+  color: #1a1a1a; // más oscuro que el resto
 
+  svg {
+    color: #1a1a1a; // íconos también oscuros
+  }
+
+  &:hover {
+    color: #1a1a1a;
+    svg {
+      color: #1a1a1a;
+    }
+  }
+}

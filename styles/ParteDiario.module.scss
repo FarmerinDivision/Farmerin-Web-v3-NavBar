@@ -1,8 +1,10 @@
 .parteBotonera {
   display: flex;
   gap: 10px;
+  position: relative;
+  z-index: 1; // Necesario para stacking context del dropdown
 
-   .parteBtn {
+  .parteBtn {
     padding: 10px 20px;
     border: 2px solid transparent;
     border-radius: 8px;
@@ -48,7 +50,7 @@
     border-radius: 6px;
     padding: 5px 10px;
     position: absolute;
-    z-index: 1;
+    z-index: 1000;
     bottom: 125%;
     left: 50%;
     transform: translateX(-50%);
@@ -89,9 +91,8 @@
   margin-bottom: 0.5rem;
 }
 
-
 //////////// LOADER 
- .spinnerOverlay {
+.spinnerOverlay {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,3 +117,11 @@
   from { opacity: 0 }
   to { opacity: 1 }
 }
+
+.parteSelect {
+  select {
+    position: relative;
+    z-index: 9999 !important;
+  }
+}
+

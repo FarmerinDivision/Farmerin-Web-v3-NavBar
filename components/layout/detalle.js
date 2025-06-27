@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../../styles/CargarControlFarmer.module.scss';
+import styles from '../../styles/ControlLecheroFarmerin.module.scss';
 
 const Detalle = ({ info }) => {
   return (

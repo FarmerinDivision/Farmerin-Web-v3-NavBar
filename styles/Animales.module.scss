@@ -384,3 +384,108 @@
 .textoSecundario {
   color: #555;
 }
+
+/* ==== MODAL DE ANIMAL === */
+.modalAnimal {
+  .modal-dialog {
+    width: 100%;
+    margin: 5rem auto;
+  }
+
+  .modal-content {
+    border-radius: 18px;
+    background-color: #ffffff;
+    border: none;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    padding: 1.5rem 1.8rem;
+  }
+
+  .modal-header {
+    border-bottom: none;
+    padding-bottom: 0.5rem;
+
+    .modal-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #2a2a2a;
+    }
+
+    .btn-close {
+      background: transparent;
+      font-size: 1.2rem;
+    }
+  }
+
+  .modal-body {
+    padding-top: 1rem;
+
+    .form-group {
+      margin-bottom: 1.2rem;
+
+      label {
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+        display: block;
+        color: #444;
+        font-size: 0.95rem;
+      }
+
+      input,
+      select,
+      textarea {
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.95rem;
+        background-color: #f9fafb;
+        color: #111;
+        transition: all 0.2s ease;
+
+        &:focus {
+          border-color: #4cb04f;
+          box-shadow: 0 0 0 3px rgba(76, 176, 79, 0.2);
+          outline: none;
+          background-color: #fff;
+        }
+      }
+
+      textarea {
+        resize: vertical;
+      }
+    }
+  }
+
+  .modal-footer {
+    padding-top: 0;
+    border-top: none;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+
+    .btn {
+      border-radius: 8px;
+      padding: 0.45rem 1.2rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-success {
+      background-color: #4cb04f;
+      border-color: #3b853d;
+
+      &:hover {
+        background-color: #3aa13c;
+      }
+    }
+
+    .btn-secondary {
+      background-color: #dee2e6;
+      color: #333;
+
+      &:hover {
+        background-color: #cfd4d9;
+      }
+    }
+  }
+}

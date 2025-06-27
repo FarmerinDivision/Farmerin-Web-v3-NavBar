@@ -95,7 +95,7 @@
 .botonAplicar {
     font-weight: bold;
     border-radius: 10px;
-    width: 20%;
+    width: 200%;
     margin: 0 auto;
     height: 50px;
     font-size: 18px;
@@ -322,4 +322,157 @@
     transition: opacity 0.3s;
     font-size: 12px;
     white-space: nowrap;
+}
+
+// 🔄 Animación al marcar como leída
+.fadeOut {
+  animation: fadeOut 0.5s ease-out;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.98);
+  }
+}
+
+// ✅ Badge visual "Leída"
+.badgeLeido {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-block;
+  align-self: center;
+  margin-right: 8px;
+}
+
+// 🧩 Card de notificación (estilo base + transición)
+.alertaNotificacionBox {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+// 🎨 Estilo si ya fue marcada como leída
+.visto {
+  background-color: #f8f9fa; // gris claro
+  border-left: 5px solid #28a745; // verde claro
+}
+
+/* --- Estilos para el Modal de Editar Parámetro --- */
+// parametro.module.scss
+
+.ModalContent {
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.ModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.ModalTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.ModalBody {
+  padding-top: 20px;
+}
+
+.FormGroup {
+  margin-bottom: 20px;
+
+  label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+    color: #333;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    transition: border 0.2s;
+
+    &:focus {
+      border-color: #1b829b;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(27, 130, 155, 0.2);
+    }
+  }
+}
+
+.ButtonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+
+  .btnGuardar {
+    background-color: #1b829b;
+    color: #fff;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+
+    &:hover {
+      background-color: #166a81;
+    }
+  }
+
+  .btnCancelar {
+    background-color: #e0e0e0;
+    color: #444;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+
+    &:hover {
+      background-color: #cfcfcf;
+    }
+  }
+}
+
+.AlertContainer {
+  margin-bottom: 15px;
+
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-radius: 8px;
+    padding: 12px;
+  }
 }

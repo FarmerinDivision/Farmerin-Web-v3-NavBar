@@ -1,4 +1,10 @@
 // Wrapper del texto principal
+.nombreControl {
+  color: #000; // Texto negro
+  text-decoration: underline;
+  text-decoration-color: #297fb8; // Verde moderno (Tailwind Emerald-500)
+  font-weight: 600;
+}
 .resumenNutricion {
   text-align: center;
   font-size: 16px;

@@ -1,140 +1,138 @@
-import React, { useState, useEffect, useContext } from 'react'
-import Link from 'next/link';
+import React, { useState, useEffect, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
-import { Botonera, Contenedor } from '../components/ui/Elementos';
 import Layout from '../components/layout/layout';
 import DetalleListado from '../components/layout/detalleListado';
-import StickyTable from "react-sticky-table-thead"
+import StickyTable from 'react-sticky-table-thead';
 import SelectTambo from '../components/layout/selectTambo';
-import { Button, Form, Row, Col, Table } from 'react-bootstrap';
+import { Button, Form, Row, Col, Table, Modal } from 'react-bootstrap';
 import { RiAddBoxLine } from 'react-icons/ri';
+import Listado from './listados/[id]'; // reutilizamos el componente de edición
+import styles from '../styles/Listados.module.scss';
 
 const Listados = () => {
-
   const [listados, guardarListados] = useState([]);
   const [tipo, guardarTipo] = useState('todos');
-  const { firebase, tamboSel } = useContext(FirebaseContext);
+  const [showNuevo, setShowNuevo] = useState(false);
 
+  const { firebase, tamboSel } = useContext(FirebaseContext);
 
   useEffect(() => {
     if (tamboSel) {
-      const obtenerListados = () => {
-        firebase.db.collection('listado').where('idtambo', '==', tamboSel.id).onSnapshot(manejarSnapshot)
-      }
-      obtenerListados();
-    }
+      const unsubscribe = firebase.db
+        .collection('listado')
+        .where('idtambo', '==', tamboSel.id)
+        .onSnapshot(manejarSnapshot);
 
+      return () => unsubscribe();
+    }
   }, [tipo, tamboSel]);
 
-  function manejarSnapshot(snapshot) {
-    const listados = snapshot.docs.map(doc => {
-      return {
-        id: doc.id,
-        ...doc.data()
-      }
-    })
+  const manejarSnapshot = (snapshot) => {
+    const datos = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-
-    if (tipo != "todos") {
-
-      const filtro = listados.filter(l => {
-        return (
-          l.tipo.includes(tipo)
-        )
-      });
-      guardarListados(filtro);
+    if (tipo !== 'todos') {
+      guardarListados(datos.filter((l) => l.tipo.includes(tipo)));
     } else {
-      guardarListados(listados);
+      guardarListados(datos);
     }
+  };
 
-
-  }
-
-  const handleChange = e => {
+  const handleChange = (e) => {
     guardarTipo(e.target.value);
+  };
 
-  }
+  const handleCloseNuevo = () => setShowNuevo(false);
 
   return (
+    <Layout titulo="Listados">
+      <div className={styles.listadosContainer}>
+        <h2 className={styles.tituloSeccion}>
+          📋 Listados de{' '}
+          <strong className={styles.nombreTambo}>{tamboSel?.nombre}</strong>
+        </h2>
 
-    <Layout
-      titulo="Listados"
-    >
-      <>
-      <Botonera>
-        <h5>Tipos</h5>
-        <Row>
-          <Col lg={true}>
-
-
-            <Form.Control
-              as="select"
-              id="tipo"
-              name="tipo"
-              value={tipo}
-              placeholder="Seleccione tipo"
-              onChange={handleChange}
-              required
-            >
-              <option value="todos" >Todos...</option>
-              <option value="servicio" >Servicio</option>
-              <option value="tratamiento" >Tratamiento</option>
-              <option value="enfermedad" >Enfermedad</option>
-              <option value="baja" >Motivo de Baja</option>
-
-            </Form.Control>
-          </Col>
-
-          <Col md="auto">
-
-            <Link href="/listados/[id]" as={`/listados/0`}>
-              <span>
-              <Button
-                variant="success"
+        {/* Filtro y botón nueva opción */}
+        <div className={styles.botoneraTipo}>
+          <Row>
+            <Col>
+              <Form.Control
+                as="select"
+                id="tipo"
+                name="tipo"
+                value={tipo}
+                className={styles.selectorTipo}
+                onChange={handleChange}
+                required
               >
-                <RiAddBoxLine size={28} />
-                &nbsp;
+                <option value="todos">Todos...</option>
+                <option value="servicio">Servicio</option>
+                <option value="tratamiento">Tratamiento</option>
+                <option value="enfermedad">Enfermedad</option>
+                <option value="baja">Motivo de Baja</option>
+              </Form.Control>
+            </Col>
+
+            <Col md="auto">
+              <Button
+                className={styles.botonNuevo}
+                onClick={() => setShowNuevo(true)}
+              >
+                <RiAddBoxLine size={20} />
                 Nueva Opción
-
               </Button>
-              </span>
-            </Link>
+            </Col>
+          </Row>
+        </div>
 
-          </Col>
-        </Row>
-      </Botonera>
-      <Contenedor>
-        {tamboSel ?
-          <StickyTable height={380}>
-            <Table responsive>
-              <thead>
-                <tr>
-                  <th>Tipo</th>
-                  <th>Descripción</th>
-                  <th>Accion</th>
-                </tr>
-              </thead>
-              <tbody>
+        {/* Tabla de resultados */}
+        <div className={styles.tablaContainer}>
+          {tamboSel ? (
+            <StickyTable height={500}>
+              <Table className={styles.tablaListados} responsive>
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listados.map((l) => (
+                    <DetalleListado key={l.id} listado={l} />
+                  ))}
+                </tbody>
+              </Table>
+            </StickyTable>
+          ) : (
+            <SelectTambo />
+          )}
+        </div>
+      </div>
 
-                {listados.map(l => (
-                  <DetalleListado
-                    key={l.id}
-                    listado={l}
-                  />
-                )
-                )}
-
-              </tbody>
-            </Table>
-          </StickyTable>
-          :
-          <SelectTambo />
-        }
-      </Contenedor>
-      </>
+      {/* MODAL NUEVA OPCIÓN */}
+      <Modal
+        show={showNuevo}
+        onHide={handleCloseNuevo}
+        size="lg"
+        centered
+        backdrop="static"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Nueva Opción</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Listado
+            idListado=""
+            isModal={true}
+            onClose={handleCloseNuevo}
+          />
+        </Modal.Body>
+      </Modal>
     </Layout>
+  );
+};
 
-  )
-}
-
-export default Listados
+export default Listados;
