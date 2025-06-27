@@ -3,6 +3,7 @@ import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
 import * as XLSX from 'xlsx';
 import { FaSearch, FaFileArchive } from 'react-icons/fa';
+import styles from '../styles/ControlTurnos.module.scss';
 
 function IngresosFiltrados() {
   const { firebase, tamboSel } = useContext(FirebaseContext);
@@ -157,55 +158,55 @@ function IngresosFiltrados() {
     return (
       <Layout>
         <>
-          <div className="main_wrapper">
-            <div className="main">
-              <div className="antenna">
-                <div className="antenna_shadow"></div>
-                <div className="a1"></div>
-                <div className="a1d"></div>
-                <div className="a2"></div>
-                <div className="a2d"></div>
-                <div className="a_base"></div>
+          <div className={styles.mainWrapper}>
+            <div className={styles.main}>
+              <div className={styles.antenna}>
+                <div className={styles.antennaShadow}></div>
+                <div className={styles.a1}></div>
+                <div className={styles.a1d}></div>
+                <div className={styles.a2}></div>
+                <div className={styles.a2d}></div>
+                <div className={styles.aBase}></div>
               </div>
-              <div className="tv">
-                <div className="cruve">
-                  <svg xmlSpace="preserve" viewBox="0 0 189.929 189.929" className="curve_svg">
+              <div className={styles.tv}>
+                <div className={styles.cruve}>
+                  <svg xmlSpace="preserve" viewBox="0 0 189.929 189.929" className={styles.curveSvg}>
                     <path d="M70.343,70.343c-30.554,30.553-44.806,72.7-39.102,115.635l-29.738,3.951C-5.442,137.659,11.917,86.34,49.129,49.13
                     C86.34,11.918,137.664-5.445,189.928,1.502l-3.95,29.738C143.041,25.54,100.895,39.789,70.343,70.343z" />
                   </svg>
                 </div>
-                <div className="display_div">
-                  <div className="screen_out">
-                    <div className="screen_out1">
-                      <div className="screen">
-                        <span className="notfound_text">PROXIMAMENTE, SECCION EN DESARROLLO</span>
+                <div className={styles.displayDiv}>
+                  <div className={styles.screenOut}>
+                    <div className={styles.screenOut1}>
+                      <div className={styles.screen}>
+                        <span className={styles.notfoundText}>PROXIMAMENTE, SECCION EN DESARROLLO</span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="lines">
-                  <div className="line1"></div>
-                  <div className="line2"></div>
-                  <div className="line3"></div>
+                <div className={styles.lines}>
+                  <div className={styles.line1}></div>
+                  <div className={styles.line2}></div>
+                  <div className={styles.line3}></div>
                 </div>
-                <div className="buttons_div">
-                  <div className="b1"><div></div></div>
-                  <div className="b2"></div>
-                  <div className="speakers">
-                    <div className="g1">
-                      <div className="g11"></div>
-                      <div className="g12"></div>
-                      <div className="g13"></div>
+                <div className={styles.buttonsDiv}>
+                  <div className={styles.b1}><div></div></div>
+                  <div className={styles.b2}></div>
+                  <div className={styles.speakers}>
+                    <div className={styles.g1}>
+                      <div className={styles.g11}></div>
+                      <div className={styles.g12}></div>
+                      <div className={styles.g13}></div>
                     </div>
-                    <div className="g"></div>
-                    <div className="g"></div>
+                    <div className={styles.g}></div>
+                    <div className={styles.g}></div>
                   </div>
                 </div>
               </div>
-              <div className="bottom">
-                <div className="base1"></div>
-                <div className="base2"></div>
-                <div className="base3"></div>
+              <div className={styles.bottom}>
+                <div className={styles.base1}></div>
+                <div className={styles.base2}></div>
+                <div className={styles.base3}></div>
               </div>
             </div>
           </div>
@@ -259,33 +260,33 @@ function IngresosFiltrados() {
   return (
     <Layout titulo="Herramientas">
       <>
-      <div className="ingresos-container">
-        <h2 className='ingresosT-titulo'>Control de Turnos</h2>
-        <div className="descripcion-turnos">
+      <div className={styles.ingresosContainer}>
+        <h1 className={styles.ingresosTitulo}>Control de Turnos de <strong className={styles.nombreTambo}>{tamboSel?.nombre}</strong></h1>
+        <div className={styles.descripcionTurnos}>
           <p>
             La información de cada turno se actualiza una vez <strong>finalizado</strong>.
             Consultá a qué hora termina cada uno con el siguiente botón:
           </p>
-          <button className="btn-turnos" onClick={obtenerHorariosTurno} disabled={cargandoTurnos}>
+          <button className={styles.btnTurnos} onClick={obtenerHorariosTurno} disabled={cargandoTurnos}>
             {cargandoTurnos ? 'Cargando horarios...' : 'Ver horarios de fin de turno'}
           </button>
 
           {finesTurno && (
-            <div className="horarios-turno">
-              <button className="cerrar-turnos" onClick={() => setFinesTurno(null)}>✕</button>
+            <div className={styles.horariosTurno}>
+              <button className={styles.cerrarTurnos} onClick={() => setFinesTurno(null)}>✕</button>
               <p><strong>Fin Turno Mañana:</strong> {finesTurno.mañana}</p>
               <p><strong>Fin Turno Tarde:</strong> {finesTurno.tarde}</p>
             </div>
           )}
         </div>
-        <div className="filtros">
+        <div className={styles.filtros}>
           <label>Seleccionar fecha: </label>
           <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} />
-          <button className="ingresosT-container-btn-buscar" onClick={cargarDatos}>
+          <button className={styles.ingresosTContainerBtnBuscar} onClick={cargarDatos}>
             <FaSearch />
             Buscar
           </button>
-          <button className="ingresosT-container-btn-file" onClick={exportarAExcel}>
+          <button className={styles.ingresosTContainerBtnFile} onClick={exportarAExcel}>
             <svg
               fill="#fff"
               xmlns="http://www.w3.org/2000/svg"
@@ -321,7 +322,7 @@ function IngresosFiltrados() {
           {datosFiltrados.length > 0 && (
             <button
               onClick={analizarERP}
-              className="ingresosT-container-btn-buscar"            >
+              className={styles.ingresosTContainerBtnBuscar}            >
               <FaSearch />
               Analizar Turnos
             </button>
@@ -329,11 +330,11 @@ function IngresosFiltrados() {
 
         </div>
         {resultadoAnalisis && (
-          <div className="resultado-analisis">
-            <div className="analisis-header">
+          <div className={styles.resultadoAnalisis}>
+            <div className={styles.analisisHeader}>
               <h3>Resultado del análisis</h3>
               <button
-                className="btn-cerrar-analisis"
+                className={styles.btnCerrarAnalisis}
                 onClick={() => setResultadoAnalisis(null)}
               >
                 ✕
@@ -344,34 +345,34 @@ function IngresosFiltrados() {
               <>
                 <p>
                   <strong>Solo hay datos del turno:</strong>
-                  <span className="unico-turno"> {resultadoAnalisis.unico}</span>
+                  <span className={styles.unicoTurno}> {resultadoAnalisis.unico}</span>
                 </p>
                 {resultadoAnalisis.duplicados.length > 0 ? (
                   <p>
                     <strong>ERP duplicados:</strong>
-                    <span className="duplicados"> {resultadoAnalisis.duplicados.join(', ')}</span>
+                    <span className={styles.duplicados}> {resultadoAnalisis.duplicados.join(', ')}</span>
                   </p>
                 ) : (
-                  <p><span className="sin-duplicados">No hay ERP duplicados.</span></p>
+                  <p><span className={styles.sinDuplicados}>No hay ERP duplicados.</span></p>
                 )}
               </>
             ) : (
               <>
                 <p>
                   <strong>ERP duplicados en turno Mañana:</strong>
-                  <span className="duplicados"> {resultadoAnalisis.duplicadosMañana.join(', ') || 'Ninguno'}</span>
+                  <span className={styles.duplicados}> {resultadoAnalisis.duplicadosMañana.join(', ') || 'Ninguno'}</span>
                 </p>
                 <p>
                   <strong>ERP duplicados en turno Tarde:</strong>
-                  <span className="duplicados"> {resultadoAnalisis.duplicadosTarde.join(', ') || 'Ninguno'}</span>
+                  <span className={styles.duplicados}> {resultadoAnalisis.duplicadosTarde.join(', ') || 'Ninguno'}</span>
                 </p>
                 <p>
                   <strong>Solo en Mañana:</strong>
-                  <span className="solo-turno"> {resultadoAnalisis.soloEnMañana.join(', ') || 'Ninguno'}</span>
+                  <span className={styles.soloTurno}> {resultadoAnalisis.soloEnMañana.join(', ') || 'Ninguno'}</span>
                 </p>
                 <p>
                   <strong>Solo en Tarde:</strong>
-                  <span className="solo-turno"> {resultadoAnalisis.soloEnTarde.join(', ') || 'Ninguno'}</span>
+                  <span className={styles.soloTurno}> {resultadoAnalisis.soloEnTarde.join(', ') || 'Ninguno'}</span>
                 </p>
               </>
             )}
@@ -380,24 +381,24 @@ function IngresosFiltrados() {
         )}
 
         {cargando ? (
-          <button class="loader__btn-Ingresos">
-            <div class="loader-Ingresos"></div>
+          <button className={styles.loaderBtnIngresos}>
+            <div className={styles.loaderIngresos}></div>
             Cargando turnos.....
           </button>
 
         ) : error ? (
-          <p className="error-message">{error}</p>
+            <p className={styles.errorMessage}>{error}</p>
         ) : datosFiltrados.length > 0 ? (
-          <div className="turnos-wrapper">
+          <div className={styles.turnosWrapper}>
             {['Mañana', 'Tarde'].map(turno => {
               const datosTurno = datosFiltrados.filter(item => item.turno === turno);
 
               return (
-                <div key={turno} className="turno">
-                  <h3 className="turno-titulo">Turno {turno}</h3>
-                  <p className="turno-cantidad">Cantidad: {datosTurno.length}</p>
+                <div key={turno} className={styles.turno}>
+                  <h3 className={styles.turnoTitulo}>Turno {turno}</h3>
+                  <p className={styles.turnoCantidad}>Cantidad: {datosTurno.length}</p>
                   {datosTurno.length > 0 ? (
-                    <table className="tabla-turno">
+                    <table className={styles.tablaTurno}>
                       <thead>
                         <tr>
                           <th>#</th> {/* <-- nueva columna */}
@@ -420,8 +421,8 @@ function IngresosFiltrados() {
                       </tbody>
                     </table>
                   ) : (
-                    <p className='ingresos-mensaje'>
-                      <strong className="mensaje-alerta">No hay datos para Turno {turno}</strong>
+                    <p className={styles.ingresosMensaje}>
+                      <strong className={styles.mensajeAlerta}>No hay datos para Turno {turno}</strong>
                     </p>
                   )}
                 </div>
@@ -429,8 +430,8 @@ function IngresosFiltrados() {
             })}
           </div>
         ) : (
-          <p className="ingresos-mensaje">
-            <strong className="mensaje-alerta">No hay datos filtrados para mostrar.</strong> Seleccione una fecha y presione <strong>Buscar</strong> para ver los resultados correspondientes a los turnos <strong>matutino</strong> y <strong>vespertino</strong>.
+          <p className={styles.ingresosMensaje}>
+            <strong className={styles.mensajeAlerta}>No hay datos filtrados para mostrar.</strong> Seleccione una fecha y presione <strong>Buscar</strong> para ver los resultados correspondientes a los turnos <strong>matutino</strong> y <strong>vespertino</strong>.
           </p>
         )}
       </div>

@@ -8,6 +8,7 @@ import ResultadosCargas from '../components/layout/ResultadosCargas';
 import procesarParto from '../components/layout/registrarParto';
 import { subirControlLechero } from '../components/layout/cargarControlLechero';
 import Papa from 'papaparse';
+import styles from '../styles/Dirsa.module.scss'
 
 const Dirsa = () => {
     const { firebase, usuario, tamboSel } = useContext(FirebaseContext);
@@ -304,21 +305,92 @@ const Dirsa = () => {
         setProcesados(0);
         setTotal(0);
 
+        const extension = archivoLechero.name.split('.').pop().toLowerCase();
+
+        // 📥 Si es CSV
+        if (extension === 'csv') {
+            Papa.parse(archivoLechero, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async (results) => {
+                    try {
+                        const encabezadoMap = {
+                            "rp": "RP",
+                            "le.uc": "Le.UC",
+                            "leche uc": "Le.UC",
+                            "uc": "Le.UC"
+                        };
+
+                        const data = results.data.map(row => {
+                            const obj = {};
+
+                            for (const key in row) {
+                                const normalizedKey = encabezadoMap[key.trim().toLowerCase()] || key.trim();
+                                obj[normalizedKey] = row[key];
+                            }
+
+                            if (obj["RP"]) {
+                                obj["RP"] = obj["RP"].toString().trim().toUpperCase();
+                            }
+
+                            return obj;
+                        }).filter(item => item["RP"]);
+
+                        if (data.length === 0) {
+                            setErrores(["No hay datos válidos en el CSV."]);
+                            setIsLoading(false);
+                            return;
+                        }
+
+                        if (!tamboSel || !tamboSel.id) {
+                            setErrores(["Debes seleccionar un tambo antes de actualizar el control lechero."]);
+                            setIsLoading(false);
+                            return;
+                        }
+
+                        setTotal(data.length);
+                        await subirControlLechero(
+                            data,
+                            tamboSel,
+                            setErrores,
+                            setActualizados,
+                            () => setProcesados(prev => prev + 1),
+                            firebase,
+                            usuario
+                        );
+                    } catch (error) {
+                        console.error("Error procesando CSV:", error);
+                        setErrores(["Error procesando el archivo CSV."]);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                }
+            });
+
+            return; // 🔚 no seguir con .xlsx
+        }
+
+
+        // 📥 Si es XLSX o XLS
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const fullData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-                if (fullData.length < 1) {
-                    setErrores(["El archivo no tiene filas de datos."]);
+                const fullData = XLSX.utils.sheet_to_json(sheet, {
+                    header: 1,
+                    raw: false,
+                    defval: ""
+                });
+
+                if (fullData.length < 3) {
+                    setErrores(["El archivo tiene menos de 3 filas, no contiene encabezados válidos."]);
                     setIsLoading(false);
                     return;
                 }
 
-                // 🔍 Buscar índice de la fila que contiene encabezados válidos
                 const encabezadoMap = {
                     "rp": "RP",
                     "le.uc": "Le.UC",
@@ -326,43 +398,27 @@ const Dirsa = () => {
                     "uc": "Le.UC"
                 };
 
-                let headerRowIndex = -1;
-                let encabezadosRaw = [];
-
-                for (let i = 0; i < fullData.length; i++) {
-                    const fila = fullData[i];
-                    const filaLower = fila.map(cell => (cell || "").toString().trim().toLowerCase());
-
-                    if (filaLower.includes("rp") && filaLower.some(cell =>
-                        ["le.uc", "uc", "leche uc"].includes(cell))) {
-                        headerRowIndex = i;
-                        encabezadosRaw = fila;
-                        break;
-                    }
-                }
-
-                if (headerRowIndex === -1) {
-                    setErrores(["No se encontró una fila de encabezado válida con columnas 'RP' y 'Le.UC'."]);
-                    setIsLoading(false);
-                    return;
-                }
-
-                // 🧠 Normalizar encabezados
+                const encabezadosRaw = fullData[2]; // Tercera fila: encabezados reales
                 const encabezados = encabezadosRaw.map(h => {
                     const key = h?.toString().trim().toLowerCase();
                     return encabezadoMap[key] || h?.toString().trim();
                 });
 
-                // 🧾 Parsear filas de datos desde la fila siguiente al encabezado
-                const datos = fullData.slice(headerRowIndex + 1).map(row => {
+                const datos = fullData.slice(3).map(row => {
                     const obj = {};
                     encabezados.forEach((encabezado, idx) => {
-                        obj[encabezado] = row[idx];
+                        let val = row[idx];
+
+                        // 👇 Corrección clave: si Le.UC viene como número, forzamos a string con coma
+                        if (encabezado === "Le.UC" && typeof val === "string") {
+                            val = val.toString().replace(".", ",");
+                        }
+
+                        obj[encabezado] = val;
                     });
                     return obj;
                 });
 
-                // 🧹 Limpiar RP y filtrar filas válidas
                 const datosLimpios = datos.map((item) => {
                     const nuevo = { ...item };
                     if (nuevo["RP"]) {
@@ -395,8 +451,8 @@ const Dirsa = () => {
                 );
 
             } catch (error) {
-                console.error("Error leyendo el archivo de control lechero:", error);
-                setErrores(["Error procesando el archivo de control lechero."]);
+                console.error("Error leyendo el archivo de control lechero XLSX:", error);
+                setErrores(["Error procesando el archivo XLSX."]);
             } finally {
                 setIsLoading(false);
             }
@@ -405,107 +461,102 @@ const Dirsa = () => {
         reader.readAsArrayBuffer(archivoLechero);
     };
 
-
-
     return (
         <Layout titulo="Dirsa">
-            <Container className="py-5">
+            <Container className={styles.sectionContainer}>
                 <Row className="align-items-center text-center mb-4">
+
                     {/* 📥 Cargar Eventos */}
                     <Col md={4} className="mb-3 mb-md-0">
-                        <Card className="shadow-sm">
-                            <Card.Body>
-                                <Card.Title className="text-primary mb-3">📥 Cargar Eventos</Card.Title>
+                        <div className={styles.cardWrapper}>
+                            <h5 className={styles.sectionTitle}>📥 Cargar Eventos</h5>
 
-                                <input
-                                    type="file"
-                                    accept=".xlsx,.xls,.csv"
-                                    ref={inputFileRefEvento}
-                                    style={{ display: 'none' }}
-                                    onChange={handleFileChangeEventos}
-                                />
+                            <input
+                                type="file"
+                                accept=".xlsx,.xls,.csv"
+                                ref={inputFileRefEvento}
+                                style={{ display: 'none' }}
+                                onChange={handleFileChangeEventos}
+                            />
 
-                                <Button
-                                    variant="outline-primary"
-                                    onClick={() => {
-                                        if (inputFileRefEvento.current) inputFileRefEvento.current.value = null;
-                                        inputFileRefEvento.current?.click();
-                                    }}
-                                    className="mb-2 w-100"
-                                >
-                                    Seleccionar archivo
-                                </Button>
+                            <Button
+                                variant="outline-primary"
+                                onClick={() => {
+                                    if (inputFileRefEvento.current) inputFileRefEvento.current.value = null;
+                                    inputFileRefEvento.current?.click();
+                                }}
+                                className="mb-2 w-100"
+                            >
+                                Seleccionar archivo
+                            </Button>
 
+                            {archivoEvento && (
+                                <div className={styles.fileInfo}>
+                                    <span className={styles.fileName} title={archivoEvento.name}>📄 {archivoEvento.name}</span>
+                                    <Button variant="outline-danger" size="sm" onClick={() => setArchivoEvento(null)}>✖</Button>
+                                </div>
+                            )}
 
-                                {archivoEvento && (
-                                    <Alert variant="light" className="py-2 px-3 d-flex justify-content-between align-items-center">
-                                        <span className="text-truncate" title={archivoEvento.name}>📄 {archivoEvento.name}</span>
-                                        <Button variant="outline-danger" size="sm" onClick={() => setArchivoEvento(null)}>✖</Button>
-                                    </Alert>
-                                )}
-
-                                <Button
-                                    variant="success"
-                                    onClick={handleUploadEventos}
-                                    disabled={!archivoEvento}
-                                    className="w-100"
-                                >
-                                    Actualizar Eventos
-                                </Button>
-                            </Card.Body>
-                        </Card>
+                            <Button
+                                variant="success"
+                                onClick={handleUploadEventos}
+                                disabled={!archivoEvento}
+                                className="w-100"
+                            >
+                                Actualizar Eventos
+                            </Button>
+                        </div>
                     </Col>
 
                     {/* 🧀 Logo */}
-                    <Col md={4} className="text-center">
-                        <Image src="/dirsaNEW.png" width={350} />
+                    <Col md={4} className={styles.logoContainer}>
+                        <Image src="/dirsaNEW.png" width={350} className={styles.logoImage} />
                     </Col>
 
                     {/* 🥛 Cargar Control Lechero */}
                     <Col md={4} className="mb-3 mb-md-0">
-                        <Card className="shadow-sm">
-                            <Card.Body>
-                                <Card.Title className="text-primary mb-3">🥛 Cargar Control Lechero</Card.Title>
+                        <div className={styles.cardWrapper}>
+                            <h5 className={styles.sectionTitle}>🥛 Cargar Control Lechero</h5>
 
-                                <input
-                                    type="file"
-                                    accept=".xlsx,.xls,.csv"
-                                    ref={inputFileRefLechero}
-                                    style={{ display: 'none' }}
-                                    onChange={handleFileChangeLechero}
-                                />
+                            <input
+                                type="file"
+                                accept=".xlsx,.xls,.csv"
+                                ref={inputFileRefLechero}
+                                style={{ display: 'none' }}
+                                onChange={handleFileChangeLechero}
+                            />
 
-                                <Button
-                                    variant="outline-primary"
-                                    onClick={() => {
-                                        if (inputFileRefLechero.current) inputFileRefLechero.current.value = null;
-                                        inputFileRefLechero.current?.click();
-                                    }}
-                                    className="mb-2 w-100"
-                                >
-                                    Seleccionar archivo
-                                </Button>
+                            <Button
+                                variant="outline-primary"
+                                onClick={() => {
+                                    if (inputFileRefLechero.current) inputFileRefLechero.current.value = null;
+                                    inputFileRefLechero.current?.click();
+                                }}
+                                className="mb-2 w-100"
+                            >
+                                Seleccionar archivo
+                            </Button>
 
+                            {archivoLechero && (
+                                <div className={styles.fileInfo}>
+                                    <span className={styles.fileName} title={archivoLechero.name}>📄 {archivoLechero.name}</span>
+                                    <Button variant="outline-danger" size="sm" onClick={() => setArchivoLechero(null)}>✖</Button>
+                                </div>
+                            )}
 
-                                {archivoLechero && (
-                                    <Alert variant="light" className="py-2 px-3 d-flex justify-content-between align-items-center">
-                                        <span className="text-truncate" title={archivoLechero.name}>📄 {archivoLechero.name}</span>
-                                        <Button variant="outline-danger" size="sm" onClick={() => setArchivoLechero(null)}>✖</Button>
-                                    </Alert>
-                                )}
-
-                                <Button
-                                    variant="success"
-                                    onClick={handleUploadLechero}
-                                    disabled={!archivoLechero}
-                                    className="w-100"
-                                >
-                                    Actualizar Control Lechero
-                                </Button>
-                            </Card.Body>
-                        </Card>
+                            <Button
+                                variant="success"
+                                onClick={handleUploadLechero}
+                                disabled={!archivoLechero}
+                                className="w-100"
+                            >
+                                Actualizar Control Lechero
+                            </Button>
+                        </div>
                     </Col>
                 </Row>
+
+                {/* Resultados de Carga */}
                 <ResultadosCargas
                     titulo="📝 Resultados de la Carga"
                     actualizados={actualizados}
@@ -514,10 +565,10 @@ const Dirsa = () => {
                     total={total}
                     procesados={procesados}
                 />
-
             </Container>
         </Layout>
     );
+
 };
 
 export default Dirsa;

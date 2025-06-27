@@ -8,7 +8,7 @@ import readXlsxFile from 'read-excel-file'
 import Detalle from '../components/layout/detalle';
 import { v4 as uuidv4 } from 'uuid';
 import SelectTambo from '../components/layout/selectTambo';
-import styles from '../styles/CargarControlFarmer.module.scss';
+import styles from '../styles/ControlLecheroFarmerin.module.scss';
 
 const ControlLechero = () => {
 
@@ -191,7 +191,7 @@ const ControlLechero = () => {
                   <div className={styles.botonGrupo}>
                     <div className={styles.tooltipWrapper}>
                       <a
-                        href="/docs/planilla-modelo-farmerin.xlsx"
+                        href="/docs/planilla-modelo-conrtrolLec.xlsx"
                         download
                         className={styles.btnDescarga}
                       >
@@ -202,7 +202,7 @@ const ControlLechero = () => {
 
                     <div className={styles.tooltipWrapper}>
                       <a
-                        href="/docs/planilla-vacia-farmerin.xlsx"
+                        href="/docs/planilla-vacia-conrtrolLec.xlsx"
                         download
                         className={styles.btnDescarga}
                       >

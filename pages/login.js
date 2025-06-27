@@ -3,6 +3,9 @@ import LayoutLogin from '../components/layout/layoutLogin';
 import Router from 'next/router';
 import CrearCuenta from './crear-cuenta';
 import styles from '../styles/Login.module.scss';
+import { GiPear } from "react-icons/gi";
+import { FaLongArrowAltUp } from "react-icons/fa";
+import { TbCircleLetterF } from "react-icons/tb";
 
 //formato del formulario
 import { Contenedor, ContenedorPoliticas, ContenedorLogin, ContenedorSpinner, ContenedorPass } from '../components/ui/Elementos';
@@ -190,7 +193,8 @@ const Login = () => {
         </div>
         <div>
           <div className={styles.divider}><span>O</span></div>
-          <p className='TextFaarmerin'> Farmerin Division S.A. - © 2020</p>
+          <p className={styles.TextFaarmerin}> Farmerin Division S.A. - © 2020 </p>
+          
         </div>
       </div>
 

@@ -7,42 +7,53 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
         setErrores(prev => [...prev, "Error: Usuario no autenticado"]);
         return;
     }
-    
+
     if (!usuarios.displayName) {
         console.error("❌ ERROR: El usuario no tiene displayName. Datos del usuario:", usuarios);
         setErrores(prev => [...prev, "Error: Usuario no autenticado"]);
         return;
     }
 
-    // Ignorar la primera fila (nombre del mes) y usar la segunda como encabezado
-    const datosLimpios = data.slice(1);
+    const datosLimpios = data.slice(1); // Ignora encabezado
 
     for (const item of datosLimpios) {
         console.log(`🛠️ Datos crudos recibidos → RP: "${item["RP"]}", Le.UC: "${item["Le.UC"]}"`);
 
-        // ✅ Elimina espacios en RP sin modificar mayúsculas/minúsculas
         const rp = item["RP"] ? item["RP"].toString().replace(/\s+/g, "").trim().normalize("NFKC") : null;
 
-        // ✅ Obtener el valor de Le.UC, eliminando espacios y convirtiendo a minúsculas
-        let litrosStr = item["Le.UC"] ? item["Le.UC"].toString().trim().toLowerCase() : ""; 
-        let litros = parseFloat(litrosStr); // Conversión segura a número
+        const litrosStrOriginal = item["Le.UC"];
+        let litrosStr = litrosStrOriginal ? litrosStrOriginal.toString().trim() : "";
 
-        // ✅ Verificar si es un valor especial ("enferma" o "fiscalizada")
+        // ⚙️ Conversión robusta coma → punto o fallback a división si vino sin coma
+        let litros = null;
         const valoresEspeciales = ["enferma", "fiscalizada"];
-        const esValorEspecial = valoresEspeciales.includes(litrosStr);
+        const esValorEspecial = valoresEspeciales.includes(litrosStr.toLowerCase());
+
+        if (!esValorEspecial) {
+            if (litrosStr.includes(",") && !litrosStr.includes(".")) {
+                // Ej: "37,4" → "37.4"
+                litros = parseFloat(litrosStr.replace(",", "."));
+            } else if (!isNaN(Number(litrosStr))) {
+                // Ej: vino como 374 en vez de 37.4
+                litros = parseFloat(litrosStr) / 10;
+            }
+        }
 
         if (isNaN(litros) && !esValorEspecial) {
             litros = null;
         }
 
-        // ✅ Definir el detalle del evento correctamente
+        // Log detallado para verificar
+        console.log(`🔍 Conversión → Original: "${litrosStrOriginal}", Normalizado: "${litrosStr}", Convertido: ${litros}`);
+
+        // Detalle
         let detalleEvento = "";
         if (!litrosStr) {
             detalleEvento = "No se actualizó el control, la casilla estaba vacía";
         } else if (esValorEspecial) {
-            detalleEvento = litrosStr; // Guardar exactamente "enferma" o "fiscalizada"
+            detalleEvento = litrosStr.toLowerCase(); // "enferma" o "fiscalizada"
         } else {
-            detalleEvento = `${litros} lts.`; // Si es un número, se usa ese valor
+            detalleEvento = `${litros.toFixed(1)} lts.`; // valor convertido con 1 decimal
         }
 
         console.log(`📊 Datos procesados → RP: "${rp}", Le.UC convertido: ${litros}, Detalle: "${detalleEvento}"`);
@@ -53,7 +64,6 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
             continue;
         }
 
-        // ❌ Si el valor es 0, "0", "0.0", "0,0", "0,00", saltear la actualización
         const valoresInvalidos = ["0", "0.0", "0,0", "0,00"];
         if ((litros === 0 || valoresInvalidos.includes(litrosStr)) && !esValorEspecial) {
             console.log(`⏭️ RP '${rp}' no se actualiza porque el valor es inválido: "${litrosStr}"`);
@@ -61,7 +71,7 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
         }
 
         try {
-            console.log(`🔍 Buscando en Firebase el RP: '${rp}' en el tambo ID: '${tamboSel.nombre}'`);
+            console.log(`🔍 Buscando el RP: '${rp}' en el tambo ID: '${tamboSel.nombre}'`);
 
             const snapshot = await firebase.db.collection('animal')
                 .where('idtambo', '==', tamboSel.id)
@@ -69,36 +79,39 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
                 .get();
 
             if (!snapshot.empty) {
-                console.log(`✅ RP '${rp}' encontrado en Firebase (${snapshot.size} coincidencias).`);
+                console.log(`✅ RP '${rp}' encontrado (${snapshot.size} coincidencias).`);
 
                 snapshot.forEach(async (doc) => {
                     await firebase.db.collection('animal').doc(doc.id).collection('eventos').add({
-                        fecha: firebase.nowTimeStamp(),
-                        tipo: 'Control Lechero',
+                        fecha: item["fecha"]
+                            ? firebase.firestore.Timestamp.fromDate(new Date(item["fecha"]))
+                            : firebase.nowTimeStamp(),
+                        tipo: 'Control Lechero mediante planilla Dirsa',
                         detalle: detalleEvento,
                         usuario: `${usuarios.displayName} - Dirsa`
                     });
 
                     console.log(`✅ Evento registrado para RP '${rp}' con detalle: ${detalleEvento}`);
-                    
+
                     if (litros !== null && !esValorEspecial) {
-                        console.log(`🔄 Actualizando 'uc' en Firebase con: ${litros}`);
+                        console.log(`🔄 Actualizando 'uc' con: ${litros}`);
                         await firebase.db.collection('animal').doc(doc.id).update({ uc: litros });
                     } else {
                         console.log(`⚠️ No se actualizó 'uc' para RP '${rp}' porque el valor es especial o inválido (Texto: '${litrosStr}')`);
                     }
-                    
+
                     setActualizados(prev => [...prev, `RP ${rp} - ${detalleEvento}`]);
                     setExito(true);
                 });
             } else {
-                console.warn(`⚠️ RP '${rp}' no encontrado en Firebase.`);
-                setErrores(prev => [...prev, `RP ${rp} no encontrado en Firebase.`]);
+                console.warn(`⚠️ RP '${rp}' no registrado.`);
+                setErrores(prev => [...prev, `RP ${rp} no registrado.`]);
             }
         } catch (error) {
             console.error(`🛑 Error al procesar RP '${rp}':`, error);
             setErrores(prev => [...prev, `Error en RP ${rp}: ${error.message}`]);
         }
     }
+
     console.log("✅ Finalizado el proceso de Control Lechero.");
 }

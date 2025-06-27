@@ -404,6 +404,7 @@ const ParteDiario = () => {
                   <option value="Celo">Celo</option>
                   <option value="Cambio eRP">Cambio eRP</option>
                   <option value="Control Lechero">Control Lechero</option>
+                  <option value="Control Lechero mediante planilla Dirsa">Control Lechero de Dirsa</option>
                   <option value="Parto">Parto</option>
                   <option value="Rechazo">Rechazo</option>
                   <option value="Secado">Secado</option>
@@ -412,17 +413,18 @@ const ParteDiario = () => {
                   <option value="Tratamiento">Tratamiento</option>
                 </Form.Control>
               </Form.Group>
+
             </Col>
           </Row>
         </Form>
       </Botonera>
 
 
-      {procesando ? 
-      <div className={styles.spinnerOverlay}>
-        <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem' }} />
-        <div className={styles.spinnerText}>Procesando datos de parte diario...</div>
-      </div> :
+      {procesando ?
+        <div className={styles.spinnerOverlay}>
+          <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem' }} />
+          <div className={styles.spinnerText}>Procesando datos de parte diario...</div>
+        </div> :
         //si hay tambo
 
         tamboSel ?

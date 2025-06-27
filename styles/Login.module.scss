@@ -367,3 +367,28 @@
   }
 }
 
+.link {
+  color: #021025;
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #297eb9;
+    text-decoration: underline;
+  }
+}
+
+.devSignature {
+  color: #1a1a1a; // más oscuro que el resto
+
+  svg {
+    color: #1a1a1a; // íconos también oscuros
+  }
+
+  &:hover {
+    color: #1a1a1a;
+    svg {
+      color: #1a1a1a;
+    }
+  }
+}

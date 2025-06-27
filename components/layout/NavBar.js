@@ -150,10 +150,10 @@ const NavBar = () => {
     return 'Fecha desconocida';
   }
 
-    // 🚫 OCULTAR NAVBAR SI NO HAY TAMBO SELECCIONADO
+  // 🚫 OCULTAR NAVBAR SI NO HAY TAMBO SELECCIONADO
   if (!tamboSel) return null;
 
-  
+
   return (
     <header className={styles.navbar}>
       <div className={styles.navContainer}>
@@ -213,80 +213,30 @@ const NavBar = () => {
           </div>
 
           <Link href="/ayuda"><span>Ayuda</span></Link>
+          <Link href="/perfilFarmerin">
+            <span style={{ position: "relative", display: "inline-block" }}>
+              Mi Farmerin - {tamboSel.nombre}
+              {ultimoCambio && !ultimoCambio.visto && (
+                <Badge
+                  bg="danger"
+                  pill
+                  style={{
+                    position: "absolute",
+                    top: -10,
+                    right: -10,
+                    fontSize: "0.65rem",
+                    padding: "4px 6px",
+                    backgroundColor: "#297fb8"
+                  }}
+                >
+                  1
+                </Badge>
+              )}
+            </span>
+          </Link>
 
-          <span style={{ position: 'relative', marginRight: '10px', cursor: 'pointer', }} onClick={handleCampanaClick} title="Notificaciones">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" color='#fbfbfb'>
-              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-            {alertasSinLeer.length > 0 && (
-              <span style={{
-                background: '#e74c3c',
-                color: '#fff',
-                borderRadius: '50%',
-                padding: '2px 7px',
-                fontSize: '11px',
-                position: 'absolute',
-                top: '-8px',
-                right: '-10px',
-                fontWeight: 'bold',
-                minWidth: '20px',
-                textAlign: 'center',
-                lineHeight: '16px'
-              }}>{alertasSinLeer.length}</span>
-            )}
-          </span>
-
-          <Link href="/perfilFarmerin"><span>Mi Farmerin</span></Link>
         </nav>
       </div>
-
-      {/* Modal de alerta */}
-      <Modal size="lg" show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Alertas</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {ultimoCambio ? (
-            <div className="historial-container">
-              <ContenedorAlertas>
-                <div className="historial-item" key={ultimoCambio.id}>
-                  <div className="historial-fecha">{formatFecha(ultimoCambio.fecha)}:</div> {ultimoCambio.mensaje}
-                </div>
-              </ContenedorAlertas>
-            </div>
-          ) : (
-            <Alert variant="warning">No se registran alertas</Alert>
-          )}
-          <Button
-            variant="info"
-            onClick={handleHistorialShow}
-            style={{ marginTop: '10px', backgroundColor: '#1b8aa5' }}
-            className="boton-historial"
-          >
-            Ver historial de cambios
-          </Button>
-        </Modal.Body>
-      </Modal>
-
-      {/* Modal de historial */}
-      <Modal size="lg" show={showHistorial} onHide={handleHistorialClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Historial de cambios</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="historial-container">
-            {historial.length > 0 ? historial.map((cambio) => (
-              <div key={cambio.id} className="historial-item">
-                <div className="historial-fecha">{formatFecha(cambio.fecha)}</div>
-                <div className="historial-mensaje">{cambio.mensaje}</div>
-              </div>
-            )) : (
-              <Alert variant="info">No hay cambios registrados.</Alert>
-            )}
-          </div>
-        </Modal.Body>
-      </Modal>
     </header>
   );
 };

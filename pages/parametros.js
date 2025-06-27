@@ -5,11 +5,10 @@ import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
 import DetalleParametro from '../components/layout/detalleParametro';
 import SelectTambo from '../components/layout/selectTambo';
-import { Button, DropdownButton, Dropdown, Row, Col, } from 'react-bootstrap';
+import { Button, DropdownButton, Dropdown, Row, Col } from 'react-bootstrap';
 import { format } from 'date-fns';
 import { addNotification } from '../redux/notificacionSlice';
-import styles from '../styles/Parametro.module.scss'
-
+import styles from '../styles/Parametro.module.scss';
 
 const Parametros = () => {
   const [valor, setValor] = useState(0);
@@ -54,33 +53,45 @@ const Parametros = () => {
     try {
       await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
 
-      // Obtener la colección de animales
-      const animalesSnapshot = await firebase.db.collection('animal').where('tamboId', '==', tamboSel.id).get();
+      const animalesSnapshot = await firebase.db
+        .collection('animal')
+        .where('tamboId', '==', tamboSel.id)
+        .get();
 
-      animalesSnapshot.forEach(async (doc) => {
-        const animalData = doc.data();
-        if (!animalData.fbaja && !animalData.mbaja) {
-          await firebase.db.collection('animal').doc(doc.id).update(pAnimal);
-        }
-      });
+      const updatePromises = animalesSnapshot.docs
+        .filter(doc => {
+          const data = doc.data();
+          return !data.fbaja && !data.mbaja;
+        })
+        .map(doc =>
+          firebase.db.collection('animal').doc(doc.id).update(pAnimal)
+        );
 
-      // Agregar notificación en Firestore
-      await firebase.db.collection('tambo').doc(tamboSel.id).collection('notificaciones').add({
-        mensaje: isIncrease ? `AUMENTO DEL ${selectedChange} %` : `REDUCCIÓN DEL ${selectedChange} %`,
+      await Promise.all(updatePromises);
+
+      const noti = {
+        mensaje: isIncrease
+          ? `AUMENTO DEL ${selectedChange} %`
+          : `REDUCCIÓN DEL ${selectedChange} %`,
         fecha: firebase.nowTimeStamp(),
-      });
+      };
 
-      // Agregar notificación en Redux
+      await firebase.db
+        .collection('tambo')
+        .doc(tamboSel.id)
+        .collection('notificaciones')
+        .add(noti);
+
       dispatch(addNotification({
+        ...noti,
         id: Date.now(),
-        mensaje: isIncrease ? `AUMENTO DEL ${selectedChange} %` : `REDUCCIÓN DEL ${selectedChange} %`,
-        fecha: firebase.nowTimeStamp(),
       }));
 
       console.log(tamboSel);
     } catch (error) {
       console.log(error);
     }
+
     setValor(nuevoPorcentaje);
     setSelectedChange(null);
   };
@@ -88,37 +99,50 @@ const Parametros = () => {
   const restablecer = async () => {
     if (tamboSel) {
       setValor(0);
-      let p = { porcentaje: 0 };  // Para la colección 'tambo'
-      let pAnimal = { porcentaje: 1 };  // Para la colección 'animal'
+      let p = { porcentaje: 0 };
+      let pAnimal = { porcentaje: 1 };
 
       try {
-        // Actualizar el porcentaje en la colección 'tambo'
         await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
 
-        // Obtener la colección de animales
-        const animalesSnapshot = await firebase.db.collection('animal').where('tamboId', '==', tamboSel.id).get();
+        const animalesSnapshot = await firebase.db
+          .collection('animal')
+          .where('tamboId', '==', tamboSel.id)
+          .get();
 
-        animalesSnapshot.forEach(async (doc) => {
-          const animalData = doc.data();
-          if (!animalData.fbaja && !animalData.mbaja) {
-            await firebase.db.collection('animal').doc(doc.id).update(pAnimal);
-          }
-        });
+        const updatePromises = animalesSnapshot.docs
+          .filter(doc => {
+            const data = doc.data();
+            return !data.fbaja && !data.mbaja;
+          })
+          .map(doc =>
+            firebase.db.collection('animal').doc(doc.id).update(pAnimal)
+          );
 
-        // Agregar notificación en Firestore
-        await firebase.db.collection('tambo').doc(tamboSel.id).collection('notificaciones').add({
+        await Promise.all(updatePromises);
+
+        const noti = {
           mensaje: 'SE VOLVIÓ AL VALOR ORIGINAL DE LA RACIÓN.',
           fecha: firebase.nowTimeStamp(),
-        });
+        };
 
-        // Agregar notificación en Redux
+        await firebase.db
+          .collection('tambo')
+          .doc(tamboSel.id)
+          .collection('notificaciones')
+          .add(noti);
+
         dispatch(addNotification({
+          ...noti,
           id: Date.now(),
-          mensaje: 'SE VOLVIÓ AL VALOR ORIGINAL DE LA RACIÓN.',
-          fecha: firebase.nowTimeStamp(),
         }));
 
         console.log('se ejecutó y se agregó la notificación');
+
+        // 👇 Estas dos líneas permiten que el cambio se vea reflejado de inmediato
+        setSelectedChange(null);
+        setIsIncrease(true);
+
       } catch (error) {
         console.log(error);
       }
@@ -126,23 +150,9 @@ const Parametros = () => {
   };
 
   let porcentaje;
-
-  if (valor === 10) porcentaje = 1.1;
-  else if (valor === 20) porcentaje = 1.2;
-  else if (valor === 30) porcentaje = 1.3;
-  else if (valor === 40) porcentaje = 1.4;
-  else if (valor === 50) porcentaje = 1.5;
-  else if (valor === 60) porcentaje = 1.6;
-  else if (valor === 70) porcentaje = 1.7;
-  else if (valor === 80) porcentaje = 1.8;
-  else if (valor === 90) porcentaje = 1.9;
-  else if (valor === 100) porcentaje = 2;
-  else if (valor === -10) porcentaje = 0.9;
-  else if (valor === -20) porcentaje = 0.8;
-  else if (valor === -30) porcentaje = 0.7;
-  else if (valor === -40) porcentaje = 0.6;
-  else if (valor === -50) porcentaje = 0.5;
-  else if (valor === 0) porcentaje = 1;
+  if (valor >= -50 && valor <= 100 && valor % 10 === 0) {
+    porcentaje = 1 + valor / 100;
+  }
 
   return (
     <Layout titulo="Parámetros Nutricionales">
@@ -243,8 +253,6 @@ const Parametros = () => {
       </div>
     </Layout>
   );
-
-
 };
 
 export default Parametros;

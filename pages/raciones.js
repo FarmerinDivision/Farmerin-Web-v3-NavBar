@@ -7,7 +7,7 @@ import { FirebaseContext } from '../firebase2';
 import * as XLSX from 'xlsx';
 import { GiCow, GiSave } from 'react-icons/gi';
 import AnimalesEnOrdeñe from '../components/layout/fichaEnOrdeñe';
-
+import styles from '../styles/Grafico.module.scss'
 
 function control_ingreso() {
   const [data, setData] = useState([]);
@@ -104,16 +104,16 @@ function control_ingreso() {
   const descargarExcel = () => {
     console.log("Descargando Excel...");
     const wb = XLSX.utils.book_new();
-  
+
     const limpiarNombreHoja = (nombre) => {
       // Reemplaza caracteres no permitidos con guiones bajos
       return nombre.replace(/[:\/\\?*\[\]]/g, '_');
     };
-  
+
     const agregarHoja = (nombreHoja, datos) => {
       const nombreLimpio = limpiarNombreHoja(nombreHoja);
       console.log(`Agregando hoja: ${nombreLimpio}`, datos);
-      
+
       let datosFormateados;
       if (nombreHoja === 'Seca/NR') {
         datosFormateados = datos.map(animal => ({
@@ -129,21 +129,21 @@ function control_ingreso() {
           'Dias Ausentes': animal.DiasAusente || 'No Registrado'
         }));
       }
-      
+
       const ws = XLSX.utils.json_to_sheet(datosFormateados);
       XLSX.utils.book_append_sheet(wb, ws, nombreLimpio);
     };
-  
+
     agregarHoja('Se Leyo', animalesSeLeyo);
     agregarHoja('No Se Leyo', animalesNoLeyo);
     agregarHoja('Ausentes', animalesAusentes);
     agregarHoja('Nunca Se Leyo', animalesNuncaPaso);
     agregarHoja('Seca/NR', animalesConRP);
-  
+
     // Obtener la fecha actual en formato YYYY-MM-DD
     const fechaActual = new Date().toISOString().split('T')[0];
     const nombreArchivo = `Control_Ingreso_${fechaActual}.xlsx`;
-  
+
     XLSX.writeFile(wb, nombreArchivo);
   };
 
@@ -151,19 +151,19 @@ function control_ingreso() {
     return (
       <Layout titulo="Herramientas">
         <>
-        <div className="spinnerContainer-Grafico">
-          <div className="spinner-Grafico"></div>
-          <div className="loader-Grafico">
-            <p>Cargando</p>
-            <div className="words-Grafico">
-              <span className="word-Grafico">Datos del tambo</span>
-              <span className="word-Grafico">Animales En Ordeñe</span>
-              <span className="word-Grafico">Animales Secos</span>
-              <span className="word-Grafico">Animales Ausentes</span>
-              <span className="word-Grafico">Datos del tambo</span>
+          <div className={styles.spinnerContainerGrafico}>
+            <div className={styles.spinnerGrafico}></div>
+            <div className={styles.loaderGrafico}>
+              <p>Cargando</p>
+              <div className={styles.wordsGrafico}>
+                <span className={styles.wordGrafico}>Datos del tambo</span>
+                <span className={styles.wordGrafico}>Animales En Ordeñe</span>
+                <span className={styles.wordGrafico}>Animales Secos</span>
+                <span className={styles.wordGrafico}>Animales Ausentes</span>
+                <span className={styles.wordGrafico}>Datos del tambo</span>
+              </div>
             </div>
           </div>
-        </div>
         </>
       </Layout>
     );
@@ -172,53 +172,57 @@ function control_ingreso() {
   if (error) {
     return (
       <Layout titulo="Herramientas">
-        <>
-        <div className="errorContainer">
-          <h1 className="tituloRacionesAviso">Aviso</h1>
-          <h2 className="tituloRacionesAviso"> No se pudo obtener el control de ingreso </h2>
+        <div className={styles.tvContainer}>
+          <div className={styles.tvScreen}>
+            <div className={styles.static}></div>
+            <div className={styles.errorText}>AVISO: Error al obtener datos de ingreso</div>
+          </div>
+          <div className={styles.tvStand}></div>
         </div>
-        </>
       </Layout>
     );
   }
+
 
   if (data.length === 0) {
     return (
       <Layout titulo="Herramientas">
-        <>
-        <div className="divRaciones">
-          <h1 className="tituloRacionesAviso"> Aviso </h1>
-          <h2 className="tituloRacionesAviso"> No se pudo obtener el control de ingreso </h2>
+        <div className={styles.tvContainer}>
+          <div className={styles.tvScreen}>
+            <div className={styles.static}></div>
+            <div className={styles.errorText}>AVISO: Sin datos de ingreso</div>
+          </div>
+          <div className={styles.tvStand}></div>
         </div>
-        </>
       </Layout>
     );
   }
 
+
   return (
     <Layout titulo="Herramientas">
       <>
-      <div className="containerGrafico">
-        <div className="tamboHeader">
-          <h2 className="tituloTambo">{tamboSel?.nombre} - Control de Ingreso</h2>
-          <div style={{ marginTop: '10px' }}>
-            <button onClick={descargarExcel} style={{ backgroundColor: '#4cb14e',  marginLeft: '10px', color: 'white' }}><GiSave style={{ fontSize: '24px' }} /> Excel</button>
-            <button onClick={() => setShowFichaEnOrdeñe(true)} style={{ backgroundColor: '#4cb14e', marginLeft: '10px', color: 'white' }}><GiCow style={{ fontSize: '24px' }} /> </button>
+        <div className={styles.containerGrafico}>
+          <div className={styles.tamboHeader}>
+            <h2 className={styles.tituloTambo}>{tamboSel?.nombre} - Control de Ingreso</h2>
+            <div style={{ marginTop: '10px' }}>
+              <button onClick={descargarExcel} style={{ backgroundColor: '#4cb14e', marginLeft: '10px', color: 'white' }}><GiSave style={{ fontSize: '24px' }} /> Excel</button>
+              <button onClick={() => setShowFichaEnOrdeñe(true)} style={{ backgroundColor: '#4cb14e', marginLeft: '10px', color: 'white' }}><GiCow style={{ fontSize: '24px' }} /> </button>
+            </div>
           </div>
+          <TamboChart
+            data={data}
+            toggleList={toggleList}
+            selectedLists={selectedLists}
+            animalesAusentes={animalesAusentes}
+            animalesNoLeyo={animalesNoLeyo}
+            animalesNuncaPaso={animalesNuncaPaso}
+            animalesSeLeyo={animalesSeLeyo}
+            secosNaNData={secosNaNData}
+            onSecosNaNDataConRPUpdate={setAnimalesConRP}
+          />
         </div>
-        <TamboChart 
-          data={data}
-          toggleList={toggleList}
-          selectedLists={selectedLists}
-          animalesAusentes={animalesAusentes}
-          animalesNoLeyo={animalesNoLeyo}
-          animalesNuncaPaso={animalesNuncaPaso}
-          animalesSeLeyo={animalesSeLeyo}
-          secosNaNData={secosNaNData}
-          onSecosNaNDataConRPUpdate={setAnimalesConRP}
-        />
-        </div>
-      <AnimalesEnOrdeñe show={showFichaEnOrdeñe} setShow={setShowFichaEnOrdeñe} />
+        <AnimalesEnOrdeñe show={showFichaEnOrdeñe} setShow={setShowFichaEnOrdeñe} />
       </>
     </Layout>
   );
@@ -259,93 +263,106 @@ function TamboChart({ data, toggleList, selectedLists, animalesAusentes, animale
 
   return (
     <>
-      <div className="chartArea">
+      <div className={styles.chartArea}>
         <Bar data={chartData} options={chartOptions} />
       </div>
-      <div className="tamboChart">
-        <div className="chartButtons" style={{ textAlign: 'center' }}>
+      <div className={styles.tamboChart}>
+        <div className={styles.chartButtons} style={{ textAlign: 'center' }}>
           {animalesSeLeyo.length > 0 && (
-            <button onClick={() => toggleList('seLeyo')} className={`chartButton ${selectedLists.seLeyo ? 'active' : ''}`}>
+            <button
+              onClick={() => toggleList('seLeyo')}
+              className={`${styles.chartButton} ${selectedLists.seLeyo ? styles.active : ''}`}
+            >
               Ver Se Leyó ({animalesSeLeyo.length})
             </button>
           )}
           {animalesNoLeyo.length > 0 && (
-            <button onClick={() => toggleList('noLeyo')} className={`chartButton ${selectedLists.noLeyo ? 'active' : ''}`}>
+            <button onClick={() => toggleList('noLeyo')}
+              className={`${styles.chartButton} ${selectedLists.seLeyo ? styles.active : ''}`}
+            >
               Ver No Se Leyó ({animalesNoLeyo.length})
             </button>
           )}
           {animalesAusentes.length > 0 && (
-            <button onClick={() => toggleList('ausentes')} className={`chartButton ${selectedLists.ausentes ? 'active' : ''}`}>
+            <button onClick={() => toggleList('ausentes')}
+              className={`${styles.chartButton} ${selectedLists.seLeyo ? styles.active : ''}`}
+            >
               Ver Ausentes ({animalesAusentes.length})
             </button>
           )}
           {animalesNuncaPaso.length > 0 && (
-            <button onClick={() => toggleList('nuncaPaso')} className={`chartButton ${selectedLists.nuncaPaso ? 'active' : ''}`}>
+            <button onClick={() => toggleList('nuncaPaso')}
+              className={`${styles.chartButton} ${selectedLists.seLeyo ? styles.active : ''}`}
+            >
               Ver Nunca Se Leyó ({animalesNuncaPaso.length})
             </button>
           )}
           {secosNaNData.length > 0 && (
-            <button onClick={() => toggleList('secosNaN')} className={`chartButton ${selectedLists.secosNaN ? 'active' : ''}`}>
+            <button onClick={() => toggleList('secosNaN')}
+              className={`${styles.chartButton} ${selectedLists.seLeyo ? styles.active : ''}`}
+            >
               Ver Seca/NR ({secosNaNData.length})
             </button>
           )}
         </div>
-        <div className="listContainer">
-          {selectedLists.seLeyo && <AnimalesSeLeyoList animales={animalesSeLeyo} />}
-          {selectedLists.noLeyo && <AnimalesNoLeyoList animales={animalesNoLeyo} />}
-          {selectedLists.ausentes && <AnimalesAusentesList animales={animalesAusentes} />}
-          {selectedLists.nuncaPaso && <AnimalesNuncaPasoList animales={animalesNuncaPaso} />}
-          {selectedLists.secosNaN && <AnimalesSecosNaNList animales={secosNaNData} onAnimalesConRPUpdate={onSecosNaNDataConRPUpdate} />}
+        <div className={styles.listContainer}>
+          {selectedLists.seLeyo && (
+            <AnimalesSeLeyoList
+              animales={animalesSeLeyo}
+              onClose={() => toggleList('seLeyo')}
+            />
+          )}
+          {selectedLists.noLeyo && (
+            <AnimalesNoLeyoList
+              animales={animalesNoLeyo}
+              onClose={() => toggleList('noLeyo')}
+            />
+          )}
+          {selectedLists.ausentes && (
+            <AnimalesAusentesList
+              animales={animalesAusentes}
+              onClose={() => toggleList('ausentes')}
+            />
+          )}
+          {selectedLists.nuncaPaso && (
+            <AnimalesNuncaPasoList
+              animales={animalesNuncaPaso}
+              onClose={() => toggleList('nuncaPaso')}
+            />
+          )}
+          {selectedLists.secosNaN && (
+            <AnimalesSecosNaNList
+              animales={secosNaNData}
+              onClose={() => toggleList('secosNaN')}
+              onAnimalesConRPUpdate={onSecosNaNDataConRPUpdate}
+            />
+          )}
         </div>
+
       </div>
     </>
   );
 }
 
-function AnimalesSeLeyoList({ animales }) {
+function AnimalesSeLeyoList({ animales, onClose }) {
   return (
-    <div className="AnimalesFormulario">
-      <h2>Se Leyeron</h2>
-      <table className="tablaDeAnimales" >
-          <thead>
-            <tr>
-              <th>Caravana(RP)</th>
-              <th>Boton(eRP)</th>    
-            </tr>
-          </thead>
-          <tbody>
-            {animales.map((animal, index) => (
-              <tr key={index}>
-                <td>{animal.RP || 'RP desconocido'}</td>
-                <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>           
-              </tr>
-            ))}
-          </tbody>
-        </table>
-    </div>
-  );
-}
-
-function AnimalesNoLeyoList({ animales }) {
-  if (animales.length === 0) {
-    return <div className="loaderGrafico" />;
-  }
-
-  return (
-    <div className="AnimalesFormulario">
-      <h2>No se leyó</h2>
-      <table className="tablaDeAnimales" >
+    <div className={styles.AnimalesFormulario}>
+      <div className={styles.listaHeader}>
+        <h2>Se Leyeron</h2>
+        <button className={styles.cerrarBtn} onClick={onClose}>×</button>
+      </div>
+      <table className={styles.tablaDeAnimales}>
         <thead>
           <tr>
             <th>Caravana(RP)</th>
-            <th>Boton(eRP)</th> {/* Cambiado de RFID a eRP */}
+            <th>Boton(eRP)</th>
           </tr>
         </thead>
         <tbody>
           {animales.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td> {/* Eliminar caracteres especiales como ⛔ */}
+              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>
             </tr>
           ))}
         </tbody>
@@ -354,19 +371,50 @@ function AnimalesNoLeyoList({ animales }) {
   );
 }
 
-function AnimalesAusentesList({ animales }) {
-  if (animales.length === 0) {
-    return <div className="loaderGrafico" />;
-  }
+
+function AnimalesNoLeyoList({ animales, onClose }) {
+  if (animales.length === 0) return null;
 
   return (
-    <div className="AnimalesFormulario">
-      <h2>Ausentes</h2>
-      <table className="tablaDeAnimales" style={{ width: '100%' }}>
+    <div className={styles.AnimalesFormulario}>
+      <div className={styles.listaHeader}>
+        <h2>No se leyó</h2>
+        <button className={styles.cerrarBtn} onClick={onClose}>×</button>
+      </div>
+      <table className={styles.tablaDeAnimales}>
         <thead>
           <tr>
             <th>Caravana(RP)</th>
-            <th>Boton(eRP)</th> {/* Cambiado de RFID a eRP */}
+            <th>Boton(eRP)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {animales.map((animal, index) => (
+            <tr key={index}>
+              <td>{animal.RP || 'RP desconocido'}</td>
+              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AnimalesAusentesList({ animales, onClose }) {
+  if (animales.length === 0) return null;
+
+  return (
+    <div className={styles.AnimalesFormulario}>
+      <div className={styles.listaHeader}>
+        <h2>Ausentes</h2>
+        <button className={styles.cerrarBtn} onClick={onClose}>×</button>
+      </div>
+      <table className={styles.tablaDeAnimales}>
+        <thead>
+          <tr>
+            <th>Caravana(RP)</th>
+            <th>Boton(eRP)</th>
             <th>Días Ausentes</th>
           </tr>
         </thead>
@@ -374,7 +422,7 @@ function AnimalesAusentesList({ animales }) {
           {animales.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td> {/* Eliminar caracteres especiales como ⛔ */}
+              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>
               <td>{animal.DiasAusente}</td>
             </tr>
           ))}
@@ -384,26 +432,28 @@ function AnimalesAusentesList({ animales }) {
   );
 }
 
-function AnimalesNuncaPasoList({ animales }) {
-  if (animales.length === 0) {
-    return <div className="loaderGrafico" />;
-  }
+
+function AnimalesNuncaPasoList({ animales, onClose }) {
+  if (animales.length === 0) return null;
 
   return (
-    <div className="AnimalesFormulario">
-      <h2>Nunca se leyó</h2>
-      <table className="tablaDeAnimales" style={{ width: '100%' }}>
+    <div className={styles.AnimalesFormulario}>
+      <div className={styles.listaHeader}>
+        <h2>Nunca se leyó</h2>
+        <button className={styles.cerrarBtn} onClick={onClose}>×</button>
+      </div>
+      <table className={styles.tablaDeAnimales}>
         <thead>
           <tr>
             <th>Caravana(RP)</th>
-            <th>Boton(eRP)</th> {/* Cambiado de RFID a eRP */}
+            <th>Boton(eRP)</th>
           </tr>
         </thead>
         <tbody>
           {animales.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td> {/* Eliminar caracteres especiales como ⛔ */}
+              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>
             </tr>
           ))}
         </tbody>
@@ -412,7 +462,8 @@ function AnimalesNuncaPasoList({ animales }) {
   );
 }
 
-function AnimalesSecosNaNList({ animales, onAnimalesConRPUpdate }) {
+
+function AnimalesSecosNaNList({ animales, onClose, onAnimalesConRPUpdate }) {
   const { firebase } = useContext(FirebaseContext);
   const [animalesConRP, setAnimalesConRP] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -428,17 +479,22 @@ function AnimalesSecosNaNList({ animales, onAnimalesConRPUpdate }) {
               .where('erp', '==', erp)
               .where('mbaja', '==', '')
               .get();
-            
+
             if (!snapshot.empty) {
               const animalDoc = snapshot.docs[0];
-              return { ...animal, rp: animalDoc.data().rp, estpro: animalDoc.data().estpro, estrep: animalDoc.data().estrep };
+              return {
+                ...animal,
+                rp: animalDoc.data().rp,
+                estpro: animalDoc.data().estpro,
+                estrep: animalDoc.data().estrep
+              };
             }
           }
           return animal;
         })
       );
       setAnimalesConRP(animalesActualizados);
-      onAnimalesConRPUpdate(animalesActualizados);  // Pasar los datos actualizados al componente padre
+      onAnimalesConRPUpdate(animalesActualizados);
       setLoading(false);
     };
 
@@ -446,30 +502,31 @@ function AnimalesSecosNaNList({ animales, onAnimalesConRPUpdate }) {
   }, [animales, firebase, onAnimalesConRPUpdate]);
 
   if (loading) {
-    return <div className="loaderSecosNaN"> Obteniendo Informacion...</div>;
+    return <div className={styles.loaderSecosNaN}>Obteniendo información...</div>;
   }
 
   return (
-    <div className="AnimalesFormulario">
-      <h2>Seca/NR</h2>
-      <table className="tablaDeAnimales" style={{ width: '100%' }}>
+    <div className={styles.AnimalesFormulario}>
+      <div className={styles.listaHeader}>
+        <h2>Seca/NR</h2>
+        <button className={styles.cerrarBtn} onClick={onClose}>×</button>
+      </div>
+      <table className={styles.tablaDeAnimales}>
         <thead>
           <tr>
             <th>Caravana(RP)</th>
             <th>Boton(eRP)</th>
             <th>EST. PRO</th>
             <th>EST. REP</th>
-            {/* Agrega más encabezados si es necesario */}
           </tr>
         </thead>
         <tbody>
           {animalesConRP.map((animal, index) => (
             <tr key={index}>
-              <td>{animal.rp || animal.RP || 'No Regsitrada'}</td>
+              <td>{animal.rp || animal.RP || 'No Registrada'}</td>
               <td>{animal.RFID?.replace(/⛔/g, '') || 'eRP desconocido'}</td>
               <td>{animal.estpro || 'No Registrada'}</td>
               <td>{animal.estrep || 'No Registrada'}</td>
-              {/* Agrega más celdas si es necesario */}
             </tr>
           ))}
         </tbody>

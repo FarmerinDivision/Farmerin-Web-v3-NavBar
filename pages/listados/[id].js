@@ -1,210 +1,199 @@
 import React, { useEffect, useContext, useState } from 'react';
 import { FirebaseContext } from '../../firebase2';
 import { useRouter } from 'next/router';
-import Layout from '../../components/layout/layout';
-//hook de validacion de formularios
 import useValidacion from '../../hook/useValidacion';
-//importo las reglas de validacion para crear cuenta
 import validarCrearListado from '../../validacion/validarCrearListado';
-//formato del formulario
-import { Form, Button, Alert, Spinner, Row, Col,ButtonGroup } from 'react-bootstrap';
+import { Form, Button, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import Link from 'next/link';
-import { Contenedor, Mensaje, ContenedorSpinner } from '../../components/ui/Elementos';
+import { ContenedorSpinner, Mensaje } from '../../components/ui/Elementos';
+import styles from '../../styles/Listados.module.scss';
 
 const STATE_INICIAL = {
     tipo: '',
     descripcion: ''
-}
+};
 
-const Listado = () => {
+const Listado = ({ idListado = null, isModal = false, onClose = null }) => {
+    const router = useRouter();
+    const idFromRouter = router?.query?.id;
+    const id = idListado || idFromRouter;
 
     const [exito, guardarExito] = useState(false);
     const [descExito, guardarDescExito] = useState('');
     const [error, guardarError] = useState(false);
     const [descError, guardarDescError] = useState('');
     const [procesando, guardarProcesando] = useState(false);
+    const { usuario, firebase, tamboSel } = useContext(FirebaseContext);
 
-    //uso este state para guardar los valores de los campos en el submit
-    const [listado, guardarListado] = useState({});
-    let titulo = "Editar Opcion";
+    const titulo = id === '0' || idListado === '0' ? 'Nueva Opción' : 'Editar Opción';
 
-    //reouter para obtener el id
-    const router = useRouter();
-    const { query: { id } } = router;
+    const {
+        valores,
+        errores,
+        handleSubmit,
+        handleChange,
+        handleBlur,
+        guardarValores
+    } = useValidacion(STATE_INICIAL, validarCrearListado, editListado);
 
-    //context con las CRUD de firebase
-    const { usuario, firebase,tamboSel } = useContext(FirebaseContext);
-
-    const { valores, errores, handleSubmit, handleChange, handleBlur, guardarValores } = useValidacion(STATE_INICIAL, validarCrearListado, editListado);
     const { tipo, descripcion } = valores;
 
     useEffect(() => {
-        if (id) {
-            //Si es alta
-            if (id === "0") {
-                titulo = "Nueva Opcion";
-                guardarError(false);
-            } else {
-                const obtenerListado = async () => {
-                    const listadoQuery = await firebase.db.collection('listado').doc(id);
-                    const listado = await listadoQuery.get();
-                    if (listado.exists) {
-                        guardarValores(listado.data());
-                    } else {
-                        guardarDescError("La opción no existe");
-                        guardarError(true);
-                    }
+        if (!id || id === '0') return;
+
+        const obtenerListado = async () => {
+            try {
+                const doc = await firebase.db.collection('listado').doc(id).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    // Validar que el tipo sea válido
+                    const tipoValido = ['servicio', 'tratamiento', 'enfermedad', 'baja'].includes(data.tipo);
+                    guardarValores({
+                        ...data,
+                        tipo: tipoValido ? data.tipo : ''
+                    });
+                } else {
+                    guardarDescError('La opción no existe');
+                    guardarError(true);
                 }
-                obtenerListado();
+            } catch (error) {
+                guardarDescError(error.message);
+                guardarError(true);
             }
-        }
+        };
 
-    }, [id, listado]);
-
+        obtenerListado();
+    }, [id]);
 
     async function editListado() {
-        //Si es alta
         guardarProcesando(true);
-        if (id == "0") {
-            if (!usuario) {
-                return router.push('/login');
-            }
 
-            //creo el objeto tambo
-            const listado = {
+        if (id === '0') {
+            if (!usuario) return router.push('/login');
+
+            const nuevoListado = {
                 idtambo: tamboSel.id,
                 tipo,
                 descripcion
-            }
+            };
 
-            //insertar en base de datos
             try {
-                await firebase.db.collection('listado').add(listado);
+                await firebase.db.collection('listado').add(nuevoListado);
                 guardarExito(true);
-                guardarDescExito("Opción creada con éxito!");
+                guardarDescExito('Opción creada con éxito!');
             } catch (error) {
                 guardarDescError(error.message);
                 guardarError(true);
             }
-
-
         } else {
-
-            //EDITA en base de datos
             try {
                 await firebase.db.collection('listado').doc(id).update(valores);
                 guardarExito(true);
-                guardarDescExito("Opción editada con éxito!");
+                guardarDescExito('Opción editada con éxito!');
             } catch (error) {
                 guardarDescError(error.message);
                 guardarError(true);
             }
-            //Guardo los valores del formulario para recargar 
-            guardarListado(valores);
-
         }
+
         guardarProcesando(false);
+
+        if (onClose) onClose();
+        else router.push('/listados');
     }
 
-    return (
-        <Layout
-            titulo={titulo}
-        >
-        <>
-             {procesando ? <ContenedorSpinner> <Spinner animation="border" variant="info" /></ContenedorSpinner> :
-            <>
-                <Mensaje>
-                    <Alert variant="success" show={exito} >{descExito}</Alert>
-                    <Alert variant="danger" show={error} >
-                        <Alert.Heading>Oops! Se ha producido un error!</Alert.Heading>
-                        <p>{descError}</p>
-                    </Alert>
+    const contenido = (
+        <div className={styles.modalContent}>
+            {procesando ? (
+                <ContenedorSpinner>
+                    <Spinner animation="border" variant="info" />
+                </ContenedorSpinner>
+            ) : (
+                <>
+                    <div className={styles.alertSection}>
+                        <Alert variant="success" show={exito}>{descExito}</Alert>
+                        <Alert variant="danger" show={error}>
+                            <Alert.Heading>Oops! Se ha producido un error!</Alert.Heading>
+                            <p>{descError}</p>
+                        </Alert>
+                    </div>
 
-                </Mensaje>
-
-                <Contenedor>
-                    <Form
-                        onSubmit={handleSubmit}
-                    >
+                    <Form onSubmit={handleSubmit} className={styles.modalBody}>
                         <Form.Label><h5>Opción</h5></Form.Label>
                         <Row>
-                            <Col lg={true}>
-                                <Form.Group>
+                            <Col>
+                                <div className={styles.formGroup}>
                                     <Form.Label>Tipo</Form.Label>
                                     <Form.Control
                                         as="select"
                                         id="tipo"
                                         name="tipo"
                                         value={tipo}
-                                        placeholder="seleccione tipo"
                                         onChange={handleChange}
                                         required
                                     >
-                                        <option value="0" >Seleccione tipo...</option>
-                                        <option value="servicio" >Tipo Servicio</option>
-                                        <option value="tratamiento" >Tratamiento</option>
-                                        <option value="enfermedad" >Enfermedad</option>
-                                        <option value="baja" >Motivo de Baja</option>
-
+                                        <option value="">Seleccione tipo...</option>
+                                        <option value="servicio">Servicio</option>
+                                        <option value="tratamiento">Tratamiento</option>
+                                        <option value="enfermedad">Enfermedad</option>
+                                        <option value="baja">Motivo de Baja</option>
                                     </Form.Control>
-
-                                </Form.Group>
+                                </div>
                             </Col>
-                            <Col lg={true}>
-                                <Form.Group>
+                            <Col>
+                                <div className={styles.formGroup}>
                                     <Form.Label>Descripción</Form.Label>
                                     <Form.Control
-                                        type="string"
-                                        id="descripcion"
-                                        placeholder="descripcion"
+                                        type="text"
                                         name="descripcion"
+                                        placeholder="Descripción"
                                         value={descripcion}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         required
-
                                     />
-                                    {errores.descripcion && <Alert variant="danger" width="100%"  >{errores.descripcion}</Alert>}
-                                </Form.Group>
+                                    {errores.descripcion && (
+                                        <Alert variant="danger">{errores.descripcion}</Alert>
+                                    )}
+                                </div>
                             </Col>
-
-
                         </Row>
-                        <Row>
-                            <Col lg={true}>
-                            <Button
-                                variant="success"
-                                type="submit"
-                                block
-                            >
-                                Guardar
-                            </Button>
+
+                        <Row className={styles.buttonRow}>
+                            <Col>
+                                <Button type="submit" variant="success" block>
+                                    Guardar
+                                </Button>
                             </Col>
-                           
-                            &nbsp;
-                            <Col lg={true}>
-                            <Link
-                                href="/listados"
-                            >
-                                <span>
-                                    <Button
-                                        variant="info"
-                                        block
-                                    >   
-                                        Volver
+                            {!idListado && (
+                                <Col>
+                                    <Link href="/listados" passHref legacyBehavior onClick={onClose}>
+                                        <Button variant="info" block>
+                                            Volver
+                                        </Button>
+                                    </Link>
+                                </Col>
+                            )}
+                            {idListado && onClose && (
+                                <Col>
+                                    <Button variant="secondary" block onClick={onClose}>
+                                        Cancelar
                                     </Button>
-                                </span>
-                            </Link>
-                            </Col>
+                                </Col>
+                            )}
                         </Row>
-
                     </Form>
-                </Contenedor>
-            </>
-            }
-        </>
-        </Layout>
+                </>
+            )}
+        </div>
     );
-}
+
+    return isModal || idListado ? contenido : (
+        <div className={styles.pageWrapper}>
+            <h1 className={styles.pageTitle}>{titulo}</h1>
+            {contenido}
+        </div>
+    );
+};
 
 export default Listado;

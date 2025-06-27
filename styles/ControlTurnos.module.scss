@@ -1,0 +1,750 @@
+////// MODIFICAR LISTA DE INGRESOS TURNOS //////////////////////
+
+
+
+
+//// h2 titulo 
+.ingresosTitulo {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #222;
+  text-align: center;
+  margin: 2rem 0;
+
+  // Sutil degradado de fondo en el texto (efecto moderno)
+  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  // Animación de entrada suave
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: fadeInDown 0.6s ease-out forwards;
+
+  // Subrayado minimalista con pseudo-elemento
+  position: relative;
+
+  &::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background-color: #0f2027;
+    margin: 0.5rem auto 0;
+    border-radius: 2px;
+  }
+}
+
+.descripcionTurnos {
+  text-align: center;
+  margin: 2rem auto 3rem;
+  max-width: 700px;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #222;
+
+  // Degradado en el texto principal
+  p:first-of-type {
+    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1.25rem;
+    position: relative;
+
+    &::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 3px;
+      background-color: #2c5364;
+      margin: 0.5rem auto 0;
+      border-radius: 2px;
+    }
+
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInDesc 0.6s ease-out forwards;
+  }
+
+  // Botón estilizado como los demás
+  .btnTurnos {
+    background: #2c5364;
+    color: #fff;
+    padding: 0.6rem 1.4rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, background 0.3s ease;
+
+    &:hover {
+      background: #203a43;
+      transform: scale(1.03);
+    }
+
+    &:disabled {
+      background: #999;
+      cursor: wait;
+    }
+  }
+
+  // Resultado de Firebase
+  .horariosTurno {
+    position: relative;
+    margin-top: 1.5rem;
+
+    .cerrarTurnos {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 1rem;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #c0392b;
+      }
+    }
+
+    p {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0.4rem 0;
+    }
+  }
+}
+
+@keyframes fadeInDesc {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Botón estilizado como los demás
+.btnTurnos {
+  background: #2c5364;
+  color: #fff;
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, background 0.3s ease;
+
+  &:hover {
+    background: #203a43;
+    transform: scale(1.03);
+  }
+
+  &:disabled {
+    background: #999;
+    cursor: wait;
+  }
+}
+
+// Resultado de Firebase
+.horariosTurno {
+  position: relative;
+  margin-top: 1.5rem;
+
+  .cerrarTurnos {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: #c0392b;
+    }
+  }
+
+  p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0.4rem 0;
+  }
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+
+  label {
+    font-size: 1.15rem; // Más grande
+    font-weight: 600; // Resalta sin ser agresivo
+    color: #2c3e50; // Azul grisáceo moderno
+    letter-spacing: 0.5px; // Ligera separación de letras
+    text-transform: uppercase; // Da un toque profesional
+    margin-right: 0.5rem;
+
+
+    // Sutil animación de entrada
+    opacity: 0;
+    transform: translateY(-5px);
+    animation: fadeInLabel 0.6s ease forwards;
+  }
+
+  @keyframes fadeInLabel {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  input[type='date'] {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    background-color: #2c5364;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s ease;
+
+    &:hover {
+      background-color: #3b853d;
+    }
+  }
+
+  .ingresosTContainerBtnFile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #2c5364;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    .file {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    &:hover {
+      background-color: #203a43;
+    }
+  }
+}
+
+
+/// BOTON BUSCAR
+.ingresosTContainerBtnBuscar {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  background-color: #307750;
+  color: #fff;
+  border-style: none;
+  padding: 1em 2em;
+  border-radius: 0.5em;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow: 4px 8px 10px -3px rgba(0, 0, 0, 0.356);
+  transition: all 250ms;
+}
+
+.ingresosTContainerBtnBuscar input[type="file"] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ingresosTContainerBtnBuscar>svg {
+  margin-right: 5px;
+}
+
+.ingresosTContainerBtnBuscar::before {
+  content: "";
+  position: absolute;
+  height: 100%;
+  width: 0;
+  border-radius: 0.5em;
+  background-color: #3b853d;
+  z-index: -1;
+  transition: all 350ms;
+}
+
+.ingresosTContainerBtnBuscar:hover::before {
+  width: 100%;
+}
+
+.ingresosTContainerBtnFile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #2c5364;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  .file {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &:hover {
+    background-color: #203a43;
+  }
+}
+
+//// resultado listas 
+.resultadoAnalisis {
+  margin-top: 20px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  color: #333;
+  font-size: 16px;
+  line-height: 1.6;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #1b829b;
+  }
+
+  p {
+    margin: 8px 0;
+
+    strong {
+      font-weight: 600;
+    }
+
+    span {
+      &.duplicados {
+        color: #b02a37;
+      }
+
+      &.unico-turno {
+        color: #555;
+      }
+
+      &.sin-duplicados {
+        color: #28a745;
+      }
+
+      &.solo-turno {
+        color: #6c757d;
+      }
+    }
+  }
+}
+
+.analisisHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btnCerrarAnalisis {
+  background-color: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #888;
+  cursor: pointer;
+}
+
+.btnCerrarAnalisis:hover {
+  color: #c00;
+}
+
+/// RESULTADO ANALISIS 
+
+//// resultado listas 
+.resultadoAnalisis {
+  margin-top: 20px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  color: #333;
+  font-size: 16px;
+  line-height: 1.6;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #1b829b;
+  }
+
+  p {
+    margin: 8px 0;
+
+    strong {
+      font-weight: 600;
+    }
+
+    span {
+      &.duplicados {
+        color: #b02a37;
+      }
+
+      &.unico-turno {
+        color: #555;
+      }
+
+      &.sin-duplicados {
+        color: #28a745;
+      }
+
+      &.solo-turno {
+        color: #6c757d;
+      }
+    }
+  }
+}
+
+/// LOADER INGRESOS 
+/* From Uiverse.io by seyed-mohsen-mousavi */
+.loaderBtnIngresos {
+  border: none;
+  background-color: ligtblue;
+  padding: 10px 20px 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 15px;
+  border-radius: 12px;
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color),
+    0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  cursor: wait;
+}
+
+.loaderIngresos {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: transparent;
+  border-radius: 50%;
+}
+
+.loaderIngresos {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: transparent;
+  width: 23px;
+  height: 23px;
+  animation: spin89345 1s linear infinite;
+}
+
+@keyframes spin89345 {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+// Texto NO HAY DATOS FILTRADOS
+.ingresosMensaje {
+  max-width: 700px;
+  text-align: center;
+  margin: 2rem auto;
+  font-size: 1.35rem; // más grande para todo el párrafo
+  line-height: 1.8;
+  color: #333;
+  background-color: #f9f9f9;
+  padding: 1.5rem 2rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+
+  strong {
+    font-weight: 600;
+    color: #0d232d;
+  }
+
+  .mensajeAlerta {
+    color: #ac0502; // rojo llamativo y profesional
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  // Animación de entrada sutil
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInMsg 0.6s ease-out forwards;
+}
+
+@keyframes fadeInMsg {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+//// ESTILOS DE SI EL TAMBO NO TIENE CONTROL DE TURNOS 
+
+.mainWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 2rem;
+}
+
+.main {
+  position: relative;
+  width: 300px;
+  animation: float 2s ease-in-out infinite;
+}
+
+.antenna {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.antennaShadow {
+  width: 50px;
+  height: 10px;
+  background: #444;
+  border-radius: 50%;
+  margin: auto;
+}
+
+.a1,
+.a2 {
+  width: 2px;
+  height: 30px;
+  background: #666;
+  margin: 4px auto;
+}
+
+.a1d,
+.a2d {
+  width: 10px;
+  height: 10px;
+  background: #666;
+  border-radius: 50%;
+  margin: auto;
+}
+
+.aBase {
+  width: 12px;
+  height: 12px;
+  background: #444;
+  margin: auto;
+  border-radius: 50%;
+}
+
+.tv {
+  background: #000;
+  border-radius: 20px;
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  border: 4px solid #2c5364;
+}
+
+.cruve svg {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  top: -50px;
+  left: 0;
+  opacity: 0.1;
+}
+
+.displayDiv {
+  background: repeating-linear-gradient(-45deg,
+      #333,
+      #333 10px,
+      #444 10px,
+      #444 20px);
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.screen {
+  background: #000;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 1rem;
+  border: 2px dashed #e53935;
+  border-radius: 10px;
+}
+
+.lines {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 1rem;
+}
+
+.line1,
+.line2,
+.line3 {
+  width: 10px;
+  height: 40px;
+  background: #666;
+  border-radius: 5px;
+  animation: bounce 1s infinite alternate;
+}
+
+.line2 {
+  animation-delay: 0.2s;
+}
+
+.line3 {
+  animation-delay: 0.4s;
+}
+
+.buttonsDiv {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 0 1rem;
+}
+
+.b1,
+.b2 {
+  width: 20px;
+  height: 20px;
+  background: #2c5364;
+  border-radius: 50%;
+}
+
+.b1 div {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  margin: auto;
+  border-radius: 50%;
+  margin-top: 5px;
+}
+
+.speakers {
+  display: flex;
+  gap: 5px;
+}
+
+.g1,
+.g {
+  width: 5px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.g1>div {
+  width: 5px;
+  height: 5px;
+  background: #999;
+  margin: 1px 0;
+  border-radius: 1px;
+}
+
+.bottom {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  gap: 10px;
+}
+
+.base1,
+.base2,
+.base3 {
+  width: 20px;
+  height: 10px;
+  background: #2c5364;
+  border-radius: 2px;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  from {
+    transform: scaleY(1);
+  }
+
+  to {
+    transform: scaleY(1.5);
+  }
+}

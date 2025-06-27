@@ -205,19 +205,19 @@ const Animales = () => {
                   <div className={styles.colEncabezadoRp} onClick={handleClickRP}>
                     RP
                     <span className={styles.iconoOrden}>
-                      <FaSort size={15} />
+                      <FaSort size={20} />
                     </span>
                   </div>
                   <div className={styles.colEncabezado} onClick={handleClickEP}>
                     Est. Prod.
                     <span className={styles.iconoOrden}>
-                      <FaSort size={15} />
+                      <FaSort size={20} />
                     </span>
                   </div>
                   <div className={styles.colEncabezado} onClick={handleClickER}>
                     Est. Rep.
                     <span className={styles.iconoOrden}>
-                      <FaSort size={15} />
+                      <FaSort size={20} />
                     </span>
                   </div>
                   <div className={styles.colEncabezadoErp}>eRP</div>

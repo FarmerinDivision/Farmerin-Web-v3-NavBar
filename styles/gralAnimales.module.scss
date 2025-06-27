@@ -82,3 +82,102 @@
   color: #333;
   padding-top: 5px;
 }
+
+/////// TOOLTIP DE LOS TITULOS DE LAS COLUMNAS 
+.thTooltipWrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  text-align: center;
+
+  &:hover .thTooltipText {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.thContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #333;
+}
+
+.sortIcon {
+  margin-left: 4px;
+}
+
+.thTooltipText {
+   visibility: hidden;
+  width: 220px;
+  /* Ajusta según el texto */
+  background-color: #00111c;
+  color: #fff;
+  text-align: center;
+  padding: 5px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: -35px;
+  /* Hace que aparezca debajo */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltipWrapper {
+  position: relative;
+  display: inline-block;
+
+  &:hover .tooltipText {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+/// TOOLTIP CON LOS BOTONES DE ACCIONES 
+.tooltipText {
+  visibility: hidden;
+  background-color: #212529;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 10px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  font-size: 0.75rem;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #212529 transparent transparent transparent;
+  }
+}
+
+.btnIconoInfo {
+  background-color: #297eb9;
+  color: white;
+  border: none;
+  padding: 0.4rem;
+  border-radius: 6px;
+
+  &:hover {
+    background-color: rgb(4, 65, 156);
+  }
+}

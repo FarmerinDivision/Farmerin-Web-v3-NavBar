@@ -1,6 +1,8 @@
 import React from 'react';
 import styles from '../../styles/footer.module.scss';
-
+import { GiPear } from "react-icons/gi";
+import { FaLongArrowAltUp } from "react-icons/fa";
+import { TbCircleLetterF } from "react-icons/tb";
 const Footer = () => {
   return (
     <footer className={styles.footer}>
@@ -22,6 +24,14 @@ const Footer = () => {
         >
           Ultra I+D
         </a>
+        <span className={styles.separator}>&</span>
+        <a className={`${styles.link} ${styles.devSignature}`}>
+          <GiPear />
+          <FaLongArrowAltUp />
+          <TbCircleLetterF /> 
+          and Farmerin Developer.
+        </a>
+
       </div>
     </footer>
   );

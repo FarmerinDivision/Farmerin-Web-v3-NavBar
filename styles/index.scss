@@ -954,63 +954,6 @@ $icon-size: 35px;
   background-color: #f0f0f0;
 }
 
-contact-section,
-.social-section {
-  width: 45%;
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px #020014;
-}
-
-.contact-section,
-.map-section {
-  width: 95%;
-  background-color: #ffffff;
-  padding: 10px;
-  margin: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px #020014;
-}
-
-// TITULOS CONTACTO - REDES 
-.titulo-ayuda {
-  font-family: 'Roboto', sans-serif;
-  /* Fuente moderna */
-  font-size: 2.5rem;
-  /* Tamaño del texto */
-  font-weight: 700;
-  /* Grosor del texto */
-  line-height: 1.2;
-  /* Espaciado entre líneas */
-  letter-spacing: -0.5px;
-  /* Espaciado entre letras */
-  margin: 0.5em 0;
-  /* Márgenes superior e inferior */
-  padding: 0.2em 0.5em;
-  /* Relleno adicional para el fondo */
-  color: #1b89a5;
-  /* Color del texto: Gris oscuro */
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-  /* Sombra suave */
-  border-bottom: 2px solid #1b89a5;
-  /* Línea inferior */
-}
-
-/* Ajustes responsivos */
-@media (max-width: 768px) {
-  .titulo-ayuda {
-    font-size: 2rem;
-    /* Tamaño del texto para dispositivos medianos */
-  }
-}
-
-@media (max-width: 480px) {
-  .titulo-ayuda {
-    font-size: 1.5rem;
-    /* Tamaño del texto para dispositivos pequeños */
-  }
-}
 
 /*
 // AVISO DE RACIONES
@@ -1065,93 +1008,6 @@ contact-section,
   font-size: 12px;
 }
 */
-// TITULOS UBICACION 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
-
-.titulo-ayuda-ubi {
-  font-family: 'Roboto', sans-serif;
-  /* Fuente moderna y legible */
-  font-size: 2.5rem;
-  /* Tamaño del texto ajustable */
-  font-weight: 700;
-  /* Grosor del texto */
-  line-height: 1.2;
-  /* Espaciado entre líneas */
-  letter-spacing: -0.5px;
-  /* Espaciado entre letras */
-  margin: 0.5em 0;
-  /* Márgenes superior e inferior */
-  padding: 0;
-  /* Sin relleno adicional */
-}
-
-/* Colores */
-.titulo-ayuda-ubi {
-  color: #1b89a5;
-  /* Color del texto: Gris oscuro */
-  padding: 0.2em 0.5em;
-  /* Relleno para el fondo */
-}
-
-/* Sombra de texto */
-.titulo-ayuda-ubi {
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-  /* Sombra suave */
-}
-
-/* Bordes */
-.titulo-ayuda-ubi {
-  border-bottom: 2px solid #1b89a5;
-  /* Línea en la parte inferior */
-}
-
-/* Ajustes responsivos */
-@media (max-width: 768px) {
-  .titulo-ayuda-ubi {
-    font-size: 2rem;
-    /* Tamaño del texto para dispositivos medianos */
-  }
-}
-
-@media (max-width: 480px) {
-  .titulo-ayuda-ubi {
-    font-size: 1.5rem;
-    /* Tamaño del texto para dispositivos pequeños */
-  }
-}
-
-.contact-item {
-  margin-bottom: 15px;
-}
-
-.contact-item a {
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  color: #020014;
-  /* Color del texto */
-  font-size: 20px;
-  /* Tamaño del texto */
-  font-weight: 500;
-  /* Peso del texto */
-}
-
-.contact-item a i,
-.contact-item a svg {
-  margin-right: 15px;
-  /* Espacio entre el icono y el texto */
-  font-size: 28px;
-  /* Tamaño del icono */
-  color: #1a8aa4;
-  /* Color del icono */
-}
-
-.contact-item a:hover {
-  color: #1a8aa4;
-  /* Color del texto al pasar el mouse */
-  text-decoration: underline;
-  /* Subraya al pasar el mouse */
-}
 
 /* Estilos generales para las alertas */
 .alert {
@@ -3972,7 +3828,7 @@ body {
     letter-spacing: 0.5px; // Ligera separación de letras
     text-transform: uppercase; // Da un toque profesional
     margin-right: 0.5rem;
-    
+
 
     // Sutil animación de entrada
     opacity: 0;
@@ -4329,14 +4185,16 @@ body {
   margin: auto;
 }
 
-.a1, .a2 {
+.a1,
+.a2 {
   width: 2px;
   height: 30px;
   background: #666;
   margin: 4px auto;
 }
 
-.a1d, .a2d {
+.a1d,
+.a2d {
   width: 10px;
   height: 10px;
   background: #666;
@@ -4371,13 +4229,11 @@ body {
 }
 
 .display_div {
-  background: repeating-linear-gradient(
-    -45deg,
-    #333,
-    #333 10px,
-    #444 10px,
-    #444 20px
-  );
+  background: repeating-linear-gradient(-45deg,
+      #333,
+      #333 10px,
+      #444 10px,
+      #444 20px);
   padding: 1rem;
   border-radius: 10px;
   margin-bottom: 1rem;
@@ -4400,7 +4256,9 @@ body {
   margin-top: 1rem;
 }
 
-.line1, .line2, .line3 {
+.line1,
+.line2,
+.line3 {
   width: 10px;
   height: 40px;
   background: #666;
@@ -4423,7 +4281,8 @@ body {
   padding: 0 1rem;
 }
 
-.b1, .b2 {
+.b1,
+.b2 {
   width: 20px;
   height: 20px;
   background: #2c5364;
@@ -4444,14 +4303,15 @@ body {
   gap: 5px;
 }
 
-.g1, .g {
+.g1,
+.g {
   width: 5px;
   height: 20px;
   background: #ccc;
   border-radius: 2px;
 }
 
-.g1 > div {
+.g1>div {
   width: 5px;
   height: 5px;
   background: #999;
@@ -4466,7 +4326,9 @@ body {
   gap: 10px;
 }
 
-.base1, .base2, .base3 {
+.base1,
+.base2,
+.base3 {
   width: 20px;
   height: 10px;
   background: #2c5364;
@@ -4474,18 +4336,31 @@ body {
 }
 
 @keyframes float {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
 }
 
 @keyframes bounce {
-  from { transform: scaleY(1); }
-  to { transform: scaleY(1.5); }
+  from {
+    transform: scaleY(1);
+  }
+
+  to {
+    transform: scaleY(1.5);
+  }
 }
 
 /// LOADER INGRESOS 
-/* From Uiverse.io by seyed-mohsen-mousavi */ 
+/* From Uiverse.io by seyed-mohsen-mousavi */
 .loader__btn-Ingresos {
   border: none;
   background-color: ligtblue;
@@ -4623,37 +4498,37 @@ body {
   }
 
   // Resultado de Firebase
- .horarios-turno {
-  position: relative;
-  margin-top: 1.5rem;
+  .horarios-turno {
+    position: relative;
+    margin-top: 1.5rem;
 
-  .cerrar-turnos {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 1rem;
-    width: 28px;
-    height: 28px;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    transition: background 0.2s ease;
+    .cerrar-turnos {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 1rem;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      transition: background 0.2s ease;
 
-    &:hover {
-      background: #c0392b;
+      &:hover {
+        background: #c0392b;
+      }
+    }
+
+    p {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0.4rem 0;
     }
   }
-
-  p {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0.4rem 0;
-  }
-}
 }
 
 @keyframes fadeInDesc {
@@ -4729,7 +4604,7 @@ body {
 
 /* SIDEBAR GLOBAL NAVBAR */
 
- .appLayout {
+.appLayout {
   min-height: 100vh;
   display: flex;
   flex-direction: column;

@@ -1,113 +1,104 @@
 import React, { useState, useContext } from 'react';
-import Link from 'next/link';
 import { FirebaseContext } from '../../firebase2';
-import { RiEdit2Line, RiAddBoxLine, RiDeleteBin2Line } from 'react-icons/ri';
-import { Alert, Button, Modal, OverlayTrigger, Tooltip }  from 'react-bootstrap';
+import { RiEdit2Line, RiDeleteBin2Line } from 'react-icons/ri';
+import { Alert, Button, Modal } from 'react-bootstrap';
+import Listado from '../../pages/listados/[id]'; // reutilizamos el formulario como componente
+import styles from '../../styles/Listados.module.scss';
 
 const DetalleListado = ({ listado }) => {
+  const { id, tipo, descripcion } = listado;
+  const { usuario, firebase } = useContext(FirebaseContext);
 
-   const { id, tipo, descripcion } = listado;
-   //context con las CRUD de firebase
-   const { usuario, firebase } = useContext(FirebaseContext);
+  const [error, guardarError] = useState(false);
+  const [descError, guardarDescError] = useState('');
+  const [showDelete, setShowDelete] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
-   const [error, guardarError] = useState(false);
-   const [descError, guardarDescError] = useState('');
+  const handleCloseDelete = () => {
+    setShowDelete(false);
+    guardarError(false);
+  };
 
-   const [show, setShow] = useState(false);
-   const handleClose = () => { setShow(false), guardarError(false) };
-   const handleShow = () => { setShow(true), guardarError(false) };
+  const handleCloseEdit = () => {
+    setShowEdit(false);
+  };
 
+  const eliminarListado = async () => {
+    try {
+      await firebase.db.collection('listado').doc(id).delete();
+    } catch (error) {
+      guardarDescError(error.message);
+      guardarError(true);
+    }
+  };
 
-   async function eliminarListado() {
-
-      try {
-
-         await firebase.db.collection('listado').doc(id).delete();
-
-
-      } catch (error) {
-         guardarDescError(error.message);
-         guardarError(true);
-
-      }
-
-   }
-
-
-   return (
-      <>
-         <tr>
-            <td >
-               <h6>{tipo}</h6>
-            </td>
-            <td >
-               <h6>{descripcion}</h6>
-            </td>
-            <td>
-
-
-               <Link
-                  href="/listados/[id]" as={`/listados/${id}`}
-               >
-                  <span>
-                    <Button
-                       variant="link"
-                    >
-                        <OverlayTrigger
-                       placement="bottom"
-                       overlay={<Tooltip >Editar</Tooltip>}
-                    >
-                       <RiEdit2Line size={24} />
-                       </OverlayTrigger>
-                    </Button>
-                  </span>
-               </Link>
-
-               <Button
-                  variant="link"
-                  onClick={handleShow}
-               ><OverlayTrigger
-               placement="bottom"
-               overlay={<Tooltip >Eliminar</Tooltip>}
+  return (
+    <>
+      <tr>
+        <td><h6>{tipo}</h6></td>
+        <td><h6>{descripcion}</h6></td>
+        <td>
+          <div className={styles.tooltipWrapper}>
+            <Button
+              className={styles.btnIconoEditar}
+              onClick={() => setShowEdit(true)}
             >
-                  <RiDeleteBin2Line size={24} />
-                  </OverlayTrigger>
-               </Button>
-            </td>
-         </tr>
-         <Modal show={show} onHide={handleClose}>
-            <Modal.Header closeButton>
-               <Modal.Title>
-                  <p>Atención!</p>
+              <RiEdit2Line size={20} />
+            </Button>
+            <span className={styles.tooltipText}>Editar</span>
+          </div>
 
-               </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-               <p>¿Desea eliminar la opcion {descripcion} ?</p>
-               <Alert variant="danger" show={error} >
-                  <Alert.Heading>Oops! Se ha producido un error!</Alert.Heading>
-                  <p>{descError}</p>
-               </Alert>
-            </Modal.Body>
-            <Modal.Footer>
+          <div className={styles.tooltipWrapper}>
+            <Button
+              className={styles.btnIconoEliminar}
+              onClick={() => setShowDelete(true)}
+            >
+              <RiDeleteBin2Line size={20} />
+            </Button>
+            <span className={styles.tooltipText}>Eliminar</span>
+          </div>
+        </td>
+      </tr>
 
-               <Button
-                  variant="success"
-                  onClick={eliminarListado}
+      {/* MODAL DE EDICIÓN */}
+      <Modal
+        show={showEdit}
+        onHide={handleCloseEdit}
+        size="lg"
+        centered
+        backdrop="static"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Editar Opción</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Listado
+            idListado={id}
+            isModal={true}
+            onClose={handleCloseEdit}
+          />
+        </Modal.Body>
+      </Modal>
 
-               >Aceptar</Button>
-               <Button
-                  variant="danger"
-                  onClick={handleClose}
-
-               >
-                  Cancelar </Button>
-            </Modal.Footer>
-         </Modal>
-
-      </>
-
-   );
-}
+      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+      <Modal show={showDelete} onHide={handleCloseDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Atención</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>¿Desea eliminar la opción "{descripcion}"?</p>
+          <Alert variant="danger" show={error}>
+            <Alert.Heading>¡Oops! Se ha producido un error</Alert.Heading>
+            <p>{descError}</p>
+          </Alert>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={eliminarListado}>Aceptar</Button>
+          <Button variant="danger" onClick={handleCloseDelete}>Cancelar</Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+};
 
 export default DetalleListado;
