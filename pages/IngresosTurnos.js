@@ -261,7 +261,7 @@ function IngresosFiltrados() {
     <Layout titulo="Herramientas">
       <>
       <div className={styles.ingresosContainer}>
-        <h1 className={styles.ingresosTitulo}>Control de Turnos de <strong className={styles.nombreTambo}>{tamboSel?.nombre}</strong></h1>
+        <h1 className={styles.ingresosTitulo}>Control de Turnos  <strong className={styles.nombreTambo}>{tamboSel?.nombre}</strong></h1>
         <div className={styles.descripcionTurnos}>
           <p>
             La información de cada turno se actualiza una vez <strong>finalizado</strong>.

@@ -134,3 +134,19 @@
     height: 150px;
     width: 150px;
   }
+
+  .botonMonitor {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.botonMonitor:hover {
+  text-decoration: underline;
+}

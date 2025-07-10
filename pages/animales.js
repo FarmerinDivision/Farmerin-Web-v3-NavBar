@@ -15,6 +15,7 @@ import { GiCow } from 'react-icons/gi';
 import Lottie from 'lottie-react';
 import vacaAnimacion from '../public/animaciones/Animation - Vaca.json';
 import styles from '../styles/Animales.module.scss';
+import FormularioAnimal from '../components/layout/FormularioAnimal'; // ajustá la ruta si es distinta
 
 const Animales = () => {
   const dispatch = useDispatch();
@@ -32,6 +33,7 @@ const Animales = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [esSticky, setEsSticky] = useState(false);
+  const [showAltaAnimal, setShowAltaAnimal] = useState(false);
 
   useEffect(() => {
     guardarElim(false);
@@ -43,6 +45,17 @@ const Animales = () => {
       setTimeout(() => guardarProcesando(false), 800);
     }
   }, [tamboSel, elim])
+
+  function filtrarAnimales(animales, filtro) {
+    if (!filtro) return animales;
+    const cond = filtro.toLowerCase();
+    return animales.filter(animal =>
+    (animal.rp?.toString().toLowerCase().includes(cond) ||
+      animal.erp?.toString().toLowerCase().includes(cond))
+    );
+  }
+
+
 
   function buscarAnimales() {
     if (tamboSel) {
@@ -93,27 +106,51 @@ const Animales = () => {
 
   const handleClickRP = () => {
     const orden = orderRp === 'asc' ? 'desc' : 'asc';
-    const sorted = [...animalesBase].sort((a, b) => orden === 'asc' ? a.rp - b.rp : b.rp - a.rp);
     guardarOrderRp(orden);
+
+    const sorted = [...animalesBase].sort((a, b) => {
+      const rpA = a.rp?.toString().toLowerCase() || '';
+      const rpB = b.rp?.toString().toLowerCase() || '';
+      return orden === 'asc' ? rpA.localeCompare(rpB) : rpB.localeCompare(rpA);
+    });
+
     guardarAnimalesBase(sorted);
-    aplicarFiltro();
-  }
+    guardarAnimales(filtrarAnimales(sorted, valores.rp));
+  };
+
+
 
   const handleClickER = () => {
     const orden = orderEr === 'asc' ? 'desc' : 'asc';
-    const sorted = [...animalesBase].sort((a, b) => orden === 'asc' ? a.estrep - b.estrep : b.estrep - a.estrep);
     guardarOrderEr(orden);
+
+    const sorted = [...animalesBase].sort((a, b) => {
+      const erA = a.estrep?.toString().toLowerCase() || '';
+      const erB = b.estrep?.toString().toLowerCase() || '';
+      return orden === 'asc' ? erA.localeCompare(erB) : erB.localeCompare(erA);
+    });
+
     guardarAnimalesBase(sorted);
-    aplicarFiltro();
-  }
+    guardarAnimales(filtrarAnimales(sorted, valores.rp));
+  };
+
+
 
   const handleClickEP = () => {
     const orden = orderEp === 'asc' ? 'desc' : 'asc';
-    const sorted = [...animalesBase].sort((a, b) => orden === 'asc' ? a.estpro - b.estpro : b.estpro - a.estpro);
     guardarOrderEp(orden);
+
+    const sorted = [...animalesBase].sort((a, b) => {
+      const epA = a.estpro?.toString().toLowerCase() || '';
+      const epB = b.estpro?.toString().toLowerCase() || '';
+      return orden === 'asc' ? epA.localeCompare(epB) : epB.localeCompare(epA);
+    });
+
     guardarAnimalesBase(sorted);
-    aplicarFiltro();
-  }
+    guardarAnimales(filtrarAnimales(sorted, valores.rp));
+  };
+
+
 
   const mostrarMensajeModal = async () => {
     try {
@@ -162,12 +199,13 @@ const Animales = () => {
       <>
         <div className={styles.container}>
           <h2 className={styles.title}>
-            <GiCow /> Listado de animales de <strong className={styles.nombreTambo}>{tamboSel?.nombre}</strong>:<strong>{animales.length}</strong>
+            <GiCow /> Listado de animales de <strong className={styles.nombreTambo}>{tamboSel?.nombre}</strong>: <strong>{animales.length}</strong>
           </h2>
 
-          <div className={styles.actionsContainer}>
+          {/* 🔍 Formulario de búsqueda y botón de alta */}
+          <Form onSubmit={handleSubmit} className={styles.actionsContainer}>
             <input
-              type="string"
+              type="text"
               id="rp"
               placeholder="RP / eRP"
               name="rp"
@@ -176,17 +214,23 @@ const Animales = () => {
               className={styles.inputRp}
             />
 
-            <button onClick={handleSubmit} variant="info" block
-              type="submit" className={`${styles.customBtn} ${styles.searchBtn}`}>
+            <button
+              type="submit"
+              className={`${styles.customBtn} ${styles.searchBtn}`}
+            >
               <RiSearchLine size={20} className={styles.btnIcon} />
               Buscar
             </button>
 
-            <button href="/animales/[id]" as="/animales/0" className={`${styles.customBtn} ${styles.addBtn}`}>
+            <button
+              type="button"
+              onClick={() => setShowAltaAnimal(true)}
+              className={`${styles.customBtn} ${styles.addBtn}`}
+            >
               <RiAddBoxLine size={20} className={styles.btnIcon} />
               Alta Animal
             </button>
-          </div>
+          </Form>
 
           {tamboSel ? (
             animales.length === 0 ? (
@@ -252,7 +296,24 @@ const Animales = () => {
             <SelectTambo />
           )}
 
-          {/* Modal de notificación */}
+          {/* Modal de alta de animal */}
+          <Modal show={showAltaAnimal} onHide={() => setShowAltaAnimal(false)} size="lg">
+            <Modal.Header closeButton>
+              <Modal.Title>Alta de Animal</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <FormularioAnimal
+                modo="alta"
+                onCancel={() => setShowAltaAnimal(false)}
+                onSuccess={() => {
+                  setShowAltaAnimal(false);
+                  guardarElim(true); // refresca la lista
+                }}
+              />
+            </Modal.Body>
+          </Modal>
+
+          {/* Modal de notificación si lo tenés */}
           <Modal show={showModal} onHide={() => setShowModal(false)}>
             <Modal.Header closeButton>
               <Modal.Title>Notificaciones</Modal.Title>
@@ -270,6 +331,7 @@ const Animales = () => {
       </>
     </Layout>
   );
+
 }
 
 export default Animales;

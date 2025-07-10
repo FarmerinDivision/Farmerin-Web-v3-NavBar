@@ -1,3 +1,68 @@
+@media (max-width: 768px) {
+  .stickyTable {
+    overflow-x: auto;
+    display: block;
+    width: 100%;
+
+    table {
+      width: 100%;
+      font-size: 14px;
+
+      thead {
+        display: table;
+        width: 100%;
+        position: sticky;
+        top: 0;
+        background-color: #fff;
+        z-index: 10;
+      }
+
+      tbody {
+        display: block;
+        width: 100%;
+      }
+
+      tr {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        word-wrap: break-word;
+        padding: 8px;
+        vertical-align: middle;
+        text-align: center;
+      }
+    }
+  }
+
+  .controlBtn {
+    padding: 6px 10px !important;
+    font-size: 0.85rem;
+  }
+
+  .nombreControl {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .resumenNutricion {
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .mensajeCaja {
+    text-align: center;
+    font-size: 1rem;
+    padding: 1rem;
+  }
+}
+
+
 // Wrapper del texto principal
 .nombreControl {
   color: #000; // Texto negro

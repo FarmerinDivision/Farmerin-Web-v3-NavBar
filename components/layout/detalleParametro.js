@@ -8,6 +8,8 @@ import { Button, Form, Row, Col, Alert, Spinner, Table, Modal } from 'react-boot
 import { RiAddBoxLine } from 'react-icons/ri';
 import { format } from 'date-fns';
 import styles from '../../styles/Parametro.module.scss'
+import ParametroEdit from '../../pages/parametros/[id]';
+
 
 const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
 
@@ -16,6 +18,9 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
    const [parametros, guardarParametros] = useState([]);
    const [animal, guardarAnimal] = useState([]);
    const [fracion, guardarFracion] = useState([]);
+   const [showNuevo, setShowNuevo] = useState(false);
+   const [showSuccess, setShowSuccess] = useState(false);
+   const [successMsg, setSuccessMsg] = useState('');
 
 
    useEffect(() => {
@@ -36,7 +41,12 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
    const obtenerParam = () => {
       try {
 
-         firebase.db.collection('parametro').where('idtambo', '==', idTambo).where('categoria', '==', categoria).orderBy('orden').get().then(snapshotParametros)
+         firebase.db.collection('parametro')
+            .where('idtambo', '==', idTambo)
+            .where('categoria', '==', categoria)
+            .orderBy('orden')
+            .get()
+            .then(snapshotParametros)
          firebase.db.collection('animal').where('idtambo', '==', idTambo).get().then(snapshotAnimal)
       } catch (error) {
          guardarDescError(error.message);
@@ -108,61 +118,107 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
 
    return (
       <>
-<Contenedor className={styles.paramCard}>
-  <Row className="align-items-center mb-3">
-    <Col xs={12} md>
-      <h3 className={`${styles.tituloCategoria} text-md-start text-center`}>
-        {categoria}
-      </h3>
-    </Col>
-    <Col xs={12} md="auto" className="text-md-end text-center">
-      <Link href="/parametros/[id]" as="/parametros/0" passHref>
-        <Button variant="success" className={styles.botonNuevo}>
-          <RiAddBoxLine size={20} />
-          &nbsp;Nuevo
-        </Button>
-      </Link>
-    </Col>
-  </Row>
+         <Contenedor className={styles.paramCard}>
+            <Row className="align-items-center mb-3">
+               <Col xs={12} md>
+                  <h3 className={`${styles.tituloCategoria} text-md-start text-center`}>
+                     {categoria}
+                  </h3>
+               </Col>
+               <Col xs={12} md="auto" className="text-md-end text-center">
+                  <Button
+                     variant="success"
+                     className={styles.botonNuevo}
+                     onClick={() => setShowNuevo(true)}
+                  >
+                     <RiAddBoxLine size={20} />
+                     &nbsp;Nuevo
+                  </Button>
 
-  {parametros.length === 0 ? (
-    <Mensaje>
-      <Alert variant="warning">
-        No hay parámetros nutricionales configurados para <strong>{categoria}</strong>
-      </Alert>
-    </Mensaje>
-  ) : (
-    <div className={styles.tablaScroll}>
-      <StickyTable height={350} width={550}>
-        <Table striped bordered hover responsive className={styles.tablaParam}>
-          <thead className={styles.tablaHeader}>
-            <tr>
-              <th>Rodeo/Orden</th>
-              <th>Cond</th>
-              <th>Min.</th>
-              <th>Max</th>
-              <th>UM</th>
-              <th>Ración (kg)</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {parametros.map((p) => (
-              <Parametro
-                key={p.id}
-                parametro={p}
-                parametros={parametros}
-                guardarParametros={guardarParametros}
-                porcentaje={porcentaje}
-              />
-            ))}
-          </tbody>
-        </Table>
-      </StickyTable>
-    </div>
-  )}
-</Contenedor>
+               </Col>
+            </Row>
 
+            {parametros.length === 0 ? (
+               <Mensaje>
+                  <Alert variant="warning">
+                     No hay parámetros nutricionales configurados para <strong>{categoria}</strong>
+                  </Alert>
+               </Mensaje>
+            ) : (
+               <div className={styles.tablaScroll}>
+                  <StickyTable height={350} width={550}>
+                     <Table striped bordered hover responsive className={styles.tablaParam}>
+                        <thead className={styles.tablaHeader}>
+                           <tr>
+                              <th>Rodeo/Orden</th>
+                              <th>Cond</th>
+                              <th>Min.</th>
+                              <th>Max</th>
+                              <th>UM</th>
+                              <th>Ración (kg)</th>
+                              <th>Acción</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           {parametros.map((p) => (
+                              <Parametro
+                                 key={p.id}
+                                 parametro={p}
+                                 parametros={parametros}
+                                 guardarParametros={guardarParametros}
+                                 porcentaje={porcentaje}
+                                 onUpdate={obtenerParam}
+                              />
+                           ))}
+                        </tbody>
+                     </Table>
+                  </StickyTable>
+               </div>
+            )}
+         </Contenedor>
+         <Modal
+            show={showNuevo}
+            onHide={() => setShowNuevo(false)}
+            size="lg"
+            centered
+            backdrop="static"
+         >
+            <Modal.Header closeButton>
+               <Modal.Title>Nuevo Parámetro</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+               
+               <ParametroEdit
+                  idParametro="0"
+                  isModal={true}
+                  onClose={() => {
+                     setShowNuevo(false);
+                     setSuccessMsg('Parámetro creado con éxito.');
+                     setShowSuccess(true);
+                  }}
+                  onAddParam={(nuevoParam) => {
+                     guardarParametros(prev => [...prev, nuevoParam].sort((a, b) => a.orden - b.orden));
+                  }}
+               />
+
+            </Modal.Body>
+         </Modal>
+         <Modal show={showSuccess} onHide={() => setShowSuccess(false)} centered>
+            <Modal.Header closeButton>
+               <Modal.Title>✅ Acción completada</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+               <p>{successMsg}</p>
+               <p className="text-muted">
+                  (Si no ve el parámetro, salga y vuelva a entrar para actualizar.)
+               </p>
+            </Modal.Body>
+            <Modal.Footer>
+               <Button variant="primary" onClick={() => setShowSuccess(false)}>
+                  Cerrar
+               </Button>
+            </Modal.Footer>
+         </Modal>
 
       </>
    );

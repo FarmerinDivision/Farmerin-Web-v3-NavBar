@@ -28,6 +28,7 @@
     font-size: 1.5em;
   }
 }
+
 .nombreTambo {
   color: #000; // Texto negro
   text-decoration: underline;
@@ -149,6 +150,7 @@
     transition: background-color 0.3s ease;
   }
 }
+
 .custom-btn {
   display: flex;
   align-items: center;
@@ -318,6 +320,7 @@
     background-color: rgb(131, 22, 33);
   }
 }
+
 .activa {
   color: #000; // Podés usar otro color como #007bff si querés destacar más
 }
@@ -344,17 +347,21 @@
   font-weight: bold;
   display: flex;
   justify-content: center;
+  cursor: pointer;
 }
-.colEncabezadoRp{
+
+.colEncabezadoRp {
   font-weight: bold;
   display: flex;
   padding-left: 10px;
+  cursor: pointer;
 }
 
-.colEncabezadoErp{
+.colEncabezadoErp {
   font-weight: bold;
   display: flex;
   padding-left: 100px;
+  cursor: pointer;
 }
 
 .iconoOrden {

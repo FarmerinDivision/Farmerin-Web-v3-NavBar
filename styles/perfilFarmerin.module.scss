@@ -177,33 +177,41 @@
   font-size: 1rem;
 }
 
+
+.configPerfilCard {
+  width: 100%;
+  max-width: 280px; // igual o mayor que el botón principal
+  margin: 0 auto;
+}
+
+.configPerfilList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
 .configPerfilItem {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-  cursor: pointer;
+  gap: 8px;
   background-color: white;
   border: 1px solid #ddd;
-  transition: background 0.2s ease;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
   width: 100%;
-  max-width: 600px;
+  transition: background-color 0.2s ease;
+  border-radius: 0;
 
   &:hover {
-    background-color: #eef2f5;
+    background-color: #f3f3f3;
   }
 
-  svg {
-    flex-shrink: 0;
-  }
-
+  // Para que el texto no se corte y se alinee bien
   p {
     margin: 0;
-    font-size: 0.95rem;
     font-weight: 500;
-    color: #333;
   }
 }
 
@@ -385,5 +393,27 @@
 .error {
   color: red;
   font-size: 0.9rem;
+}
+
+.loadingWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.nombreTambo {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+
+  strong {
+    color: #1e88e5;
+    font-weight: 700;
+    margin-left: 0.25rem;
+  }
 }
 

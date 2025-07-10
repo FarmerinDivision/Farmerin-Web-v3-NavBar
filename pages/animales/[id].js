@@ -1,23 +1,25 @@
-import React, { useEffect, useContext, useState } from 'react';
-import { FirebaseContext } from '../../firebase2';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import Layout from '../../components/layout/layout';
+// src/components/animales.js
+import React, { useState, useEffect, useContext } from 'react';
+import { FirebaseContext } from '../firebase2';
+import { Botonera, Mensaje, Contenedor } from '../components/ui/Elementos';
+import Layout from '../components/layout/layout';
+import DetalleAnimal from '../components/layout/detalleAnimal';
+import SelectTambo from '../components/layout/selectTambo';
+import { useDispatch } from 'react-redux';
+import { addNotification } from '../redux/notificacionSlice';
+import { Button, Form, Row, Col, Modal } from 'react-bootstrap';
+import { RiAddBoxLine, RiSearchLine } from 'react-icons/ri';
+import { GiCow } from 'react-icons/gi';
+import Lottie from 'lottie-react';
+import vacaAnimacion from '../public/animaciones/Animation - Vaca.json';
+import styles from '../styles/Animales.module.scss';
+import useValidacion from '../hook/useValidacion';
+import validarCrearAnimal from '../validacion/validarCrearAnimal';
+import { format } from 'date-fns';
 
-//hook de validacion de formularios
-import useValidacion from '../../hook/useValidacion';
-//importo las reglas de validacion para crear cuenta
-import validarCrearAnimal from '../../validacion/validarCrearAnimal';
-//formato del formulario
-import { Form, Button, Alert, Spinner, Row, Col } from 'react-bootstrap';
-import { Contenedor, Mensaje, ContenedorSpinner, Botonera } from '../../components/ui/Elementos';
-import { format } from 'date-fns'
-import firebaseCampo from '../../firebase2'
-
-//State inicial para el hook de validacion (inicializo vacío)
 const STATE_INICIAL = {
   ingreso: format(Date.now(), 'yyyy-MM-dd'),
-  idtambo: '0',
+  idtambo: '',
   rp: '',
   erp: '',
   lactancia: 0,
@@ -37,568 +39,245 @@ const STATE_INICIAL = {
   anorm: '',
   fbaja: '',
   mbaja: '',
-  rodeo:0,
-  sugerido:0
+  rodeo: 0,
+  sugerido: 0
+};
 
-}
-
-const Animal = () => {
-
-  const [tambos, guardarTambos] = useState([]);
-  const [exito, guardarExito] = useState(false);
-  const [descExito, guardarDescExito] = useState('');
-  const [error, guardarError] = useState(false);
-  const [descError, guardarDescError] = useState('');
+const Animales = () => {
+  const dispatch = useDispatch();
+  const [elim, guardarElim] = useState(false);
+  const [animales, guardarAnimales] = useState([]);
+  const [animalesBase, guardarAnimalesBase] = useState([]);
+  const [valoresFiltro, guardarValoresFiltro] = useState({ rp: '' });
   const [procesando, guardarProcesando] = useState(false);
-  const [tit, guardarTit] = useState("Nuevo Animal");
-  const [campoProtegido, guardarcampoProtegido]=useState(false);
-  const hoy=format(Date.now(), 'yyyy-MM-dd');
+  const { firebase, tamboSel } = useContext(FirebaseContext);
+  const [showAltaModal, setShowAltaModal] = useState(false);
 
-  //uso este state para guardar los valores de los campos en el submit
-  const [animal, guardarAnimal] = useState({});
+  const handleAbrirAlta = () => setShowAltaModal(true);
+  const handleCerrarAlta = () => setShowAltaModal(false);
 
-  let existeERP = false;
-  let existeRP = false;
+  const {
+    valores,
+    errores,
+    handleSubmit: handleSubmitAlta,
+    handleChange: handleChangeAlta,
+    handleBlur: handleBlurAlta,
+    guardarValores
+  } = useValidacion(STATE_INICIAL, validarCrearAnimal, altaAnimal);
 
-  //reouter para obtener el id
-  const router = useRouter();
-  const { query: { id } } = router;
-
-  //context con las CRUD de firebase
-  const { usuario, firebase, tamboSel } = useContext(FirebaseContext);
-
-  const { valores, errores, handleSubmit, handleChange, handleBlur, guardarValores } = useValidacion(STATE_INICIAL, validarCrearAnimal, editAnimal);
-
-  const { idtambo, rp, erp, lactancia, ingreso, observaciones, estpro, estrep, fparto, fservicio, categoria, racion, fracion, nservicio, uc, fuc, ca, anorm, fbaja, mbaja,rodeo,sugerido, porcentaje } = valores;
+  const {
+    rp, erp, lactancia, estpro, estrep, observaciones
+  } = valores;
 
   useEffect(() => {
-   
-    if (id != "0") {
-      guardarTit("Editar Animal");
-      guardarcampoProtegido(true);
-
-      //obtiene los tambos al cargar el component
-      const obtenerTambos = () => {
-        firebase.db.collection('tambo').orderBy('nombre', 'desc').onSnapshot(snapshotTambo)
-      }
-      obtenerTambos();
-    } else {
-
-      guardarAnimal({
-        ingreso: format(Date.now(), 'yyyy-MM-dd'),
-        idtambo: tamboSel.id,
-        rp: '',
-        erp: '',
-        lactancia: 0,
-        observaciones: '',
-        estpro: 'seca',
-        estrep: 'vacia',
-        fparto: '',
-        fservicio: '',
-        categoria: 'Vaquillona',
-        racion: 8,
-        porcentaje: 1,
-        fracion: firebase.ayerTimeStamp(),
-        nservicio: 1,
-        uc: 0,
-        fuc:firebase.nowTimeStamp(),
-        ca: 0,
-        anorm: '',
-        fbaja: '',
-        mbaja: '',
-        rodeo:0,
-        sugerido:0
-      })
+    if (tamboSel) {
+      guardarProcesando(true);
+      buscarAnimales();
+      setTimeout(() => guardarProcesando(false), 800);
     }
+  }, [tamboSel, elim]);
 
-  }, [])
-
-  useEffect(() => {
-    
-    if (id) {
-      //Si es alta
-      if (id === "0") {
-        guardarValores(animal);
-      } else {
-
-        const obtenerAnimal = async () => {
-          const animalQuery = await firebase.db.collection('animal').doc(id);
-          const animalQ = await animalQuery.get();
-          if (animalQ.exists) {
-            guardarValores(animalQ.data());
-          } else {
-            guardarDescError("El animal no existe");
-            guardarError(true);
-          }
-        }
-        obtenerAnimal();
-      }
-    }
-
-  }, [id, animal]);
-
-
-  function snapshotTambo(snapshot) {
-    const tambos = snapshot.docs.map(doc => {
-      return {
-        id: doc.id,
-        ...doc.data()
-      }
-    })
-    guardarTambos(tambos);
+  const buscarAnimales = () => {
+    firebase.db.collection('animal')
+      .where('idtambo', '==', tamboSel.id)
+      .where('fbaja', '==', '')
+      .orderBy('rp')
+      .get()
+      .then(snapshot => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        guardarAnimalesBase(data);
+        guardarAnimales(data);
+      });
   };
 
-  async function editAnimal() {
+  const aplicarFiltro = () => {
+    const cond = valoresFiltro.rp.toLowerCase();
+    const filtrado = animalesBase.filter(a =>
+      (a.rp?.toString().toLowerCase().includes(cond) ||
+        a.erp?.toString().toLowerCase().includes(cond))
+    );
+    guardarAnimales(filtrado);
+  };
 
-    guardarDescError();
-    guardarDescExito();
-    guardarError(false);
-    guardarExito(false);
-    guardarProcesando(true);
+  const handleSubmit = e => {
+    e.preventDefault();
+    aplicarFiltro();
+  };
 
-    //Si el usuario no está logueado
-    if (!usuario) {
-      return router.push('/login');
+  async function altaAnimal() {
+    try {
+      const existe = await firebase.db.collection('animal')
+        .where('idtambo', '==', tamboSel.id)
+        .where('rp', '==', valores.rp)
+        .where('fbaja', '==', '')
+        .get();
 
-    }
-
-    
-    //valida que el RP no exista
-    if (rp && rp.length != 0) {
-      existeRP = false;
-      try {
-        await firebase.db.collection('animal').where('idtambo', '==', idtambo).where('rp', '==', rp).where('fbaja', '==', '').get().then(snapshot => {
-          if (!snapshot.empty) {
-            snapshot.forEach(doc => {
-              if (doc.id != id) {
-                existeRP = true;
-              };
-            });
-
-          }
-        });
-      } catch (error) {
-        guardarDescError(error.message);
-        guardarError(true);
-        guardarProcesando(false);
-        guardarAnimal(valores);
+      if (!existe.empty) {
+        alert("Ya existe un animal con ese RP");
         return;
       }
 
-      if (existeRP == true) {
-
-        guardarDescError("El RP ya está asociado a otro animal!");
-        guardarError(true);
-        guardarProcesando(false);
-        guardarAnimal(valores);
-        return;
-      }
+      await firebase.db.collection('animal').add({ ...valores, idtambo: tamboSel.id });
+      setShowAltaModal(false);
+      guardarElim(true);
+    } catch (e) {
+      console.error("Error al dar de alta:", e);
+      alert("Error al guardar el animal");
     }
-
-
-    //valida que el eRP no exista
-    if (erp && erp.length != 0) {
-      existeERP = false;
-      try {
-        await firebase.db.collection('animal').where('idtambo', '==', idtambo).where('erp', '==', erp).where('fbaja', '==', '').get().then(snapshot => {
-          if (!snapshot.empty) {
-            snapshot.forEach(doc => {
-              if (doc.id != id) {
-                existeERP = true;
-              };
-            });
-
-          }
-        });
-      } catch (error) {
-        guardarDescError(error.message);
-        guardarError(true);
-        guardarProcesando(false);
-        guardarAnimal(valores);
-        return;
-      }
-
-      if (existeERP == true) {
-        guardarDescError("El eRP ya está asociado a otro animal!");
-        guardarError(true);
-        guardarProcesando(false);
-        guardarAnimal(valores);
-        return;
-      }
-    }
-
-    //Si es alta
-    if (id == "0") {
-   
-      //creo el objeto animal
-      const animal = {
-        idtambo,
-        ingreso,
-        rp,
-        erp,
-        lactancia,
-        observaciones,
-        estpro,
-        estrep,
-        fparto,
-        fservicio,
-        categoria,
-        racion,
-        porcentaje,
-        fracion,
-        nservicio,
-        uc,
-        fuc,
-        ca,
-        anorm,
-        fbaja,
-        mbaja,
-        rodeo,
-        sugerido
-      }
-
-      //insertar en base de datos
-      try {
-        await firebase.db.collection('animal').add(animal);
-        guardarDescExito("Animal dado de alta con éxito!");
-        guardarExito(true);
-        router.push('/animales');
-      } catch (error) {
-        guardarDescError(error.message);
-        guardarError(true);
-      }
-
-
-    } else {
-
-      //update en base de datos
-      try {
-        await firebase.db.collection('animal').doc(id).update(valores);
-        guardarExito(true);
-        guardarDescExito("Animal editado con éxito!");
-        router.push('/animales');
-      } catch (error) {
-        guardarDescError(error.message);
-        guardarError(true);
-      }
-      guardarAnimal(valores);
-
-    }
-
-
-    //Guardo los valores del formulario para recargar 
-    guardarProcesando(false);
   }
 
+  if (procesando) {
+    return (
+      <Layout titulo="Cargando...">
+        <div className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
+          <div className="text-center" style={{ maxWidth: 300 }}>
+            <Lottie animationData={vacaAnimacion} loop autoplay />
+            <p className="textoLoader">CARGANDO ANIMALES...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
-    <Layout
-      titulo="Animales"
-    >
-      <>
-    
-    {procesando ? <ContenedorSpinner> <Spinner animation="border" variant="info" /></ContenedorSpinner> :
-      <>
-        <Botonera>
+    <Layout titulo="Animales">
+      <div className={styles.container}>
+        <h2 className={styles.title}><GiCow /> Listado de animales de <strong>{tamboSel?.nombre}</strong>: <strong>{animales.length}</strong></h2>
 
-          <h5>Tambo {tamboSel && tamboSel.nombre}</h5>
-          <h6>{tit}</h6>
-
-        </Botonera>
-        <Mensaje>
-          <Alert variant="success" show={exito} >{descExito}</Alert>
-          <Alert variant="danger" show={error} >
-            <Alert.Heading>Oops! Se ha producido un error!</Alert.Heading>
-            <p>{descError}</p>
-          </Alert>
-
-        </Mensaje>
+        <div className={styles.actionsContainer}>
+          <input
+            type="text"
+            name="rp"
+            placeholder="RP / eRP"
+            value={valoresFiltro.rp}
+            onChange={e => guardarValoresFiltro({ rp: e.target.value })}
+            className={styles.inputRp}
+          />
+          <button onClick={handleSubmit} className={`${styles.customBtn} ${styles.searchBtn}`}><RiSearchLine /> Buscar</button>
+          <button onClick={handleAbrirAlta} className={`${styles.customBtn} ${styles.addBtn}`}><RiAddBoxLine /> Alta Animal</button>
+        </div>
 
         <Contenedor>
-          <Form
-            onSubmit={handleSubmit}
-          >
-            <Form.Label><h5>Datos del Animal</h5></Form.Label>
+          {animales.map(a => (
+            <div key={a.id} className={styles.animalCard}>
+              <div>{a.rp}</div>
+              <div>{a.estpro}</div>
+              <div>{a.estrep}</div>
+              <div>{a.erp}</div>
+              <DetalleAnimal animal={a} guardarElim={guardarElim} />
+            </div>
+          ))}
+        </Contenedor>
+
+     {/* Modal Alta Animal */}
+      <Modal show={showAltaModal} onHide={handleCerrarAlta} size="lg">
+        <Modal.Header closeButton><Modal.Title>Alta de Animal</Modal.Title></Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleSubmitAlta}>
             <Row>
-
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Tambo</Form.Label>
-                  {(id != "0") ?
-                    <>
-                      <Form.Control
-                        as="select"
-                        id="idtambo"
-                        name="idtambo"
-                        value={idtambo}
-                        placeholder="seleccione tambo"
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="0" >Seleccione tambo...</option>
-                        {tambos.map(t => (
-
-                          <option key={t.id} value={t.id}>{t.nombre}</option>
-                        )
-                        )}
-                      </Form.Control>
-                      
-                    </>
-                    :
-                    <Form.Control
-                      type="string"
-                      value={tamboSel.nombre}
-                      readOnly
-
-                    />
-
-                  }
-                {errores.idtambo && <Alert variant="danger" width="100%"  >{errores.idtambo}</Alert>}
+              <Col lg={6}>
+                <Form.Group><Form.Label>Tambo</Form.Label>
+                  <Form.Control type="text" value={tamboSel?.nombre} readOnly />
                 </Form.Group>
               </Col>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Ingreso</Form.Label>
-                  <Form.Control
-                    type="date"
-                    id="ingreso"
-                    name="ingreso"
-                    max={hoy}
-                    value={ingreso}
-                    onChange={handleChange}
-                   // required
-
-                  />
-                  {errores.ingreso && <Alert variant="danger" width="100%"  >{errores.ingreso}</Alert>}
-                </Form.Group>
-              </Col>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>RP</Form.Label>
-                  <Form.Control
-                    type="string"
-                    id="rp"
-                    placeholder="RP"
-                    name="rp"
-                    value={rp}
-                    onChange={handleChange}
-                    required
-
-                  />
-                  {errores.rp && <Alert variant="danger" width="100%"  >{errores.rp}</Alert>}
-                </Form.Group>
-              </Col>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>RP electrónico (eRP)</Form.Label>
-                  <Form.Control
-                    type="string"
-                    id="erp"
-                    placeholder="eRP"
-                    name="erp"
-                    value={erp}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
-                  {errores.erp && <Alert variant="danger" width="100%"  >{errores.erp}</Alert>}
+              <Col lg={6}>
+                <Form.Group><Form.Label>Ingreso</Form.Label>
+                  <Form.Control type="date" name="ingreso" value={ingreso} onChange={handleChangeAlta} max={hoy} />
                 </Form.Group>
               </Col>
             </Row>
 
             <Row>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Lactancias</Form.Label>
-
-                  <Form.Control
-                    type="number"
-                    min="0"
-                    max="20"
-                    id="lactancia"
-                    name="lactancia"
-                    value={lactancia}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    required
-
-                  />
-                  {errores.lactancia && <Alert variant="danger" width="100%"  >{errores.lactancia}</Alert>}
+              <Col lg={6}>
+                <Form.Group><Form.Label>RP</Form.Label>
+                  <Form.Control name="rp" value={rp} onChange={handleChangeAlta} required isInvalid={!!errores.rp} />
+                  <Form.Control.Feedback type="invalid">{errores.rp}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
-
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Categoria</Form.Label>
-                  <Form.Control
-                    type="string"
-                    id="categoria"
-                    name="categoria"
-                    value={categoria}
-                    onChange={handleChange}
-                    disabled
-
-                  />
-
-                </Form.Group>
-              </Col>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Estado Reproductivo</Form.Label>
-
-                  <Form.Control
-                    as="select"
-                    id="estrep"
-                    name="estrep"
-                    value={estrep}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="vacia">Vacía</option>
-                    <option value="preñada">Preñada</option>
-                  </Form.Control>
-                  {errores.estrep && <Alert variant="danger" width="100%"  >{errores.estrep}</Alert>}
-                </Form.Group>
-              </Col>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Ultimo Servicio</Form.Label>
-                  <Form.Control
-                    type="date"
-                    id="fservicio"
-                    name="fservicio"
-                    value={fservicio}
-                    onChange={handleChange}
-                    max={hoy}
-                  />
-                  {errores.fservicio && <Alert variant="danger" width="100%"  >{errores.fservicio}</Alert>}
+              <Col lg={6}>
+                <Form.Group><Form.Label>eRP</Form.Label>
+                  <Form.Control name="erp" value={erp} onChange={handleChangeAlta} isInvalid={!!errores.erp} />
+                  <Form.Control.Feedback type="invalid">{errores.erp}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
             </Row>
+
             <Row>
+              <Col lg={6}>
+                <Form.Group><Form.Label>Lactancia</Form.Label>
+                  <Form.Control type="number" name="lactancia" value={lactancia} onChange={handleChangeAlta} />
+                </Form.Group>
+              </Col>
+              <Col lg={6}>
+                <Form.Group><Form.Label>Categoría</Form.Label>
+                  <Form.Control name="categoria" value={categoria} readOnly disabled />
+                </Form.Group>
+              </Col>
+            </Row>
 
-
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Estado Productivo</Form.Label>
-
-                  <Form.Control
-                    as="select"
-                    id="estpro"
-                    name="estpro"
-                    value={estpro}
-                    onChange={handleChange}
-                    required
-                  >
+            <Row>
+              <Col lg={6}>
+                <Form.Group><Form.Label>Estado Productivo</Form.Label>
+                  <Form.Control as="select" name="estpro" value={estpro} onChange={handleChangeAlta}>
                     <option value="seca">Seca</option>
                     <option value="En Ordeñe">En Ordeñe</option>
                   </Form.Control>
-                  {errores.estpro && <Alert variant="danger" width="100%"  >{errores.estpro}</Alert>}
                 </Form.Group>
               </Col>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Ultimo Parto</Form.Label>
-                  <Form.Control
-                    type="date"
-                    id="fparto"
-                    name="fparto"
-                    value={fparto}
-                    onChange={handleChange}
-                    max={hoy}
-                  />
-                  {errores.fparto && <Alert variant="danger" width="100%"  >{errores.fparto}</Alert>}
-                </Form.Group>
-              </Col>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Ultimo Control(Lts)</Form.Label>
-                  
-                  <Form.Control
-                    type="number"
-                    step="any"
-                    min="0"
-                    max="60"
-                    id="uc"
-                    name="uc"
-                    value={uc}
-                    onChange={handleChange}
-                    required
-                    readOnly={campoProtegido}
-
-                  />
-                  {errores.uc && <Alert variant="danger" width="100%"  >{errores.uc}</Alert>}
-                </Form.Group>
-              </Col>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Racion(Kgs)</Form.Label>
-
-                  <Form.Control
-                    type="number"
-                    min="0"
-                    max="20"
-                    id="racion"
-                    name="racion"
-                    value={racion}
-                    onChange={handleChange}
-                    required
-                    readOnly={campoProtegido}
-
-                  />
-                  {errores.racion && <Alert variant="danger" width="100%"  >{errores.racion}</Alert>}
+              <Col lg={6}>
+                <Form.Group><Form.Label>Estado Reproductivo</Form.Label>
+                  <Form.Control as="select" name="estrep" value={estrep} onChange={handleChangeAlta}>
+                    <option value="vacia">Vacía</option>
+                    <option value="preñada">Preñada</option>
+                  </Form.Control>
                 </Form.Group>
               </Col>
             </Row>
+
             <Row>
-              <Col lg={true}>
-                <Form.Group>
-                  <Form.Label>Observaciones</Form.Label>
-                  <Form.Control
-                    type="text"
-                    id="observaciones"
-                    name="observaciones"
-                    value={observaciones}
-                    onChange={handleChange}
-
-                  />
-
+              <Col lg={6}>
+                <Form.Group><Form.Label>Último Servicio</Form.Label>
+                  <Form.Control type="date" name="fservicio" value={fservicio} onChange={handleChangeAlta} max={hoy} />
+                </Form.Group>
+              </Col>
+              <Col lg={6}>
+                <Form.Group><Form.Label>Último Parto</Form.Label>
+                  <Form.Control type="date" name="fparto" value={fparto} onChange={handleChangeAlta} max={hoy} />
                 </Form.Group>
               </Col>
             </Row>
-            <Row>
-              <Col lg={true}>
-                <Button
-                  variant="success"
-                  type="submit"
-                  block
-                >
-                  Guardar
-                </Button>
-              </Col>
-              &nbsp;
-              <Col lg={true}>
-                <Link
-                  href="/animales"
-                >
-                  <span>
-                  <Button
-                    variant="info"
-                    block
-                  >
-                    Volver
-                  </Button>
-                  </span>
-                </Link>
-              </Col>
 
+            <Row>
+              <Col lg={6}>
+                <Form.Group><Form.Label>Último Control (Lts)</Form.Label>
+                  <Form.Control type="number" step="any" name="uc" value={uc} onChange={handleChangeAlta} />
+                </Form.Group>
+              </Col>
+              <Col lg={6}>
+                <Form.Group><Form.Label>Ración (Kgs)</Form.Label>
+                  <Form.Control type="number" step="any" name="racion" value={racion} onChange={handleChangeAlta} />
+                </Form.Group>
+              </Col>
             </Row>
+
+            <Row>
+              <Col>
+                <Form.Group><Form.Label>Observaciones</Form.Label>
+                  <Form.Control as="textarea" rows={2} name="observaciones" value={observaciones} onChange={handleChangeAlta} />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <div className="text-end mt-3">
+              <Button variant="secondary" onClick={handleCerrarAlta} className="me-2">Cancelar</Button>
+              <Button type="submit" variant="success">Guardar</Button>
+            </div>
           </Form>
-        </Contenedor>
-      </>
-      }
-      </>
-      </Layout>
+        </Modal.Body>
+      </Modal>
+      </div>
+    </Layout>
   );
-}
+};
 
-export default Animal;
+export default Animales;

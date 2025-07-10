@@ -12,12 +12,14 @@ import styles from '../styles/Tambos.module.scss';
 
 import Lottie from 'lottie-react';
 import vacaAnimacion from '../public/animaciones/Animation - Vaca.json';
+import CrearTamboModal from '../pages/tambos/CrearTamboModal';
 
 const Home = () => {
   const [error, guardarError] = useState(false);
   const { firebase, usuario, tambos, guardarTambos } = useContext(FirebaseContext);
   const router = useRouter();
   const [loading, setLoading] = useState(true); // loader inicial
+  const [showCrearModal, setShowCrearModal] = useState(false);
 
   useEffect(() => {
     const redirectLogin = async () => {
@@ -74,12 +76,11 @@ const Home = () => {
               <p>Gestioná tus tambos fácilmente</p>
             </div>
             <div>
-              <Link href="/tambos/[id]" as="/tambos/0">
-                <Button className={styles.btnNuevoTambo}>
-                  <RiAddBoxLine size={20} />
-                  &nbsp; Crear nuevo tambo
-                </Button>
-              </Link>
+              <Button className={styles.btnNuevoTambo} onClick={() => setShowCrearModal(true)}>
+                <RiAddBoxLine size={20} />
+                &nbsp; Crear nuevo tambo
+              </Button>
+
             </div>
           </section>
 
@@ -169,6 +170,12 @@ const Home = () => {
           </section>
         </>
       )}
+      <CrearTamboModal
+        show={showCrearModal}
+        onHide={() => setShowCrearModal(false)}
+        onSuccess={() => setShowCrearModal(false)}
+      />
+
     </Layout>
   );
 };

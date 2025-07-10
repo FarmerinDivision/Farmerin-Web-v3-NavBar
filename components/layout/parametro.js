@@ -1,231 +1,216 @@
 import React, { useState, useContext } from 'react';
 import { FirebaseContext } from '../../firebase2';
-import { Button, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { RiArrowDownLine, RiArrowUpLine, RiDeleteBin2Line, RiSubtractLine, RiEdit2Line } from 'react-icons/ri';
-import ParametroEdit from '../../pages/parametros/[id]'; // asegurate de que esté adaptado para funcionar como componente modal
-import styles from '../../styles/Parametro.module.scss'
-const Parametro = ({ parametro, parametros, guardarParametros, porcentaje }) => {
-  const { id, orden, condicion, min, max, um, racion } = parametro;
+import { Button, Modal } from 'react-bootstrap';
+import {
+  RiArrowDownLine,
+  RiArrowUpLine,
+  RiDeleteBin2Line,
+  RiSubtractLine,
+  RiEdit2Line
+} from 'react-icons/ri';
+import ParametroEdit from '../../pages/parametros/[id]';
+import styles from '../../styles/Parametro.module.scss';
+
+const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpdate }) => {
+  const { id, orden, condicion, min, max, um, racion, categoria } = parametro;
   const { firebase } = useContext(FirebaseContext);
 
   const [showModal, setShowModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleShow = () => setShowModal(true);
-  const handleClose = () => setShowModal(false);
+  const handleClose = () => {
+    setShowModal(false);
+    setSuccessMsg('Parámetro actualizado correctamente.');
+    setShowSuccess(true);
+  };
+
+
 
   const eliminarParam = async () => {
     await firebase.db.collection('parametro').doc(id).delete();
-    const actualizados = parametros.filter(p => p.id !== id).map((param, i) => {
-      param.orden = i + 1;
-      firebase.db.collection('parametro').doc(param.id).update(param);
-      return param;
-    });
+    const actualizados = parametros
+      .filter(p => p.id !== id)
+      .map((param, i) => {
+        const actualizado = { ...param, orden: i + 1 };
+        firebase.db.collection('parametro').doc(param.id).update(actualizado);
+        return actualizado;
+      });
+
     guardarParametros(actualizados);
   };
-   const handleDown = () => {
-      const parOrd = parametros.map(p => {
-         // Revisamos que el id recibido coincida con el elemento que queremos actualizar
-         if (p.id === id) {
-            // Actualizamos el orden
-            p.orden += 1;
-            try {
-               firebase.db.collection('parametro').doc(p.id).update(p);
-            } catch (error) {
-               console.log(error);
-            }
-            // Regresamos el nuevo elemento con el orden actualizad
-            return p;
-         }
-         //Si es el anterior le sumo uno
-         if (p.orden === orden + 1) {
-            p.orden -= 1;
-            try {
-               firebase.db.collection('parametro').doc(p.id).update(p);
-            } catch (error) {
-               console.log(error);
-            }
-            // Regresamos el nuevo elemento con el orden actualizado
-            return p;
 
-         }
-         // Si no es el elemento que deseamos actualizar lo regresamos tal como está
-         return p;
-      });
+  const handleDown = () => {
+    const parOrd = parametros.map(p => {
+      if (p.id === id) {
+        p.orden += 1;
+        firebase.db.collection('parametro').doc(p.id).update(p);
+        return p;
+      }
+      if (p.orden === orden + 1) {
+        p.orden -= 1;
+        firebase.db.collection('parametro').doc(p.id).update(p);
+        return p;
+      }
+      return p;
+    });
 
-      parOrd.sort(function (a, b) {
-         if (a.orden > b.orden) {
-            return 1;
-         }
-         if (a.orden < b.orden) {
-            return -1;
-         }
-         // a must be equal to b
-         return 0;
-      });
+    parOrd.sort((a, b) => a.orden - b.orden);
+    guardarParametros(parOrd);
+  };
 
-      //actualizamos state
-      guardarParametros(parOrd);
+  const handleUp = () => {
+    const parOrd = parametros.map(p => {
+      if (p.id === id) {
+        p.orden -= 1;
+        firebase.db.collection('parametro').doc(p.id).update(p);
+        return p;
+      }
+      if (p.orden === orden - 1) {
+        p.orden += 1;
+        firebase.db.collection('parametro').doc(p.id).update(p);
+        return p;
+      }
+      return p;
+    });
 
-   };
+    parOrd.sort((a, b) => a.orden - b.orden);
+    guardarParametros(parOrd);
+  };
 
-   function handleUp() {
+  return (
+    <>
+      <tr className={styles.filaParametro}>
+        <td className={styles.columna}><strong>{orden}</strong></td>
+        <td className={styles.columna}>{condicion}</td>
+        <td className={styles.columna}>{min}</td>
+        <td className={styles.columna}>{max}</td>
+        <td className={styles.columna}>{um}</td>
+        <td className={styles.columna}>{racion} kg</td>
+        <td className={styles.colAcciones}>
+          <div className={styles.tooltipWrapper}>
+            <Button variant="outline-info" size="sm" onClick={handleShow} className={styles.iconBtnEdit}>
+              <RiEdit2Line />
+            </Button>
+            <span className={styles.tooltipText}>Editar parámetro</span>
+          </div>
 
-      //console.log(parametros);
-      const parOrd = parametros.map(p => {
-         // Revisamos que la llave recibida coincida con el elemento que queremos actualizar
-         if (p.id === id) {
-            // Actualizamos el orden
-            p.orden -= 1;
-            try {
-               firebase.db.collection('parametro').doc(p.id).update(p);
-            } catch (error) {
-               console.log(error);
-            }
-            // Regresamos el nuevo elemento con el orden actualizad
-            return p;
-         }
-         //Si el el anterior le sumo uno
-         if (p.orden === orden - 1) {
-            p.orden += 1;
-            try {
-               firebase.db.collection('parametro').doc(p.id).update(p);
-            } catch (error) {
-               console.log(error);
-            }
-            // Regresamos el nuevo elemento con el orden actualizado
-            return p;
+          <div className={styles.tooltipWrapper}>
+            <Button variant="outline-danger" size="sm" onClick={() => setShowConfirm(true)} className={styles.iconBtnElim}>
+              <RiDeleteBin2Line />
+            </Button>
+            <span className={styles.tooltipText}>Eliminar parámetro</span>
+          </div>
 
-         }
-         // Si no es el elemento que deseamos actualizar lo regresamos tal como está
-         return p;
-      });
+          {orden !== 1 ? (
+            <div className={styles.tooltipWrapper}>
+              <Button variant="outline-primary" size="sm" onClick={handleUp} className={styles.iconBtnSubir}>
+                <RiArrowUpLine />
+              </Button>
+              <span className={styles.tooltipText}>Mover hacia arriba</span>
+            </div>
+          ) : (
+            <div className={styles.tooltipWrapper}>
+              <Button variant="outline-secondary" size="sm" disabled className={styles.iconBtnStop}>
+                <RiSubtractLine />
+              </Button>
+              <span className={styles.tooltipText}>No se puede subir</span>
+            </div>
+          )}
 
-      parOrd.sort(function (a, b) {
-         if (a.orden > b.orden) {
-            return 1;
-         }
-         if (a.orden < b.orden) {
-            return -1;
-         }
-         // a must be equal to b
-         return 0;
-      });
+          {orden !== parametros.length ? (
+            <div className={styles.tooltipWrapper}>
+              <Button variant="outline-primary" size="sm" onClick={handleDown} className={styles.iconBtnBajar}>
+                <RiArrowDownLine />
+              </Button>
+              <span className={styles.tooltipText}>Mover hacia abajo</span>
+            </div>
+          ) : (
+            <div className={styles.tooltipWrapper}>
+              <Button variant="outline-secondary" size="sm" disabled className={styles.iconBtnStop}>
+                <RiSubtractLine />
+              </Button>
+              <span className={styles.tooltipText}>No se puede bajar</span>
+            </div>
+          )}
+        </td>
+      </tr>
 
-      //actualizamos state
-      guardarParametros(parOrd);
+      {/* Modal de edición */}
+      <Modal show={showModal} onHide={handleClose} size="lg" centered backdrop="static">
+        <Modal.Header closeButton className={styles.ModalHeader}>
+          <Modal.Title className={styles.ModalTitle}>Editar Parámetro</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className={styles.ModalBody}>
+          <ParametroEdit
+            idParametro={id}
+            isModal={true}
+            onClose={handleClose}
+            onUpdate={onUpdate}
+          />
+        </Modal.Body>
+      </Modal>
 
-   };
+      {/* Modal de confirmación de eliminación */}
+      <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>¿Eliminar parámetro?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>¿Estás seguro de que deseás eliminar el siguiente parámetro?</p>
+          <ul>
+            <li><strong>Categoría:</strong> {categoria}</li>
+            <li><strong>Condición:</strong> {condicion}</li>
+            <li><strong>Rango:</strong> {min} - {max} {um}</li>
+            <li><strong>Ración:</strong> {racion} kg</li>
+          </ul>
 
-return (
-  <>
-    <tr className={styles.filaParametro}>
-      <td className={styles.columna}><strong>{orden}</strong></td>
-      <td className={styles.columna}>{condicion}</td>
-      <td className={styles.columna}>{min}</td>
-      <td className={styles.columna}>{max}</td>
-      <td className={styles.columna}>{um}</td>
-      <td className={styles.columna}>{racion} kg</td>
-      <td className={styles.colAcciones}>
-        <div className={styles.tooltipWrapper}>
-          <Button
-            variant="outline-info"
-            size="sm"
-            onClick={handleShow}
-            className={styles.iconBtnEdit}
-          >
-            <RiEdit2Line />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowConfirm(false)}>
+            Cancelar
           </Button>
-          <span className={styles.tooltipText}>Editar</span>
-        </div>
-
-        <div className={styles.tooltipWrapper}>
           <Button
-            variant="outline-danger"
-            size="sm"
-            onClick={eliminarParam}
-            className={styles.iconBtnElim}
+            variant="danger"
+            onClick={async () => {
+              setShowConfirm(false); // ✅ Cierra confirmación primero
+
+              // 🔁 Usamos un pequeño delay para permitir que el cierre del modal se procese
+              setTimeout(async () => {
+                await eliminarParam(); // 🔥 Elimina
+                if (onUpdate) onUpdate(); // 🔁 Refresca tabla
+
+                setSuccessMsg('Parámetro eliminado correctamente.');
+                setShowSuccess(true); // ✅ Mostramos el cartel
+              }, 300);
+            }}
           >
-            <RiDeleteBin2Line />
+            Eliminar
           </Button>
-          <span className={styles.tooltipText}>Eliminar</span>
-        </div>
 
-        {orden !== 1 ? (
-          <div className={styles.tooltipWrapper}>
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={handleUp}
-              className={styles.iconBtnSubir}
-            >
-              <RiArrowUpLine />
-            </Button>
-            <span className={styles.tooltipText}>Subir</span>
-          </div>
-        ) : (
-          <div className={styles.tooltipWrapper}>
-            <Button
-              variant="outline-secondary"
-              size="sm"
-              disabled
-              className={styles.iconBtnStop}
-            >
-              <RiSubtractLine />
-            </Button>
-            <span className={styles.tooltipText}>No se puede subir</span>
-          </div>
-        )}
+        </Modal.Footer>
+      </Modal>
+      <Modal show={showSuccess} onHide={() => setShowSuccess(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>✅ Acción completada</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>{successMsg}</p>
+          <p className="text-muted">
+            (Si no ve el parámetro, salga y vuelva a entrar para actualizar.)
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowSuccess(false)}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-        {orden !== parametros.length ? (
-          <div className={styles.tooltipWrapper}>
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={handleDown}
-              className={styles.iconBtnBajar}
-            >
-              <RiArrowDownLine />
-            </Button>
-            <span className={styles.tooltipText}>Bajar</span>
-          </div>
-        ) : (
-          <div className={styles.tooltipWrapper}>
-            <Button
-              variant="outline-secondary"
-              size="sm"
-              disabled
-              className={styles.iconBtnStop}
-            >
-              <RiSubtractLine />
-            </Button>
-            <span className={styles.tooltipText}>No se puede bajar</span>
-          </div>
-        )}
-      </td>
-    </tr>
-
-    {/* Modal visible fuera de la fila */}
-    <Modal
-      show={showModal}
-      onHide={handleClose}
-      size="lg"
-      centered
-      backdrop="static"
-    >
-      <Modal.Header closeButton className={styles.ModalHeader}>
-        <Modal.Title className={styles.ModalTitle}>Editar Parámetro</Modal.Title>
-      </Modal.Header>
-      <Modal.Body className={styles.ModalBody}>
-        <ParametroEdit
-          idParametro={id}
-          isModal={true}
-          onClose={handleClose}
-        />
-      </Modal.Body>
-    </Modal>
-  </>
-);
-
+    </>
+  );
 };
 
 export default Parametro;

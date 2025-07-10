@@ -17,7 +17,14 @@ const STATE_INICIAL = {
   racion: 8
 };
 
-const ParametroEdit = ({ idParametro = null, onClose = null, isModal = false }) => {
+const ParametroEdit = ({
+  idParametro = null,
+  onClose = null,
+  isModal = false,
+  onUpdate = null,
+  onAddParam = null
+}) => {
+
   const router = useRouter();
   const idFromRouter = router?.query?.id;
   const id = idParametro || idFromRouter;
@@ -86,6 +93,7 @@ const ParametroEdit = ({ idParametro = null, onClose = null, isModal = false }) 
 
   async function editParametro() {
     guardarProcesando(true);
+
     if (id === "0") {
       if (!usuario) return router.push('/login');
 
@@ -104,9 +112,18 @@ const ParametroEdit = ({ idParametro = null, onClose = null, isModal = false }) 
       };
 
       try {
-        await firebase.db.collection('parametro').add(param);
+        const nuevoDoc = await firebase.db.collection('parametro').add(param);
+        const nuevoParam = { id: nuevoDoc.id, ...param };
+
+        // ✅ Insertar directamente en el frontend
+        if (onAddParam) onAddParam(nuevoParam);
+
+        // ✅ Mostrar mensaje y cerrar modal
         guardarExito(true);
         guardarDescExito("Parámetro creado con éxito!");
+
+        if (onClose) onClose();
+
       } catch (error) {
         guardarDescError(error.message);
         guardarError(true);
@@ -116,17 +133,18 @@ const ParametroEdit = ({ idParametro = null, onClose = null, isModal = false }) 
         await firebase.db.collection('parametro').doc(id).update(valores);
         guardarExito(true);
         guardarDescExito("Parámetro editado con éxito!");
+
+        if (onUpdate) onUpdate();
+        if (onClose) onClose();
       } catch (error) {
         guardarDescError(error.message);
         guardarError(true);
       }
     }
-    guardarProcesando(false);
 
-    // cierre según origen
-    if (onClose) onClose();
-    else router.push('/parametros');
+    guardarProcesando(false);
   }
+
 
   const contenidoFormulario = (
     <>

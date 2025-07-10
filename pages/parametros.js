@@ -40,39 +40,45 @@ const Parametros = () => {
     if (selectedChange === null || !tamboSel) return;
 
     let nuevoPorcentaje = selectedChange;
-    let porcentajeAnimal = 1 + nuevoPorcentaje / 100;
-
     if (nuevoPorcentaje > 100) nuevoPorcentaje = 100;
     if (nuevoPorcentaje < -50) nuevoPorcentaje = -50;
 
-    let p = { porcentaje: nuevoPorcentaje };
-    let pAnimal = { porcentaje: porcentajeAnimal };
+    const porcentajeAnimal = { porcentaje: 1 + nuevoPorcentaje / 100 };
+    const p = { porcentaje: nuevoPorcentaje };
 
+    // ✅ Cambio instantáneo en pantalla
+    setValor(nuevoPorcentaje);
     setPorc(nuevoPorcentaje);
+    setSelectedChange(null);
 
     try {
+      // ✅ Actualiza el porcentaje general en el tambo
       await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
 
-      const animalesSnapshot = await firebase.db
+      // ✅ Batch update para animales (más rápido)
+      const snapshot = await firebase.db
         .collection('animal')
         .where('tamboId', '==', tamboSel.id)
         .get();
 
-      const updatePromises = animalesSnapshot.docs
+      const batch = firebase.db.batch();
+      snapshot.docs
         .filter(doc => {
           const data = doc.data();
           return !data.fbaja && !data.mbaja;
         })
-        .map(doc =>
-          firebase.db.collection('animal').doc(doc.id).update(pAnimal)
-        );
+        .forEach(doc => {
+          const ref = firebase.db.collection('animal').doc(doc.id);
+          batch.update(ref, porcentajeAnimal);
+        });
 
-      await Promise.all(updatePromises);
+      await batch.commit();
 
+      // ✅ Notificación
       const noti = {
         mensaje: isIncrease
-          ? `AUMENTO DEL ${selectedChange} %`
-          : `REDUCCIÓN DEL ${selectedChange} %`,
+          ? `AUMENTO DEL ${nuevoPorcentaje} %`
+          : `REDUCCIÓN DEL ${nuevoPorcentaje} %`,
         fecha: firebase.nowTimeStamp(),
       };
 
@@ -87,67 +93,66 @@ const Parametros = () => {
         id: Date.now(),
       }));
 
-      console.log(tamboSel);
     } catch (error) {
-      console.log(error);
+      console.error("Error al aplicar cambio:", error);
     }
-
-    setValor(nuevoPorcentaje);
-    setSelectedChange(null);
   };
+
 
   const restablecer = async () => {
-    if (tamboSel) {
-      setValor(0);
-      let p = { porcentaje: 0 };
-      let pAnimal = { porcentaje: 1 };
+    if (!tamboSel) return;
 
-      try {
-        await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
+    const p = { porcentaje: 0 };
+    const pAnimal = { porcentaje: 1 };
 
-        const animalesSnapshot = await firebase.db
-          .collection('animal')
-          .where('tamboId', '==', tamboSel.id)
-          .get();
+    // ✅ Cambio instantáneo en pantalla
+    setValor(0);
+    setSelectedChange(null);
+    setIsIncrease(true);
 
-        const updatePromises = animalesSnapshot.docs
-          .filter(doc => {
-            const data = doc.data();
-            return !data.fbaja && !data.mbaja;
-          })
-          .map(doc =>
-            firebase.db.collection('animal').doc(doc.id).update(pAnimal)
-          );
+    try {
+      await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
 
-        await Promise.all(updatePromises);
+      const snapshot = await firebase.db
+        .collection('animal')
+        .where('tamboId', '==', tamboSel.id)
+        .get();
 
-        const noti = {
-          mensaje: 'SE VOLVIÓ AL VALOR ORIGINAL DE LA RACIÓN.',
-          fecha: firebase.nowTimeStamp(),
-        };
+      const batch = firebase.db.batch();
+      snapshot.docs
+        .filter(doc => {
+          const data = doc.data();
+          return !data.fbaja && !data.mbaja;
+        })
+        .forEach(doc => {
+          const ref = firebase.db.collection('animal').doc(doc.id);
+          batch.update(ref, pAnimal);
+        });
 
-        await firebase.db
-          .collection('tambo')
-          .doc(tamboSel.id)
-          .collection('notificaciones')
-          .add(noti);
+      await batch.commit();
 
-        dispatch(addNotification({
-          ...noti,
-          id: Date.now(),
-        }));
+      const noti = {
+        mensaje: 'SE VOLVIÓ AL VALOR ORIGINAL DE LA RACIÓN.',
+        fecha: firebase.nowTimeStamp(),
+      };
 
-        console.log('se ejecutó y se agregó la notificación');
+      await firebase.db
+        .collection('tambo')
+        .doc(tamboSel.id)
+        .collection('notificaciones')
+        .add(noti);
 
-        // 👇 Estas dos líneas permiten que el cambio se vea reflejado de inmediato
-        setSelectedChange(null);
-        setIsIncrease(true);
+      dispatch(addNotification({
+        ...noti,
+        id: Date.now(),
+      }));
 
-      } catch (error) {
-        console.log(error);
-      }
+    } catch (error) {
+      console.error("Error al restablecer:", error);
     }
   };
+
+
 
   let porcentaje;
   if (valor >= -50 && valor <= 100 && valor % 10 === 0) {
