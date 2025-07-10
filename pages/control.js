@@ -366,26 +366,38 @@ const Control = () => {
         return Math.round(modificoRacion);
     };
 
-    const aplicarRacionSugerida = () => {
+    const aplicarRacionSugerida = async () => {
+        const batch = firebase.db.batch(); // Alternativa con batch si querés un update atómico
+
         const animalesActualizados = animales.map(animal => {
             if (animal.sugerido > 0) {
-                animal.racion = animal.sugerido; // Actualiza la ración
-                animal.fracion = firebase.nowTimeStamp(); // Actualiza la fecha de modificación
-                animal.actu = true; // Marca como actualizado
-                // Asegúrate de que la actualización en la base de datos se realice correctamente
-                firebase.db.collection('animal').doc(animal.id).update({
-                    racion: animal.racion,
-                    fracion: animal.fracion,
-                    actu: animal.actu
-                }).catch(error => {
-                    console.error("Error updating animal:", error); // Manejo de errores
+                const ref = firebase.db.collection('animal').doc(animal.id);
+                const fracion = firebase.nowTimeStamp();
+
+                // Prepara el cambio
+                batch.update(ref, {
+                    racion: animal.sugerido,
+                    fracion: fracion,
+                    actu: true
                 });
+
+                // Actualiza en estado local también
+                animal.racion = animal.sugerido;
+                animal.fracion = fracion;
+                animal.actu = true;
             }
             return animal;
         });
-        guardarAnimales(animalesActualizados); // Actualiza el estado
-        setShowSuccessModal(true); // Muestra el modal de éxito
+
+        try {
+            await batch.commit(); // Ejecuta todas las actualizaciones
+            guardarAnimales(animalesActualizados);
+            setShowSuccessModal(true);
+        } catch (error) {
+            console.error("Error actualizando raciones sugeridas:", error);
+        }
     };
+
 
     const handleConfirmApply = () => {
         aplicarRacionSugerida(); // Asegúrate de que esta función se llame correctamente
@@ -616,20 +628,25 @@ const Control = () => {
                     </Modal.Footer>
                 </Modal>
 
-                {/* Modal de éxito */}
+              
+                {/* Modal de acción completa */}
                 <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)}>
                     <Modal.Header closeButton>
-                        <Modal.Title>Cambio de Ración Sugerido</Modal.Title>
+                        <Modal.Title>✅ Acción completada</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        Cambio de ración sugerida exitosa.
+                        <p>Los cambios fueron guardados exitosamente.</p>
+                        <p className="text-muted">
+                            (Si no ve el cambio, salga y vuelva a entrar para actualizar.)
+                        </p>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="primary" onClick={() => setShowSuccessModal(false)}>
+                        <Button variant="success" onClick={() => setShowSuccessModal(false)}>
                             Cerrar
                         </Button>
                     </Modal.Footer>
                 </Modal>
+
             </>
         </Layout>
     );

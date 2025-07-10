@@ -14,7 +14,7 @@ import styles from '../styles/perfilFarmerin.module.scss';
 
 const UserProfile = () => {
   const { usuario, tamboSel, guardarTamboSel, firebase } = useContext(FirebaseContext);
-  const { notificaciones, sinLeer, marcarComoLeidas, historial, ultimoCambio,marcarUltimoCambioComoLeido} = useContext(NotificacionesContext);
+  const { notificaciones, sinLeer, marcarComoLeidas, historial, ultimoCambio, marcarUltimoCambioComoLeido } = useContext(NotificacionesContext);
   const router = useRouter();
 
   const [show, setShow] = useState(false);
@@ -34,6 +34,8 @@ const UserProfile = () => {
   const [error, guardarError] = useState(false);
   const [descError, guardarDescError] = useState('');
   const [animacionLeido, setAnimacionLeido] = useState(false);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
+
   const handleClose = () => setShow(false);
   const handleShow = () => {
     marcarComoLeidas();
@@ -232,20 +234,35 @@ const UserProfile = () => {
         <Modal.Body>
           <div className={styles.historialContainer}>
             {historial.length > 0 ? (
-              historial.map((cambio) => (
-                <div key={cambio.id} className={styles.historialItem}>
-                  <div className={styles.historialFecha}>
-                    {new Date(cambio.fecha?.toDate?.() || cambio.fecha).toLocaleDateString()}
+              <>
+                {(mostrarTodos ? historial : historial.slice(0, 5)).map((cambio) => (
+                  <div key={cambio.id} className={styles.historialItem}>
+                    <div className={styles.historialFecha}>
+                      {new Date(cambio.fecha?.toDate?.() || cambio.fecha).toLocaleDateString()}
+                    </div>
+                    <div className={styles.historialMensaje}>{cambio.mensaje}</div>
                   </div>
-                  <div className={styles.historialMensaje}>{cambio.mensaje}</div>
-                </div>
-              ))
+                ))}
+
+                {historial.length > 5 && (
+                  <div className="d-flex justify-content-center mt-3">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setMostrarTodos(!mostrarTodos)}
+                    >
+                      {mostrarTodos ? 'Ver menos' : 'Ver más'}
+                    </Button>
+                  </div>
+                )}
+              </>
             ) : (
               <Alert variant="info">No hay cambios registrados.</Alert>
             )}
           </div>
         </Modal.Body>
       </Modal>
+
+
     </Layout >
   );
 

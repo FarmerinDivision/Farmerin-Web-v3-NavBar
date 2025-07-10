@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, CartesianGrid
 } from 'recharts';
 
-// 🔢 Formato con miles: 5.000
+// 🔢 Formato con miles
 const formatNumber = (num) => {
   const numberValue = Number(num);
   if (isNaN(numberValue)) return 0;
@@ -16,7 +16,7 @@ const formatNumber = (num) => {
   }).format(numberValue);
 };
 
-// 🔢 Formato decimal: 22,3
+// 🔢 Decimal: 22,3
 const formatProdIndv = (num) => {
   const numberValue = parseFloat(num);
   if (isNaN(numberValue)) return 0;
@@ -43,20 +43,39 @@ const TooltipGeneral = ({ active, payload, label }) => {
 };
 
 const GraficoProduccion = ({ data, promedioTotal }) => {
-  const formattedData = data.map(item => ({
-    fecha: item.fecha.toDate ? item.fecha.toDate().toISOString().split('T')[0] : item.fecha,
-    produccion: item.produccion,
-    animales: item.animalesEnOrd
-  }));
+  // ✅ Asegurar que data esté presente
+  if (!Array.isArray(data) || data.length === 0) {
+    return <p style={{ textAlign: 'center', marginTop: 20 }}>No hay datos para mostrar.</p>;
+  }
+
+  // 🧱 Convertimos las fechas y formateamos los datos
+  const formattedData = data.map(item => {
+    const fechaObj = item.fecha.toDate ? item.fecha.toDate() : new Date(item.fecha);
+    return {
+      fecha: fechaObj.toISOString().split('T')[0], // YYYY-MM-DD
+      produccion: item.produccion,
+      animales: item.animalesEnOrd
+    };
+  });
+
+  // 📅 Detectamos si hay más de un año
+  const years = new Set(formattedData.map(item => new Date(item.fecha).getFullYear()));
+  const multipleYears = years.size > 1;
+
+  // 🏷️ Formato condicional de fecha para el eje X
+  const formatXAxisLabel = (dateStr) => {
+    const date = new Date(dateStr);
+    return multipleYears
+      ? date.toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+      : date.toLocaleDateString('es-AR', { month: '2-digit', day: '2-digit' });
+  };
 
   return (
     <div style={{ width: '100%', marginTop: 40 }}>
-      {/* Título */}
       <h3 style={{ textAlign: 'center', marginBottom: 5 }}>
         Producción Total y Vacas en Ordeñe
       </h3>
 
-      {/* Subtítulo del promedio individual total */}
       {typeof promedioTotal === 'number' && (
         <p style={{
           textAlign: 'center',
@@ -69,7 +88,6 @@ const GraficoProduccion = ({ data, promedioTotal }) => {
         </p>
       )}
 
-      {/* Gráfico */}
       <div style={{ width: '100%', height: 360 }}>
         <ResponsiveContainer>
           <ComposedChart
@@ -77,26 +95,20 @@ const GraficoProduccion = ({ data, promedioTotal }) => {
             margin={{ top: 20, right: 30, left: 20, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="fecha" />
-            
-            {/* Eje Y izquierdo: Producción */}
+            <XAxis dataKey="fecha" tickFormatter={formatXAxisLabel} />
             <YAxis
               yAxisId="left"
               tickFormatter={formatNumber}
               label={{ value: 'Producción (lts)', angle: -90, position: 'insideLeft' }}
             />
-            
-            {/* Eje Y derecho: Vacas en ordeñe */}
             <YAxis
               yAxisId="right"
               orientation="right"
               tickFormatter={formatNumber}
               label={{ value: 'Vacas en ordeñe', angle: -90, position: 'insideRight' }}
             />
-
             <Tooltip content={<TooltipGeneral />} />
             <Legend verticalAlign="top" height={36} />
-
             <Bar
               dataKey="produccion"
               barSize={30}
@@ -104,7 +116,6 @@ const GraficoProduccion = ({ data, promedioTotal }) => {
               name="🍼 Producción"
               yAxisId="left"
             />
-
             <Line
               type="monotone"
               dataKey="animales"

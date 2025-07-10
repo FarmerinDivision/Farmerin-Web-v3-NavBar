@@ -240,12 +240,13 @@ const DetalleTambos = ({ tambo }) => {
 
       {/* Modal de carga bloqueante */}
       <Modal show={cargando} backdrop="static" keyboard={false} centered>
-        <Modal.Body className="text-center">
-          <Spinner animation="border" role="status" variant="primary" />
-          <p className="mt-3">
-            Ingresando a  <strong>  {tamboSel?.nombre}</strong>...
-          </p>
-
+        <Modal.Body>
+          <div className={styles.loadingWrapper}>
+            <Spinner animation="border" role="status" variant="primary" />
+            <p className={styles.nombreTambo}>
+              Ingresando a <strong>{tamboSel?.nombre}</strong>...
+            </p>
+          </div>
         </Modal.Body>
       </Modal>
     </>

@@ -94,9 +94,15 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
                     console.log(`✅ Evento registrado para RP '${rp}' con detalle: ${detalleEvento}`);
 
                     if (litros !== null && !esValorEspecial) {
-                        console.log(`🔄 Actualizando 'uc' con: ${litros}`);
-                        await firebase.db.collection('animal').doc(doc.id).update({ uc: litros });
-                    } else {
+                        console.log(`🔄 Actualizando 'uc' con: ${litros} y 'fuc' con la fecha del evento`);
+                        await firebase.db.collection('animal').doc(doc.id).update({
+                            uc: litros,
+                            fuc: item["fecha"]
+                                ? firebase.firestore.Timestamp.fromDate(new Date(item["fecha"]))
+                                : firebase.nowTimeStamp()
+                        });
+                    }
+                    else {
                         console.log(`⚠️ No se actualizó 'uc' para RP '${rp}' porque el valor es especial o inválido (Texto: '${litrosStr}')`);
                     }
 
