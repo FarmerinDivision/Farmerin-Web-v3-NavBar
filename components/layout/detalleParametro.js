@@ -22,22 +22,10 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
    const [showSuccess, setShowSuccess] = useState(false);
    const [successMsg, setSuccessMsg] = useState('');
 
-
    useEffect(() => {
+      if (idTambo) obtenerParam();
+   }, [idTambo, porcentaje]);
 
-      if (idTambo) {
-         //obtiene los parametros del tambo
-         obtenerParam();
-      }
-   }, [idTambo])
-
-   useEffect(() => {
-
-      if (idTambo) {
-         //obtiene los parametros del tambo
-         obtenerParam();
-      }
-   }, [porcentaje])
    const obtenerParam = () => {
       try {
 
@@ -187,7 +175,7 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
                <Modal.Title>Nuevo Parámetro</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-               
+
                <ParametroEdit
                   idParametro="0"
                   isModal={true}
@@ -199,6 +187,7 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
                   onAddParam={(nuevoParam) => {
                      guardarParametros(prev => [...prev, nuevoParam].sort((a, b) => a.orden - b.orden));
                   }}
+                  categoriaFija={categoria} 
                />
 
             </Modal.Body>

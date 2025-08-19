@@ -1,20 +1,20 @@
 // src/components/animales.js
 import React, { useState, useEffect, useContext } from 'react';
-import { FirebaseContext } from '../firebase2';
-import { Botonera, Mensaje, Contenedor } from '../components/ui/Elementos';
-import Layout from '../components/layout/layout';
-import DetalleAnimal from '../components/layout/detalleAnimal';
-import SelectTambo from '../components/layout/selectTambo';
+import { FirebaseContext } from '../../firebase2';
+import { Botonera, Mensaje, Contenedor } from '../../components/ui/Elementos';
+import Layout from '../../components/layout/layout';
+import DetalleAnimal from '../../components/layout/detalleAnimal';
+import SelectTambo from '../../components/layout/selectTambo';
 import { useDispatch } from 'react-redux';
-import { addNotification } from '../redux/notificacionSlice';
+import { addNotification } from '../../redux/notificacionSlice';
 import { Button, Form, Row, Col, Modal } from 'react-bootstrap';
 import { RiAddBoxLine, RiSearchLine } from 'react-icons/ri';
 import { GiCow } from 'react-icons/gi';
 import Lottie from 'lottie-react';
-import vacaAnimacion from '../public/animaciones/Animation - Vaca.json';
-import styles from '../styles/Animales.module.scss';
-import useValidacion from '../hook/useValidacion';
-import validarCrearAnimal from '../validacion/validarCrearAnimal';
+import vacaAnimacion from '../../public/animaciones/Animation - Vaca.json';
+import styles from '../../styles/Animales.module.scss';
+import useValidacion from '../../hook/useValidacion';
+import validarCrearAnimal from '../../validacion/validarCrearAnimal';
 import { format } from 'date-fns';
 
 const STATE_INICIAL = {
@@ -66,8 +66,11 @@ const Animales = () => {
   } = useValidacion(STATE_INICIAL, validarCrearAnimal, altaAnimal);
 
   const {
-    rp, erp, lactancia, estpro, estrep, observaciones
+    ingreso, rp, erp, lactancia, estpro, estrep, observaciones,
+    categoria, fservicio, fparto, uc, racion
   } = valores;
+
+  const hoy = format(Date.now(), 'yyyy-MM-dd');
 
   useEffect(() => {
     if (tamboSel) {

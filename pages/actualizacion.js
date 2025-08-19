@@ -313,8 +313,11 @@ const Actualizacion = () => {
     <Layout titulo="Actualizacion Masiva">
       <>
         {procesando ? (
-          <ContenedorSpinner>
-            <Spinner animation="border" variant="info" />
+            <ContenedorSpinner>
+            <div className={styles.contenedorSpinner}>
+              <Spinner animation="border" variant="info" />
+              <div className={styles.mensajeCargando}>Procesando actualización masiva, por favor espere...</div>
+            </div>
           </ContenedorSpinner>
         ) : (
           <>
@@ -323,7 +326,7 @@ const Actualizacion = () => {
               <Row className="justify-content-center mt-3">
                 <Col xs={12} md={6}>
                   <div className={styles.descargaWrapper}>
-                    <h6 className={styles.descargaTitulo}>📥 Descargas útiles</h6>
+                    <h6 className={styles.descargaTitulo}>📥 Descargas útiles para Actualización Masiva</h6>
                     <p className={styles.descargaSubtitulo}>
                       Estas planillas te ayudarán a cargar correctamente los datos. Elegí una según lo que necesites:
                     </p>

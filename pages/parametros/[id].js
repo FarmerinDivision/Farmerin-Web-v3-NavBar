@@ -6,6 +6,8 @@ import useValidacion from '../../hook/useValidacion';
 import validarCrearParam from '../../validacion/validarCrearParam';
 import { Form, Button, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import { Contenedor, Mensaje, ContenedorSpinner } from '../../components/ui/Elementos';
+import styles from '../../styles/Parametro.module.scss'
+
 
 const STATE_INICIAL = {
   orden: 0,
@@ -22,9 +24,10 @@ const ParametroEdit = ({
   onClose = null,
   isModal = false,
   onUpdate = null,
-  onAddParam = null
+  onAddParam = null,
+  onSuccess = null,
+  categoriaFija = null
 }) => {
-
   const router = useRouter();
   const idFromRouter = router?.query?.id;
   const id = idParametro || idFromRouter;
@@ -53,6 +56,9 @@ const ParametroEdit = ({
     if (id === "0") {
       obtenerParametros();
       guardarError(false);
+      if (categoriaFija) {
+        guardarValores(prev => ({ ...prev, categoria: categoriaFija }));
+      }
     } else {
       guardarTit("Editar Parámetro");
       const obtenerParam = async () => {
@@ -97,8 +103,23 @@ const ParametroEdit = ({
     if (id === "0") {
       if (!usuario) return router.push('/login');
 
-      const filtro = parametros.filter(p => p.categoria === categoria);
-      const cantParam = filtro.length + 1;
+      const contarParametrosCategoria = async () => {
+        try {
+          const snapshot = await firebase.db
+            .collection('parametro')
+            .where('idtambo', '==', tamboSel.id)
+            .where('categoria', '==', categoria)
+            .get();
+
+          return snapshot.size;
+        } catch (error) {
+          guardarDescError(error.message);
+          guardarError(true);
+          return 0;
+        }
+      };
+
+      const cantParam = (await contarParametrosCategoria()) + 1;
 
       const param = {
         idtambo: tamboSel.id,
@@ -115,43 +136,49 @@ const ParametroEdit = ({
         const nuevoDoc = await firebase.db.collection('parametro').add(param);
         const nuevoParam = { id: nuevoDoc.id, ...param };
 
-        // ✅ Insertar directamente en el frontend
         if (onAddParam) onAddParam(nuevoParam);
 
-        // ✅ Mostrar mensaje y cerrar modal
         guardarExito(true);
         guardarDescExito("Parámetro creado con éxito!");
 
-        if (onClose) onClose();
+        guardarProcesando(false); // ✅ detener spinner antes de cerrar
+
+        if (onClose) onClose(); // ✅ cerrar modal después
 
       } catch (error) {
         guardarDescError(error.message);
         guardarError(true);
+        guardarProcesando(false);
       }
     } else {
       try {
         await firebase.db.collection('parametro').doc(id).update(valores);
-        guardarExito(true);
-        guardarDescExito("Parámetro editado con éxito!");
 
         if (onUpdate) onUpdate();
-        if (onClose) onClose();
+        if (onSuccess) onSuccess(valores);
+
+        guardarProcesando(false);
       } catch (error) {
         guardarDescError(error.message);
         guardarError(true);
+        guardarProcesando(false);
       }
     }
-
-    guardarProcesando(false);
   }
 
 
   const contenidoFormulario = (
     <>
       {procesando ? (
-        <ContenedorSpinner>
-          <Spinner animation="border" variant="info" />
-        </ContenedorSpinner>
+        <div className={styles.overlayLoader}>
+          <div className={styles.overlayContent}>
+            <Spinner animation="border" variant="info" className={styles.overlaySpinner} />
+            <p className={styles.loaderTexto}>
+              Generando nuevo parámetro, espere... <br />
+              <span className={styles.loaderSub}>(no salga de la sección)</span>
+            </p>
+          </div>
+        </div>
       ) : (
         <>
           <Mensaje>
@@ -168,7 +195,13 @@ const ParametroEdit = ({
                 <Col>
                   <Form.Group>
                     Categoría:
-                    <Form.Control as="select" name="categoria" value={categoria} onChange={handleChange}>
+                    <Form.Control
+                      as="select"
+                      name="categoria"
+                      value={categoria}
+                      onChange={handleChange}
+                      disabled={!!categoriaFija} // 👈 deshabilita si viene fija
+                    >
                       <option value="Vaca">Vaca</option>
                       <option value="Vaquillona">Vaquillona</option>
                     </Form.Control>

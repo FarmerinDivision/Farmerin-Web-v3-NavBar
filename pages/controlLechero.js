@@ -177,21 +177,24 @@ const ControlLechero = () => {
       <>
         {procesando ? (
           <ContenedorSpinner>
-            <Spinner animation="border" variant="info" />
+            <div className={styles.contenedorSpinner}>
+              <Spinner animation="border" variant="info" />
+              <div className={styles.mensajeCargando}>Procesando control lechero, por favor espere...</div>
+            </div>
           </ContenedorSpinner>
         ) : (
           <Botonera>
             <Row className="justify-content-center mt-3">
               <Col xs={12} md={6}>
                 <div className={styles.descargaWrapper}>
-                  <h6 className={styles.descargaTitulo}>📥 Descargas útiles</h6>
+                  <h6 className={styles.descargaTitulo}>📥 Descargas útiles para Control Lechero</h6>
                   <p className={styles.descargaSubtitulo}>
                     Estas planillas te ayudarán a cargar correctamente los datos. Elegí una según lo que necesites:
                   </p>
                   <div className={styles.botonGrupo}>
                     <div className={styles.tooltipWrapper}>
                       <a
-                        href="/docs/planilla-modelo-conrtrolLec.xlsx"
+                        href="/docs/planilla-modelo-controlLec.xlsx"
                         download
                         className={styles.btnDescarga}
                       >
@@ -202,7 +205,7 @@ const ControlLechero = () => {
 
                     <div className={styles.tooltipWrapper}>
                       <a
-                        href="/docs/planilla-vacia-conrtrolLec.xlsx"
+                        href="/docs/planilla-vacia-controlLec.xlsx"
                         download
                         className={styles.btnDescarga}
                       >

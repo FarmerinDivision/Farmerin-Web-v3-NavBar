@@ -157,7 +157,7 @@ const Recepciones = () => {
             <Row>
               <Col lg={true}>
 
-                <Form.Label>Desde</Form.Label>
+                <Form.Label>Ver Recepciones desde:</Form.Label>
                 <br></br>
                 <ButtonGroup className={styles.recepcionBotonera}>
                   <div className={styles.recepcionTooltip}>

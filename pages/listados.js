@@ -1,69 +1,92 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react'
 import { FirebaseContext } from '../firebase2';
+import { Botonera, Contenedor } from '../components/ui/Elementos';
 import Layout from '../components/layout/layout';
-import DetalleListado from '../components/layout/detalleListado';
-import StickyTable from 'react-sticky-table-thead';
+import StickyTable from "react-sticky-table-thead"
 import SelectTambo from '../components/layout/selectTambo';
 import { Button, Form, Row, Col, Table, Modal } from 'react-bootstrap';
-import { RiAddBoxLine } from 'react-icons/ri';
-import Listado from './listados/[id]'; // reutilizamos el componente de edición
+import { RiAddBoxLine, RiEdit2Line, RiDeleteBin2Line } from 'react-icons/ri';
+import ListadoModal from './listados/[id]';
 import styles from '../styles/Listados.module.scss';
 
 const Listados = () => {
+
   const [listados, guardarListados] = useState([]);
   const [tipo, guardarTipo] = useState('todos');
-  const [showNuevo, setShowNuevo] = useState(false);
-
   const { firebase, tamboSel } = useContext(FirebaseContext);
+
+  // states modal editar/crear
+  const [showModal, setShowModal] = useState(false);
+  const [idListadoSel, setIdListadoSel] = useState("0");
+
+  // states modal eliminar
+  const [showEliminar, setShowEliminar] = useState(false);
+  const [idEliminar, setIdEliminar] = useState(null);
 
   useEffect(() => {
     if (tamboSel) {
-      const unsubscribe = firebase.db
-        .collection('listado')
-        .where('idtambo', '==', tamboSel.id)
-        .onSnapshot(manejarSnapshot);
-
-      return () => unsubscribe();
+      const obtenerListados = () => {
+        firebase.db
+          .collection('listado')
+          .where('idtambo', '==', tamboSel.id)
+          .onSnapshot(manejarSnapshot)
+      }
+      obtenerListados();
     }
   }, [tipo, tamboSel]);
 
-  const manejarSnapshot = (snapshot) => {
-    const datos = snapshot.docs.map((doc) => ({
+  function manejarSnapshot(snapshot) {
+    const listadosData = snapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data(),
+      ...doc.data()
     }));
 
-    if (tipo !== 'todos') {
-      guardarListados(datos.filter((l) => l.tipo.includes(tipo)));
+    if (tipo !== "todos") {
+      const filtro = listadosData.filter(l => l.tipo.includes(tipo));
+      guardarListados(filtro);
     } else {
-      guardarListados(datos);
+      guardarListados(listadosData);
     }
-  };
+  }
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     guardarTipo(e.target.value);
+  }
+
+  const abrirModal = (id) => {
+    setIdListadoSel(id);
+    setShowModal(true);
   };
 
-  const handleCloseNuevo = () => setShowNuevo(false);
+  const handleShowElim = (id) => {
+    setIdEliminar(id);
+    setShowEliminar(true);
+  };
+
+  const eliminarListado = async () => {
+    if (!idEliminar) return;
+    try {
+      await firebase.db.collection('listado').doc(idEliminar).delete();
+    } catch (error) {
+      console.error("Error eliminando listado:", error);
+    }
+    setShowEliminar(false);
+    setIdEliminar(null);
+  };
 
   return (
     <Layout titulo="Listados">
-      <div className={styles.listadosContainer}>
-        <h2 className={styles.tituloSeccion}>
-          📋 Listados de{' '}
-          <strong className={styles.nombreTambo}>{tamboSel?.nombre}</strong>
-        </h2>
-
-        {/* Filtro y botón nueva opción */}
-        <div className={styles.botoneraTipo}>
+      <>
+        <Botonera>
+          <h5>Tipos</h5>
           <Row>
-            <Col>
+            <Col lg={true}>
               <Form.Control
                 as="select"
                 id="tipo"
                 name="tipo"
                 value={tipo}
-                className={styles.selectorTipo}
+                placeholder="Seleccione tipo"
                 onChange={handleChange}
                 required
               >
@@ -77,21 +100,20 @@ const Listados = () => {
 
             <Col md="auto">
               <Button
-                className={styles.botonNuevo}
-                onClick={() => setShowNuevo(true)}
+                className={styles.btnNuevaOpcion}
+                onClick={() => abrirModal("0")}
               >
-                <RiAddBoxLine size={20} />
+                <RiAddBoxLine size={22} />
                 Nueva Opción
               </Button>
             </Col>
           </Row>
-        </div>
+        </Botonera>
 
-        {/* Tabla de resultados */}
-        <div className={styles.tablaContainer}>
-          {tamboSel ? (
-            <StickyTable height={500}>
-              <Table className={styles.tablaListados} responsive>
+        <Contenedor>
+          {tamboSel ?
+            <StickyTable height={670}>
+              <Table responsive>
                 <thead>
                   <tr>
                     <th>Tipo</th>
@@ -100,39 +122,68 @@ const Listados = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {listados.map((l) => (
-                    <DetalleListado key={l.id} listado={l} />
+                  {listados.map(l => (
+                    <tr key={l.id}>
+                      <td>{l.tipo}</td>
+                      <td>{l.descripcion}</td>
+                      <td>
+                        <div className={styles.tooltipWrapper}>
+                          <Button
+                            className={styles.btnIconoEditar}
+                            onClick={() => abrirModal(l.id)}
+                          >
+                            <RiEdit2Line size={20} />
+                          </Button>
+                          <span className={styles.tooltipText}>Editar listado</span>
+                        </div>
+
+                        <div className={styles.tooltipWrapper}>
+                          <Button
+                            className={styles.btnIconoEliminar}
+                            onClick={() => handleShowElim(l.id)}
+                          >
+                            <RiDeleteBin2Line size={20} />
+                          </Button>
+                          <span className={styles.tooltipText}>Eliminar listado</span>
+                        </div>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </Table>
             </StickyTable>
-          ) : (
+            :
             <SelectTambo />
-          )}
-        </div>
-      </div>
+          }
+        </Contenedor>
 
-      {/* MODAL NUEVA OPCIÓN */}
-      <Modal
-        show={showNuevo}
-        onHide={handleCloseNuevo}
-        size="lg"
-        centered
-        backdrop="static"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Nueva Opción</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Listado
-            idListado=""
-            isModal={true}
-            onClose={handleCloseNuevo}
-          />
-        </Modal.Body>
-      </Modal>
+        {/* Modal para alta/edición */}
+        <ListadoModal
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          idListado={idListadoSel}
+        />
+
+        {/* Modal confirmación eliminar */}
+        <Modal show={showEliminar} onHide={() => setShowEliminar(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Confirmar eliminación</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            ¿Seguro que deseas eliminar este listado? Esta acción no se puede deshacer.
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowEliminar(false)}>
+              Cancelar
+            </Button>
+            <Button variant="danger" onClick={eliminarListado}>
+              Eliminar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      </>
     </Layout>
-  );
-};
+  )
+}
 
 export default Listados;

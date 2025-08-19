@@ -260,3 +260,21 @@
 #fileAltaMasiva {
   display: none;
 }
+
+// archivo: elementos.scss o altaMasiva.module.scss
+.contenedorSpinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  width: 100%;
+  flex-direction: column;
+
+  .mensajeCargando {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    color: #555;
+    font-weight: 500;
+  }
+}
+
