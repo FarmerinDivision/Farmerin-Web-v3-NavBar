@@ -260,3 +260,19 @@
 #fileControlLechero {
   display: none;
 }
+
+.contenedorSpinner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  width: 100%;
+
+  .mensajeCargando {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #444;
+  }
+}

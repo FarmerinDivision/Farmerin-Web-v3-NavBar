@@ -366,10 +366,8 @@ const GralAnimales = () => {
     <Layout titulo="Reportes">
       <>
         <Botonera>
+        <h6 className={styles.titulo}>Gral Animales - Total de animales: <strong>{animales.length}</strong></h6>
           <Row>
-            <Col lg={true}>
-              <h6 className={styles.totalHeader}>Total: {animales.length}</h6>
-            </Col>
             <Col lg={true}><h6>&nbsp;</h6></Col>
             <Col lg={true}><h6>&nbsp;</h6></Col>
             <Col lg={true}><h6>&nbsp;</h6></Col>

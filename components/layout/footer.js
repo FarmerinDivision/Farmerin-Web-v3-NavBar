@@ -26,10 +26,7 @@ const Footer = () => {
         </a>
         <span className={styles.separator}>&</span>
         <a className={`${styles.link} ${styles.devSignature}`}>
-          <GiPear />
-          <FaLongArrowAltUp />
-          <TbCircleLetterF /> 
-          and Farmerin Developer.
+          Facundo Peralta and Farmerin Developer.
         </a>
 
       </div>

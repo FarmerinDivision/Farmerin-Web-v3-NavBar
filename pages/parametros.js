@@ -162,7 +162,7 @@ const Parametros = () => {
   return (
     <Layout titulo="Parámetros Nutricionales">
       <div className={styles.container}>
-        <h1 className={styles.titulo}>🥩 Alimentación</h1>
+        <h1 className={styles.titulo}>🥩 Parametros de Alimentación</h1>
 
         <div className={styles.estadoActual}>
           <span className={styles.estadoLabel}>Estado actual:</span>

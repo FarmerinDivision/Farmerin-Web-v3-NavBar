@@ -119,7 +119,7 @@
   border-radius: 6px;
 
   &:hover {
-    background-color:#337a37;
+    background-color: #337a37;
   }
 }
 
@@ -134,6 +134,7 @@
     background-color: #750e18;
   }
 }
+
 ///// MODAL 
 .modalContent {
   background-color: #fff;
@@ -148,7 +149,7 @@
 
 .formGroup {
   margin-bottom: 20px;
- 
+
 
   label {
     font-weight: 600;
@@ -173,4 +174,145 @@
 
 .buttonRow {
   margin-top: 30px;
+}
+
+/* Fondo más tenue detrás del modal */
+.customModal :global(.modal-backdrop) {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Contenedor principal del modal */
+.customModal :global(.modal-content) {
+  border-radius: 16px;
+  border: none;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+/* Animación de entrada */
+@keyframes modalFadeIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+/* Estilo base de todos los modales */
+.customModal :global(.modal-header) {
+  display: flex;
+  justify-content: center;
+  /* centramos horizontalmente */
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: none;
+}
+
+/* Versión para Nueva Opción con fondo verde tenue */
+.headerNuevo {
+  background-color: #f5f5f5;
+  /* verde claro, suave */
+  color: #333;
+  /* verde oscuro para el texto */
+}
+
+/* Versión para Editar opción (puede quedar como antes o en gris) */
+.headerEditar {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+
+/* Botón Guardar */
+.btnPrimary {
+  background: linear-gradient(135deg, #1f8ef1, #5e72e4);
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-weight: 500;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btnPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(31, 142, 241, 0.3);
+}
+
+/* Mensajes de alerta */
+.alertCustom {
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.loaderOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050; /* sobre modal-body */
+}
+
+.loaderCircle {
+  border: 5px solid #e0e0e0; /* gris claro */
+  border-top: 5px solid #1f8ef1; /* azul profesional */
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spinLoader 1s linear infinite;
+}
+
+@keyframes spinLoader {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loaderText {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+  text-align: center;
+}
+
+.btnNuevaOpcion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #28a745, #218838); /* verde degradado */
+  border: none;
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.25);
+  transition: all 0.25s ease-in-out;
+}
+
+.btnNuevaOpcion:hover {
+  background: linear-gradient(135deg, #34c759, #28a745);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(40, 167, 69, 0.35);
+}
+
+.btnNuevaOpcion:active {
+  transform: scale(0.97);
+  box-shadow: 0 3px 6px rgba(40, 167, 69, 0.25);
+}
+
+.btnNuevaOpcion svg {
+  flex-shrink: 0;
 }

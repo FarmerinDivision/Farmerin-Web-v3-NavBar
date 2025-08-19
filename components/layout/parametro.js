@@ -149,9 +149,19 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
             isModal={true}
             onClose={handleClose}
             onUpdate={onUpdate}
+            onSuccess={(updatedData) => {
+              const actualizados = parametros.map(p =>
+                p.id === id ? { ...p, ...updatedData } : p
+              );
+              guardarParametros(actualizados);
+              setShowModal(false);
+              setSuccessMsg('Parámetro actualizado correctamente.');
+              setShowSuccess(true);
+            }}
           />
         </Modal.Body>
       </Modal>
+
 
       {/* Modal de confirmación de eliminación */}
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>

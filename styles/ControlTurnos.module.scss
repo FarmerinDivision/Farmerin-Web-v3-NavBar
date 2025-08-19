@@ -288,7 +288,7 @@
   position: relative;
   justify-content: center;
   align-items: center;
-  background-color: #307750;
+  background-color: #2d5365;
   color: #fff;
   border-style: none;
   padding: 1em 2em;
@@ -513,7 +513,19 @@
     transform: rotate(360deg);
   }
 }
+/* Centrar el botón de Analizar Turnos */
+.analizarTurnosWrapper {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
 
+/* Centrar el loader */
+.loaderWrapper {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
 
 // Texto NO HAY DATOS FILTRADOS
 .ingresosMensaje {
@@ -756,5 +768,172 @@
 
   to {
     transform: scaleY(1.5);
+  }
+}
+
+.turnosWrapper{
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+
+  .turno {
+    flex: 1;
+  }
+
+  .turno h3 {
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    color: #0f2027;
+  }
+}
+
+.tablaTurno {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+
+  th,
+  td {
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid #ddd;
+  }
+
+  thead {
+    background-color: #f1f1f1;
+  }
+
+  tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+}
+
+.turnoCantidad {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0 auto 1.5rem;
+  color: #222;
+
+  // Degradado elegante
+  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  // Subrayado con pseudo-elemento
+  position: relative;
+
+  &::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 3px;
+    background-color: #2c5364;
+    margin: 0.5rem auto 0;
+    border-radius: 2px;
+  }
+
+  // Entrada animada sutil
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInCantidad 0.6s ease-out forwards;
+}
+
+/* Tablas */
+.tablaTurno {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+
+  th,
+  td {
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid #ddd;
+  }
+
+  thead {
+    background-color: #f1f1f1;
+  }
+
+  tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+}
+
+// Texto NO HAY DATOS FILTRADOS
+.ingresos-mensaje {
+  max-width: 700px;
+  text-align: center;
+  margin: 2rem auto;
+  font-size: 1.35rem; // más grande para todo el párrafo
+  line-height: 1.8;
+  color: #333;
+  background-color: #f9f9f9;
+  padding: 1.5rem 2rem;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+
+  strong {
+    font-weight: 600;
+    color: #0d232d;
+  }
+
+  .mensaje-alerta {
+    color: #ac0502; // rojo llamativo y profesional
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  // Animación de entrada sutil
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInMsg 0.6s ease-out forwards;
+}
+
+@keyframes fadeInMsg {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+///////////// TITULO DE LAS LISTAS
+.turnoTitulo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #020c17;
+  text-align: center;
+  margin: 2rem 0 1rem;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  // Subrayado minimalista con pseudo-elemento
+  &::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, #0f2027, #2c5364);
+    margin: 0.5rem auto 0;
+    border-radius: 2px;
+  }
+
+  // Animación sutil
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInTurno 0.5s ease-out forwards;
+}
+
+@keyframes fadeInTurno {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

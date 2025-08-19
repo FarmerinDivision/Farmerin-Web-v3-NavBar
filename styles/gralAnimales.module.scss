@@ -76,12 +76,19 @@
   }
 }
 
-.totalHeader {
-  font-size: 16px;
-  font-weight: 600;
+
+.titulo {
+  font-size: 20px;
+  font-weight: 300px;
   color: #333;
-  padding-top: 5px;
+  text-align: center;
+  margin-bottom: 5px;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 }
+
 
 /////// TOOLTIP DE LOS TITULOS DE LAS COLUMNAS 
 .thTooltipWrapper {
@@ -179,5 +186,36 @@
 
   &:hover {
     background-color: rgb(4, 65, 156);
+  }
+}
+
+//// BOTON VER MAS FICHA ANIMAL 
+// archivo: fichaAnimal.scss
+
+.fichaBotonToggle {
+  display: inline-block;
+  padding: 0.4rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #287fb9;
+  background-color: #ffffff;
+  border: 2px solid #287fb9;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+
+  &:hover {
+    background-color: #4db150;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(40,127,185,255);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.3);
   }
 }

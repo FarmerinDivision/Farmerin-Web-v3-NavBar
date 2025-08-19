@@ -37,6 +37,8 @@ const Control = () => {
     const [promRacMod, guardarPromRacMod] = useState(0);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const { firebase, tamboSel } = useContext(FirebaseContext);
     const dispatch = useDispatch(); // Ensure dispatch is defined
@@ -395,7 +397,10 @@ const Control = () => {
             setShowSuccessModal(true);
         } catch (error) {
             console.error("Error actualizando raciones sugeridas:", error);
+            setErrorMessage(error.message || "Ocurrió un error al actualizar las raciones sugeridas.");
+            setShowErrorModal(true);
         }
+
     };
 
 
@@ -422,7 +427,7 @@ const Control = () => {
                         </Mensaje>
                     ) : (
                         <Contenedor>
-                            <StickyTable className={styles.stickyTable} height={550}>
+                            <StickyTable className={styles.stickyTable} height={660}>
                                 <Table responsive>
                                     <thead>
                                         <tr>
@@ -628,24 +633,80 @@ const Control = () => {
                     </Modal.Footer>
                 </Modal>
 
-              
+
                 {/* Modal de acción completa */}
-                <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>✅ Acción completada</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <p>Los cambios fueron guardados exitosamente.</p>
-                        <p className="text-muted">
-                            (Si no ve el cambio, salga y vuelva a entrar para actualizar.)
-                        </p>
+                <Modal
+                    show={showSuccessModal}
+                    onHide={() => setShowSuccessModal(false)}
+                    centered
+                    size="sm"
+                    backdrop="static"
+                    dialogClassName="modal-alert-success"
+                >
+                    <Modal.Body className="text-center p-4">
+                        <div className="mb-3">
+                            <span
+                                style={{
+                                    display: 'inline-block',
+                                    backgroundColor: '#28a745',
+                                    borderRadius: '50%',
+                                    width: '70px',
+                                    height: '70px',
+                                    lineHeight: '70px',
+                                }}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="40"
+                                    height="40"
+                                    fill="white"
+                                    viewBox="0 0 16 16"
+                                >
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.97 11.03a.75.75 0 0 0 1.07 0l3.992-3.992a.75.75 0 1 0-1.06-1.06L7.5 9.439 5.53 7.47a.75.75 0 0 0-1.06 1.06l2.5 2.5z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <h5 className="fw-bold text-success">¡Ración modificada!</h5>
+                        <p className="text-muted mb-0">Los cambios fueron guardados correctamente.</p>
                     </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="success" onClick={() => setShowSuccessModal(false)}>
-                            Cerrar
-                        </Button>
-                    </Modal.Footer>
                 </Modal>
+                {/* Modal de error */}
+                <Modal
+                    show={showErrorModal}
+                    onHide={() => setShowErrorModal(false)}
+                    centered
+                    size="sm"
+                    backdrop="static"
+                    dialogClassName="modal-alert-error"
+                >
+                    <Modal.Body className="text-center p-4">
+                        <div className="mb-3">
+                            <span
+                                style={{
+                                    display: 'inline-block',
+                                    backgroundColor: '#dc3545',
+                                    borderRadius: '50%',
+                                    width: '70px',
+                                    height: '70px',
+                                    lineHeight: '70px',
+                                }}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="40"
+                                    height="40"
+                                    fill="white"
+                                    viewBox="0 0 16 16"
+                                >
+                                    <path d="M7.001 4a.999.999 0 0 1 2 0l-.35 4.35a.65.65 0 0 1-1.3 0L7 4zM8 12a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 8 12z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <h5 className="fw-bold text-danger">Error</h5>
+                        <p className="text-muted mb-0">{errorMessage}</p>
+                    </Modal.Body>
+                </Modal>
+
 
             </>
         </Layout>

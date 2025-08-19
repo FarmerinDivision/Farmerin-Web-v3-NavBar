@@ -476,3 +476,33 @@
     padding: 12px;
   }
 }
+/// LOADER CARGA PARAMETRO
+.overlayLoader {
+  position: relative;
+  min-height: 200px;
+}
+
+.overlayContent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.overlaySpinner {
+  width: 3rem;
+  height: 3rem;
+}
+
+.loaderTexto {
+  margin-top: 1rem;
+  font-weight: bold;
+  color: #0d6efd; // azul bootstrap
+  font-size: 1rem;
+}
+
+.loaderSub {
+  font-size: 0.85rem;
+  color: #6c757d; // gris claro
+}

@@ -345,6 +345,20 @@ function TamboChart({ data, toggleList, selectedLists, animalesAusentes, animale
 }
 
 function AnimalesSeLeyoList({ animales, onClose }) {
+  const [verMas, setVerMas] = useState(false);
+
+  const formatearRFID = (rfid) => {
+    const erp = (rfid || '')
+      .replace(/⛔/g, '')   // elimina el símbolo
+      .replace(/\s+/g, '')  // elimina todos los espacios
+      .trim();              // por si queda algo suelto
+    return erp.length === 14 ? `0${erp}` : erp;
+  };
+
+
+
+  const animalesAMostrar = verMas ? animales : animales.slice(0, 5);
+
   return (
     <div className={styles.AnimalesFormulario}>
       <div className={styles.listaHeader}>
@@ -359,21 +373,45 @@ function AnimalesSeLeyoList({ animales, onClose }) {
           </tr>
         </thead>
         <tbody>
-          {animales.map((animal, index) => (
+          {animalesAMostrar.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>
+              <td>{formatearRFID(animal.RFID) || 'eRP desconocido'}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      {animales.length > 5 && (
+        <button
+          className={`${styles.verMasBtn} ${styles['verMasBtn--verde']}`}
+          onClick={() => setVerMas(!verMas)}
+        >
+          {verMas ? 'Ver menos' : `Ver +${animales.length - 5}`}
+        </button>
+      )}
     </div>
   );
 }
 
 
+// ✅ AnimalesNoLeyoList
 function AnimalesNoLeyoList({ animales, onClose }) {
+  const [verMas, setVerMas] = useState(false);
   if (animales.length === 0) return null;
+
+  // --- Helpers para limpiar y formatear RFID (solo para visualización y comparaciones)
+  const limpiarRFID = (rfid) => {
+    if (rfid === null || rfid === undefined) return '';
+    return String(rfid).replace(/\D/g, '').trim(); // quita todo lo que no sea dígito
+  };
+
+  const formatearRFID = (rfid) => {
+    const erp = limpiarRFID(rfid);
+    if (!erp) return '';
+    return erp.length === 14 ? `0${erp}` : erp;
+  };
+
+  const animalesAMostrar = verMas ? animales : animales.slice(0, 5);
 
   return (
     <div className={styles.AnimalesFormulario}>
@@ -389,20 +427,55 @@ function AnimalesNoLeyoList({ animales, onClose }) {
           </tr>
         </thead>
         <tbody>
-          {animales.map((animal, index) => (
+          {animalesAMostrar.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>
+              <td>{formatearRFID(animal.RFID) || 'eRP desconocido'}</td>
+
             </tr>
           ))}
         </tbody>
       </table>
+      {animales.length > 5 && (
+        <button
+          className={`${styles.verMasBtn} ${styles['verMasBtn--rojo']}`}
+          onClick={() => setVerMas(!verMas)}
+        >
+          {verMas ? 'Ver menos' : `Ver +${animales.length - 5}`}
+        </button>
+
+      )}
     </div>
   );
 }
 
+
+// ✅ AnimalesAusentesList
 function AnimalesAusentesList({ animales, onClose }) {
+  const [verMas, setVerMas] = useState(false);
   if (animales.length === 0) return null;
+
+  // 🔍 Log para ver valores y longitudes de la columna RFID
+  useEffect(() => {
+    console.log("Valores RFID en la lista de Ausentes:");
+    animales.forEach((animal) => {
+      const limpio = animal.RFID?.replace(/⛔/g, '') || '';
+      console.log(limpio, "→ digitos:", limpio.length);
+    });
+  }, [animales]);
+  // --- Helpers para limpiar y formatear RFID (solo para visualización y comparaciones)
+  const limpiarRFID = (rfid) => {
+    if (rfid === null || rfid === undefined) return '';
+    return String(rfid).replace(/\D/g, '').trim(); // quita todo lo que no sea dígito
+  };
+
+  const formatearRFID = (rfid) => {
+    const erp = limpiarRFID(rfid);
+    if (!erp) return '';
+    return erp.length === 14 ? `0${erp}` : erp;
+  };
+
+  const animalesAMostrar = verMas ? animales : animales.slice(0, 5);
 
   return (
     <div className={styles.AnimalesFormulario}>
@@ -419,22 +492,40 @@ function AnimalesAusentesList({ animales, onClose }) {
           </tr>
         </thead>
         <tbody>
-          {animales.map((animal, index) => (
+          {animalesAMostrar.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>
+              <td>{formatearRFID(animal.RFID) || 'eRP desconocido'}</td>
               <td>{animal.DiasAusente}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      {animales.length > 5 && (
+        <button
+          className={`${styles.verMasBtn} ${styles['verMasBtn--azul']}`}
+          onClick={() => setVerMas(!verMas)}
+        >
+          {verMas ? 'Ver menos' : `Ver +${animales.length - 5}`}
+        </button>
+      )}
     </div>
   );
 }
 
 
+
+// ✅ AnimalesNuncaPasoList
 function AnimalesNuncaPasoList({ animales, onClose }) {
+  const [verMas, setVerMas] = useState(false);
   if (animales.length === 0) return null;
+
+  const formatearRFID = (rfid) => {
+    const erp = rfid?.replace(/⛔/g, '') || '';
+    return erp.length === 14 ? `0${erp}` : erp;
+  };
+
+  const animalesAMostrar = verMas ? animales : animales.slice(0, 5);
 
   return (
     <div className={styles.AnimalesFormulario}>
@@ -450,20 +541,32 @@ function AnimalesNuncaPasoList({ animales, onClose }) {
           </tr>
         </thead>
         <tbody>
-          {animales.map((animal, index) => (
+          {animalesAMostrar.map((animal, index) => (
             <tr key={index}>
               <td>{animal.RP || 'RP desconocido'}</td>
-              <td>{animal.RFID.replace(/⛔/g, '') || 'eRP desconocido'}</td>
+              <td>{formatearRFID(animal.RFID) || 'eRP desconocido'}</td>
+
             </tr>
           ))}
         </tbody>
       </table>
+      {animales.length > 5 && (
+        <button
+          className={`${styles.verMasBtn} ${styles['verMasBtn--naranja']}`}
+          onClick={() => setVerMas(!verMas)}
+        >
+          {verMas ? 'Ver menos' : `Ver +${animales.length - 5}`}
+        </button>
+
+      )}
     </div>
   );
 }
 
 
+// ✅ AnimalesSecosNaNList (con animalesConRP)
 function AnimalesSecosNaNList({ animales, onClose, onAnimalesConRPUpdate }) {
+  const [verMas, setVerMas] = useState(false);
   const { firebase } = useContext(FirebaseContext);
   const [animalesConRP, setAnimalesConRP] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -474,21 +577,21 @@ function AnimalesSecosNaNList({ animales, onClose, onAnimalesConRPUpdate }) {
       const animalesActualizados = await Promise.all(
         animales.map(async (animal) => {
           const erp = animal.RFID?.replace(/⛔/g, '') || '';
-          if (erp) {
-            const snapshot = await firebase.db.collection('animal')
-              .where('erp', '==', erp)
-              .where('mbaja', '==', '')
-              .get();
+          let erpFormateado = erp.length === 14 ? `0${erp}` : erp;
 
-            if (!snapshot.empty) {
-              const animalDoc = snapshot.docs[0];
-              return {
-                ...animal,
-                rp: animalDoc.data().rp,
-                estpro: animalDoc.data().estpro,
-                estrep: animalDoc.data().estrep
-              };
-            }
+          const snapshot = await firebase.db.collection('animal')
+            .where('erp', '==', erpFormateado)
+            .where('mbaja', '==', '')
+            .get();
+
+          if (!snapshot.empty) {
+            const animalDoc = snapshot.docs[0];
+            return {
+              ...animal,
+              rp: animalDoc.data().rp,
+              estpro: animalDoc.data().estpro,
+              estrep: animalDoc.data().estrep
+            };
           }
           return animal;
         })
@@ -500,6 +603,8 @@ function AnimalesSecosNaNList({ animales, onClose, onAnimalesConRPUpdate }) {
 
     obtenerRPs();
   }, [animales, firebase, onAnimalesConRPUpdate]);
+
+  const animalesAMostrar = verMas ? animalesConRP : animalesConRP.slice(0, 5);
 
   if (loading) {
     return <div className={styles.loaderSecosNaN}>Obteniendo información...</div>;
@@ -521,19 +626,36 @@ function AnimalesSecosNaNList({ animales, onClose, onAnimalesConRPUpdate }) {
           </tr>
         </thead>
         <tbody>
-          {animalesConRP.map((animal, index) => (
-            <tr key={index}>
-              <td>{animal.rp || animal.RP || 'No Registrada'}</td>
-              <td>{animal.RFID?.replace(/⛔/g, '') || 'eRP desconocido'}</td>
-              <td>{animal.estpro || 'No Registrada'}</td>
-              <td>{animal.estrep || 'No Registrada'}</td>
-            </tr>
-          ))}
+          {animalesAMostrar.map((animal, index) => {
+            const formatearRFID = (rfid) => {
+              const erp = rfid?.replace(/⛔/g, '') || '';
+              return erp.length === 14 ? `0${erp}` : erp;
+            };
+
+            return (
+              <tr key={index}>
+                <td>{animal.rp || animal.RP || 'No Registrada'}</td>
+                <td>{formatearRFID(animal.RFID) || 'eRP desconocido'}</td>
+
+                <td>{animal.estpro || 'No Registrada'}</td>
+                <td>{animal.estrep || 'No Registrada'}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      {animalesConRP.length > 5 && (
+        <button
+          className={`${styles.verMasBtn} ${styles['verMasBtn--gris']}`}
+          onClick={() => setVerMas(!verMas)}
+        >
+          {verMas ? 'Ver menos' : `Ver +${animales.length - 5}`}
+        </button>
+      )}
     </div>
   );
 }
+
 
 function tableToDataFrame(table) {
   const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
@@ -541,7 +663,18 @@ function tableToDataFrame(table) {
   return rows.map(row => {
     const cells = Array.from(row.querySelectorAll('td'));
     return headers.reduce((obj, header, index) => {
-      obj[header] = cells[index] ? cells[index].textContent.trim() : '';
+      let value = cells[index] ? cells[index].textContent.trim() : '';
+
+      // Si es la columna RFID, formatear el valor
+      if (header === 'RFID') {
+        const rfidClean = value.replace(/⛔/g, '');
+        if (rfidClean.length === 14) {
+          value = `0${rfidClean}`;
+          console.log(`RFID formateado en tableToDataFrame: ${rfidClean} -> ${value}`);
+        }
+      }
+
+      obj[header] = value;
       return obj;
     }, {});
   });

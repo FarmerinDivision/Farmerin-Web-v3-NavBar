@@ -323,3 +323,70 @@
   100% { transform: translate(-50%, -50%) skewX(5deg); opacity: 0.9; }
 }
 
+
+.verMasBtn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 15px auto 15px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    transform: scale(1.03);
+  }
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}
+
+// Estilos por categoría
+.verMasBtn--verde {
+  background: linear-gradient(135deg, #4cb14e, #2e7d32);
+
+  &:hover {
+    background: linear-gradient(135deg, #388e3c, #1b5e20);
+  }
+}
+
+.verMasBtn--rojo {
+  background: linear-gradient(135deg, #e53935, #b71c1c);
+
+  &:hover {
+    background: linear-gradient(135deg, #d32f2f, #7f0000);
+  }
+}
+
+.verMasBtn--azul {
+  background: linear-gradient(135deg, #1976d2, #0d47a1);
+
+  &:hover {
+    background: linear-gradient(135deg, #1565c0, #08306b);
+  }
+}
+
+.verMasBtn--naranja {
+  background: linear-gradient(135deg, #fb8c00, #e65100);
+
+  &:hover {
+    background: linear-gradient(135deg, #ef6c00, #bf360c);
+  }
+}
+
+.verMasBtn--gris {
+  background: linear-gradient(135deg, #757575, #424242);
+
+  &:hover {
+    background: linear-gradient(135deg, #616161, #212121);
+  }
+}

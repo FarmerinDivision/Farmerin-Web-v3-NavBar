@@ -257,7 +257,7 @@ const Produccion = () => {
         <Form onSubmit={(e) => { e.preventDefault(); handleSubmit(valores); }}>
           <Row className={styles.RepoProduFiltros}>
             <Col lg>
-              <Form.Label>Desde</Form.Label>
+              <Form.Label>Ver Producción desde:</Form.Label>
               <ButtonGroup className={styles.RepoProduBotonera}>
                 <div className={styles.RepoProduTooltip}>
                   <Button

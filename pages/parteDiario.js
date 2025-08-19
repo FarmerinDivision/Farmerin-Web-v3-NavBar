@@ -304,7 +304,7 @@ const ParteDiario = () => {
         <Form onSubmit={handleSubmit}>
           <Row style={{ alignItems: "center" }}>
             <Col lg={true}>
-              <Form.Label>Desde</Form.Label>
+              <Form.Label>Ver Parte Diario desde:</Form.Label>
               <br />
               <ButtonGroup className={styles.parteBotonera}>
                 <div className={styles.parteTooltip}>

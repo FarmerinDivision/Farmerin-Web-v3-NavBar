@@ -398,19 +398,24 @@ const AltaMasiva = () => {
     }
   };
 
+  
   return (
     <Layout titulo="Alta Masiva">
       {procesando ? (
         <ContenedorSpinner>
-          <Spinner animation="border" variant="info" />
+          <div className={styles.contenedorSpinner}>
+            <Spinner animation="border" variant="info" />
+            <div className={styles.mensajeCargando}>Procesando alta masiva, por favor espere...</div>
+          </div>
         </ContenedorSpinner>
+
       ) : (
         <>
           <Botonera>
             <Row className="justify-content-center mt-3">
               <Col xs={12} md={6}>
                 <div className={styles.descargaWrapper}>
-                  <h6 className={styles.descargaTitulo}>📥 Descargas útiles</h6>
+                  <h6 className={styles.descargaTitulo}>📥 Descargas útiles para Alta Masiva</h6>
                   <p className={styles.descargaSubtitulo}>
                     Estas planillas te ayudarán a cargar correctamente los datos. Elegí una según lo que necesites:
                   </p>
