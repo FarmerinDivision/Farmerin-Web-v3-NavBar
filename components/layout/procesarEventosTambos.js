@@ -13,27 +13,36 @@ export async function procesarEventosTambo(data, tamboSel, setErrores, setActual
     const limpiarTexto = (valor) => (valor && typeof valor === 'string') ? valor.trim() : "";
 
     for (const item of data) {
-        const rp = item["RP"];
+        const rp = item["RP"] ? limpiarTexto(String(item["RP"])).toUpperCase() : null;
         const codigoEventoRaw = item["CODIGO DE EVENTO (*)"] || item["D.Ev"];
-        let codigoEvento = codigoEventoRaw ? limpiarTexto(codigoEventoRaw).toUpperCase() : null;
 
-        // Traducir texto a código si viene con nombres
-        if (!item["CODIGO DE EVENTO (*)"] && item["D.Ev"]) {
-            const valor = codigoEvento;
+        // Convertir SIEMPRE a string
+        let codigoEvento = codigoEventoRaw !== undefined && codigoEventoRaw !== null
+            ? limpiarTexto(String(codigoEventoRaw)).toUpperCase()
+            : null;
+
+
+        // Normalizar evento: soporta texto o número
+        if (codigoEvento) {
+            const valor = codigoEvento.toUpperCase();
+
             if (valor.includes("TACTO")) codigoEvento = "P1";
             else if (valor.includes("CELO")) codigoEvento = "CE";
-            else if (valor.includes("SECADO")) codigoEvento = "3";
-            else if (valor.includes("SERVICIO")) codigoEvento = "SE";
-            else if (valor.includes("ABORTO")) codigoEvento = "AB";
-            else if (valor.includes("ANULA")) codigoEvento = "7";
-            else if (valor.includes("VACIA")) codigoEvento = "13";
-            else if (valor.includes("MUERTE")) codigoEvento = "12";
-            else if (valor.includes("TRANSFERENCIA")) codigoEvento = "11";
-            else if (valor.includes("VENTA")) codigoEvento = "10";
-            else if (valor.includes("RECHAZO")) codigoEvento = "41";
-            else if (valor.includes("TRATAMIENTO")) codigoEvento = "995";
-            else if (valor.includes("COMENTARIO")) codigoEvento = "999";
+            else if (valor.includes("SECADO") || valor === "3") codigoEvento = "3";
+            else if (valor.includes("SERVICIO") || valor === "SE") codigoEvento = "SE";
+            else if (valor.includes("ABORTO") || valor === "AB") codigoEvento = "AB";
+            else if (valor.includes("ANULA") || valor === "7") codigoEvento = "7";
+            else if (valor.includes("VACIA") || valor === "13") codigoEvento = "13";
+            else if (valor.includes("MUERTE") || valor === "12") codigoEvento = "12";
+            else if (valor.includes("TRANSFERENCIA") || valor === "11") codigoEvento = "11";
+            else if (valor.includes("VENTA") || valor === "10") codigoEvento = "10";
+            else if (valor.includes("RECHAZO") || (!isNaN(valor) && parseInt(valor) >= 41 && parseInt(valor) <= 48)) {
+                codigoEvento = parseInt(valor).toString() || "41";
+            }
+            else if (valor.includes("TRATAMIENTO") || valor === "995") codigoEvento = "995";
+            else if (valor.includes("COMENTARIO") || valor === "999") codigoEvento = "999";
         }
+
 
         const codigoNumerico = parseInt(codigoEvento, 10);
         if (!isNaN(codigoNumerico) && codigoNumerico >= 41 && codigoNumerico <= 48) {
@@ -42,7 +51,7 @@ export async function procesarEventosTambo(data, tamboSel, setErrores, setActual
 
         const fechaEventoStrRaw = item["FECHA DE EVENTO (xx/xx/xxxx)"] || item["Fecha"];
         const fechaEventoStr = fechaEventoStrRaw ? limpiarTexto(fechaEventoStrRaw) : null;
-        const observacion = item["OBSERVACION"] ? limpiarTexto(item["OBSERVACION"]) : "";
+        const observacion = item["OBSERV."] ? limpiarTexto(item["OBSERV."]) : "";
 
         if (!rp || !fechaEventoStr) {
             setErrores(prev => [...prev, `Datos inválidos en RP: ${rp}`]);
@@ -136,7 +145,7 @@ export async function procesarEventosTambo(data, tamboSel, setErrores, setActual
                             eventoDetalle = "Animal dado de baja (Muerte) mediante planilla Dirsa";
                             break;
                         case "3":
-                            updateData.estrep = "seca";
+                            updateData.estpro = "seca";
                             eventoTipo = "Secado";
                             eventoDetalle = "Se secó animal mediante planilla Dirsa";
                             break;
@@ -210,8 +219,9 @@ export async function procesarEventosTambo(data, tamboSel, setErrores, setActual
                         const nombreUsuario = usuario?.displayName || "Anónimo";
                         const eventoData = {
                             fecha: fechaEventoTimeStamp,
-                            tipo: eventoTipo || "Sin tipo",
+                            tipo: eventoTipo || "Sin tipo" - observacion || "Sin observacion",
                             detalle: eventoDetalle || "Sin detalle",
+
                             usuario: `${nombreUsuario} - Dirsa`
                         };
 

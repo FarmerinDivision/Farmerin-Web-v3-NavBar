@@ -1,4 +1,8 @@
-const limpiarTexto = (valor) => (valor && typeof valor === 'string') ? valor.trim() : "";
+// ✅ Ahora acepta números y siempre devuelve string
+const limpiarTexto = (valor) => {
+  if (valor === null || valor === undefined) return "";
+  return valor.toString().trim();
+};
 
 // Utilidad para acceder a campos de la planilla ignorando mayúsculas y espacios
 const getValor = (obj, clave) => {
@@ -10,13 +14,28 @@ const getValor = (obj, clave) => {
   return claveEncontrada ? obj[claveEncontrada] : null;
 };
 
+// Nueva utilidad: probar múltiples nombres de clave
+const getValorMultiple = (obj, posiblesClaves) => {
+  for (const clave of posiblesClaves) {
+    const valor = getValor(obj, clave);
+    if (valor !== null && valor !== undefined && valor !== "") {
+      return valor;
+    }
+  }
+  return null;
+};
+
 const procesarParto = async (evento, tamboSel, firebase, usuario) => {
   console.log("📥 Evento recibido:", evento);
 
-  const rpMadre = limpiarTexto(getValor(evento, "RP")).replace(/\s/g, "");
+  const rpMadre = limpiarTexto(getValorMultiple(evento, ["RP", "Rp"])).replace(/\s/g, "");
   if (!rpMadre) throw new Error("RP madre no encontrado o vacío");
 
-  const fechaEventoStrRaw = getValor(evento, "FECHA DE EVENTO (xx/xx/xxxx)") || getValor(evento, "Fecha");
+  const fechaEventoStrRaw = getValorMultiple(evento, [
+    "FECHA DE EVENTO (xx/xx/xxxx)",
+    "Fecha",
+    "FECHA"
+  ]);
   const fechaEventoStr = limpiarTexto((fechaEventoStrRaw || "").toString().trim());
 
   if (!fechaEventoStr) throw new Error("Fecha de evento no encontrada");
@@ -25,11 +44,19 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
   const fechaEventoTimestamp = firebase.fechaDesdeDDMMYYYY(fechaEventoStr);
   if (!fechaEventoTimestamp) throw new Error(`Fecha inválida o mal formada: ${fechaEventoStr}`);
 
-  const tipoParto = getValor(evento, "TIPO DE PARTO");
-  const observ = getValor(evento, "OBSERV");
-  const sexoCria = getValor(evento, "SEXO CRIA");
-  const rpCria = limpiarTexto(getValor(evento, "RP CRIA"));
-  const rpCria2 = limpiarTexto(getValor(evento, "INSCRIBIR CRIA**"));
+  const tipoParto = getValorMultiple(evento, ["TIPO DE PARTO", "Tipo de parto"]);
+  const observ = getValorMultiple(evento, ["OBSERV.", "Observ"]);
+
+  // 🔍 Buscar columnas de crías con más variantes
+  const sexoCria = getValorMultiple(evento, [
+    "SEXO CRIA", "Sexo Cria", "Seco Cria", "Sexo", "Sexo de Cría"
+  ]);
+  const rpCria = limpiarTexto(getValorMultiple(evento, [
+    "RP CRIA", "Rp Cria", "RP_Cria", "RP CRIA (*)", "RP de Cria", "Cría RP"
+  ]));
+  const rpCria2 = limpiarTexto(getValorMultiple(evento, [
+    "INSCRIBIR CRIA**", "RP CRIA 2", "Rp Cria 2", "RP_Cria2", "RP de Cria 2", "Cría RP 2"
+  ]));
 
   const crias = [];
 
@@ -60,21 +87,38 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
     });
 
     const registrarCria = async (rp, sexo) => {
-      if (!rp) return;
+      let rpLimpio = limpiarTexto(rp).replace(/\s/g, "");
+      const sexoNorm = (sexo || "").toString().trim().toLowerCase();
 
-      const existeCria = await firebase.db.collection("animal")
+      const esMuerta = sexoNorm.includes("muert");
+      const esMacho = sexoNorm.includes("macho");
+
+      // 👀 Si es macho y no tiene RP → asignar "sin rp"
+      if (!rpLimpio && esMacho) {
+        rpLimpio = "sin rp";
+        console.warn("⚠️ Cría macho sin RP → asignado 'sin rp'");
+      }
+
+      // 🚫 Si sigue sin RP (y no es macho), no registrar
+      if (!rpLimpio) {
+        console.warn("⚠️ Cría sin RP y no es macho → no se registra");
+        return;
+      }
+
+      const coleccion = esMacho ? "macho" : "animal";
+
+      // 🔍 Buscamos si la cría ya existe
+      const existeCria = await firebase.db.collection(coleccion)
         .where("idtambo", "==", tamboSel.id)
-        .where("rp", "==", rp)
+        .where("rp", "==", rpLimpio)
         .where("fbaja", "==", "")
         .get();
 
-      if (!existeCria.empty) {
-        console.warn(`⚠️ Cría con RP ${rp} ya existe. Solo se registrará el evento.`);
-      } else {
+      if (existeCria.empty) {
         const nuevaCria = {
-          ingreso: fechaEventoStr, // ⬅️ como string dd/mm/yyyy
+          ingreso: fechaEventoStr,
           idtambo: tamboSel.id,
-          rp,
+          rp: rpLimpio,
           erp: "",
           lactancia: 0,
           observaciones: "",
@@ -82,7 +126,7 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
           estrep: "vacia",
           fparto: "",
           fservicio: "",
-          categoria: "Vaquillona",
+          categoria: esMacho ? "Macho" : "Vaquillona",
           racion: 8,
           porcentaje: 1,
           fracion: firebase.ayerTimeStamp(),
@@ -91,26 +135,48 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
           fuc: firebase.nowTimeStamp(),
           ca: 0,
           anorm: "",
-          fbaja: "",
-          mbaja: "",
+          fbaja: esMuerta ? fechaEventoStr : "",
+          mbaja: esMuerta ? "muerte" : "",
           rodeo: 0,
           sugerido: 0,
         };
 
-        const res = await firebase.db.collection("animal").add(nuevaCria);
-        console.log(`✅ Cría con RP ${rp} registrada con ID: ${res.id}`);
+        const res = await firebase.db.collection(coleccion).add(nuevaCria);
+        console.log(`✅ Cría ${sexoNorm} con RP ${rpLimpio} registrada en ${coleccion} con ID: ${res.id}`);
+      } else {
+        console.warn(`⚠️ Cría con RP ${rpLimpio} ya existe en ${coleccion}. No se vuelve a dar de alta.`);
       }
 
-      crias.push({ rp, sexo });
+      // 🔥 SIEMPRE registrar en el array de evento
+      crias.push({
+        rp: rpLimpio,
+        sexo: sexo || "",
+        muerta: esMuerta
+      });
     };
 
+
+    // 🔍 DEBUG antes de registrar
+    console.log("🐄 Evento de parto detectado:", {
+      rpMadre,
+      fechaEventoStr,
+      tipoParto,
+      rpCria,
+      sexoCria,
+      rpCria2
+    });
+
+    // Primera cría
     await registrarCria(rpCria, sexoCria);
 
-    if (tipoParto === "Mellizos") {
-      const sexoCria2 = getValor(evento, "Sexo Cria 2") || "";
+    // Mellizos
+    if (tipoParto && tipoParto.toLowerCase().includes("mellizo")) {
+      const sexoCria2 = getValorMultiple(evento, ["Sexo Cria 2", "USAR RAZA MADRE***"]);
+      console.log("🐄 Mellizos detectados:", { rpCria2, sexoCria2 });
       await registrarCria(rpCria2, sexoCria2);
     }
 
+    // Registrar evento en madre
     const refEventos = madreRef.collection("eventos");
     const eventoObj = {
       crias,
@@ -118,7 +184,7 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
       tipo: "Parto",
       fecha: fechaEventoTimestamp, // ⬅️ como Timestamp
       tambo: tamboSel.id,
-      detalle: `${observ} - ${tipoParto}`,
+      detalle: `${observ || ""} - ${tipoParto || ""}`,
       usuario: `${usuario.displayName} - Dirsa`,
     };
 
