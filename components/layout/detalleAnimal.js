@@ -15,6 +15,9 @@ const DetalleAnimal = ({ animal, guardarElim }) => {
   const [error, guardarError] = useState(false);
   const [descError, guardarDescError] = useState('');
   const [motivos, guardarMotivos] = useState([]);
+  const [isTransferencia, setIsTransferencia] = useState(false);
+  const [tamboDestino, setTamboDestino] = useState('');
+  const [tambosUsuario, setTambosUsuario] = useState([]);
 
   const { id, idtambo, rp } = animal;
   let motivo = "0";
@@ -31,11 +34,29 @@ const DetalleAnimal = ({ animal, guardarElim }) => {
     guardarError(false);
     if (motivo !== "0") {
       try {
-        const a = {
-          fbaja: format(Date.now(), 'yyyy-MM-dd'),
+        // fecha de baja como string
+        const fechaBajaStr = format(Date.now(), 'yyyy-MM-dd');
+        // fecha en timestamp (usando tu helper)
+        const fechaBajaTs = firebase.nowTimeStamp();
+
+        // actualizar animal (string en fbaja y motivo en mbaja)
+        await firebase.db.collection('animal').doc(id).update({
+          fbaja: fechaBajaStr,
           mbaja: motivo,
-        };
-        await firebase.db.collection('animal').doc(id).update(a);
+        });
+
+        // agregar evento en subcolección "eventos"
+        await firebase.db
+          .collection('animal')
+          .doc(id)
+          .collection('eventos')
+          .add({
+            fecha: fechaBajaTs,
+            tipo: "Baja",
+            detalle: motivo,
+            usuario: firebase.auth.currentUser?.displayName || "sistema",
+          });
+
         guardarElim(true);
         handleCloseElim();
       } catch (error) {
@@ -48,6 +69,9 @@ const DetalleAnimal = ({ animal, guardarElim }) => {
     }
   }
 
+
+
+
   const buscarMotivo = () => {
     if (motivos.length === 0) {
       firebase.db.collection('listado').where('tipo', '==', 'baja').where('idtambo', '==', idtambo).get().then(snapshotMotivo);
@@ -59,10 +83,25 @@ const DetalleAnimal = ({ animal, guardarElim }) => {
     guardarMotivos(moti);
   }
 
-  const changeMotivo = e => {
-    e.preventDefault();
-    motivo = e.target.value;
-  };
+ const changeMotivo = e => {
+  e.preventDefault();
+  motivo = e.target.value;
+  if (motivo.toLowerCase().includes("transferencia")) {
+    setIsTransferencia(true);
+    // cargar tambos del usuario logueado
+    firebase.db.collection('tambo')
+      .where('usuarios', 'array-contains', firebase.auth.currentUser.uid)
+      .get()
+      .then(snapshot => {
+        const arrayTambos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setTambosUsuario(arrayTambos);
+      });
+  } else {
+    setIsTransferencia(false);
+    setTamboDestino('');
+  }
+};
+
 
   return (
     <>

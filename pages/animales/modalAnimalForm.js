@@ -42,6 +42,7 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
   const [descError, setDescError] = useState('');
   const [procesando, setProcesando] = useState(false);
   const [tambos, setTambos] = useState([]);
+  const [errorERP, setErrorERP] = useState('');
 
   const hoy = format(Date.now(), 'yyyy-MM-dd');
 
@@ -54,6 +55,9 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
     fparto, fservicio, categoria, racion, fracion, nservicio, porcentaje,
     uc, fuc, ca, anorm, fbaja, mbaja, rodeo, sugerido
   } = valores;
+
+  const requiereFechaServicio = valores.estrep === 'preñada' && !valores.fservicio;
+  const requiereFechaParto = valores.estpro === 'En Ordeñe' && !valores.fparto;
 
   useEffect(() => {
     firebase.db.collection('tambo').orderBy('nombre', 'desc').onSnapshot(snapshotTambo);
@@ -83,7 +87,13 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
     setExito(false);
 
     if (!usuario) return;
-
+    // ⚠️ Nueva validación: si está preñada debe ingresar fecha de último servicio
+    if (valores.estrep === "preñada" && !valores.fservicio) {
+      setDescError("Si el animal está preñada, debe ingresar la fecha de Último Servicio.");
+      setError(true);
+      setProcesando(false);
+      return;
+    }
     let existeRP = false;
     let existeERP = false;
 
@@ -152,22 +162,17 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
 
         <Form onSubmit={handleSubmit}>
           <Row>
-            <Col>
-              <Form.Group>
-                <Form.Label>Tambo</Form.Label>
-                {modoEdicion ? (
-                  <Form.Control as="select" name="idtambo" value={idtambo} onChange={handleChange} required>
-                    <option value="0">Seleccione tambo...</option>
-                    {tambos.map(t => (
-                      <option key={t.id} value={t.id}>{t.nombre}</option>
-                    ))}
-                  </Form.Control>
-                ) : (
-                  <Form.Control type="text" value={tamboSel?.nombre || ''} readOnly />
-                )}
-                {errores.idtambo && <Alert variant="danger">{errores.idtambo}</Alert>}
-              </Form.Group>
-            </Col>
+            <Form.Group>
+              <Form.Label>Tambo</Form.Label>
+              <Form.Control
+                type="text"
+                value={
+                  tambos.find(t => t.id === idtambo)?.nombre || tamboSel?.nombre || ''
+                }
+                readOnly
+              />
+            </Form.Group>
+
             <Col>
               <Form.Group>
                 <Form.Label>Ingreso</Form.Label>
@@ -181,9 +186,27 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
             <Col><Form.Group><Form.Label>RP</Form.Label>
               <Form.Control type="text" name="rp" value={rp} onChange={handleChange} required />
             </Form.Group></Col>
-            <Col><Form.Group><Form.Label>eRP</Form.Label>
-              <Form.Control type="text" name="erp" value={erp} onChange={handleChange} />
-            </Form.Group></Col>
+            <Col>
+              <Form.Group>
+                <Form.Label>eRP</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="erp"
+                  value={erp}
+                  onChange={(e) => {
+                    handleChange(e);
+                    const val = e.target.value;
+                    if (val && val.length < 15) {
+                      setErrorERP(`Faltan ${15 - val.length} dígitos para completar el eRP`);
+                    } else {
+                      setErrorERP('');
+                    }
+                  }}
+                />
+                {errorERP && <Alert variant="warning" className="mt-1">{errorERP}</Alert>}
+              </Form.Group>
+            </Col>
+
             <Col><Form.Group><Form.Label>Lactancia</Form.Label>
               <Form.Control type="number" name="lactancia" value={lactancia} onChange={handleChange} />
             </Form.Group></Col>
@@ -205,12 +228,51 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
           </Row>
 
           <Row className="mt-2">
-            <Col><Form.Group><Form.Label>Último Parto</Form.Label>
-              <Form.Control type="date" name="fparto" value={fparto} onChange={handleChange} max={hoy} />
-            </Form.Group></Col>
-            <Col><Form.Group><Form.Label>Último Servicio</Form.Label>
-              <Form.Control type="date" name="fservicio" value={fservicio} onChange={handleChange} max={hoy} />
-            </Form.Group></Col>
+            <Col>
+              <Form.Group>
+                <Form.Label>Último Parto</Form.Label>
+                {fparto ? (
+                  <Form.Control
+                    type="date"
+                    name="fparto"
+                    value={fparto}
+                    onChange={handleChange}
+                    max={hoy}
+                  />
+                ) : (
+                  <Form.Control
+                    type="date"
+                    name="fparto"
+                    value=""
+                    onChange={handleChange}
+                    max={hoy}
+                  />
+                )}
+                {requiereFechaParto && (
+                  <Alert variant="warning" className="mt-1">
+                    Si seleccionaste "En Ordeñe", ingresá la fecha de Último parto.
+                  </Alert>
+                )}
+              </Form.Group>
+            </Col>
+            <Col>
+              <Form.Group>
+                <Form.Label>Último Servicio</Form.Label>
+                <Form.Control
+                  type="date"
+                  name="fservicio"
+                  value={fservicio}
+                  onChange={handleChange}
+                  max={hoy}
+                  required={estrep === 'preñada'} // requerido si está preñada
+                />
+                {requiereFechaServicio && (
+                  <Alert variant="warning" className="mt-1">
+                    Si seleccionaste “Preñada”, ingresá la fecha de Último Servicio.
+                  </Alert>
+                )}
+              </Form.Group>
+            </Col>
             <Col><Form.Group><Form.Label>Categoría</Form.Label>
               <Form.Control type="text" name="categoria" value={categoria} onChange={handleChange} disabled />
             </Form.Group></Col>
@@ -231,7 +293,9 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
 
           <div className="d-flex justify-content-end mt-4">
             <Button variant="secondary" onClick={onHide} className="me-2">Cancelar</Button>
-            <Button variant="success" type="submit">Guardar</Button>
+            <Button variant="success" type="submit" disabled={requiereFechaServicio || requiereFechaParto}>
+              Guardar
+            </Button>
           </div>
         </Form>
       </Modal.Body>

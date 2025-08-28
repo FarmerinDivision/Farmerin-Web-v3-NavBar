@@ -125,7 +125,7 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
          </td>
          <td>
             <Form.Control
-               class={colorCelda}
+               className={colorCelda}
                type="number"
                id="sug"
                placeholder="Kg"
@@ -134,11 +134,8 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
                size="2"
                max="50"
                value={sug}
-               onChange={changeSugerido}
-
+               readOnly
             />
-
-
             {/* Modal de error */}
             <Modal
                show={showErrorModal}

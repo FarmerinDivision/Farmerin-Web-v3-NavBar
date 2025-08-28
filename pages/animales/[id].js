@@ -96,8 +96,8 @@ const Animales = () => {
   const aplicarFiltro = () => {
     const cond = valoresFiltro.rp.toLowerCase();
     const filtrado = animalesBase.filter(a =>
-      (a.rp?.toString().toLowerCase().includes(cond) ||
-        a.erp?.toString().toLowerCase().includes(cond))
+    (a.rp?.toString().toLowerCase().includes(cond) ||
+      a.erp?.toString().toLowerCase().includes(cond))
     );
     guardarAnimales(filtrado);
   };
@@ -172,112 +172,124 @@ const Animales = () => {
           ))}
         </Contenedor>
 
-     {/* Modal Alta Animal */}
-      <Modal show={showAltaModal} onHide={handleCerrarAlta} size="lg">
-        <Modal.Header closeButton><Modal.Title>Alta de Animal</Modal.Title></Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmitAlta}>
-            <Row>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Tambo</Form.Label>
-                  <Form.Control type="text" value={tamboSel?.nombre} readOnly />
-                </Form.Group>
-              </Col>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Ingreso</Form.Label>
-                  <Form.Control type="date" name="ingreso" value={ingreso} onChange={handleChangeAlta} max={hoy} />
-                </Form.Group>
-              </Col>
-            </Row>
+        {/* Modal Alta Animal */}
+        <Modal show={showAltaModal} onHide={handleCerrarAlta} size="lg">
+          <Modal.Header closeButton><Modal.Title>Alta de Animal</Modal.Title></Modal.Header>
+          <Modal.Body>
+            <Form onSubmit={handleSubmitAlta}>
+              <Row>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Tambo</Form.Label>
+                    <Form.Control type="text" value={tamboSel?.nombre} readOnly />
+                  </Form.Group>
+                </Col>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Ingreso</Form.Label>
+                    <Form.Control type="date" name="ingreso" value={ingreso} onChange={handleChangeAlta} max={hoy} />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            <Row>
-              <Col lg={6}>
-                <Form.Group><Form.Label>RP</Form.Label>
-                  <Form.Control name="rp" value={rp} onChange={handleChangeAlta} required isInvalid={!!errores.rp} />
-                  <Form.Control.Feedback type="invalid">{errores.rp}</Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col lg={6}>
-                <Form.Group><Form.Label>eRP</Form.Label>
-                  <Form.Control name="erp" value={erp} onChange={handleChangeAlta} isInvalid={!!errores.erp} />
-                  <Form.Control.Feedback type="invalid">{errores.erp}</Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
+              <Row>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>RP</Form.Label>
+                    <Form.Control name="rp" value={rp} onChange={handleChangeAlta} required isInvalid={!!errores.rp} />
+                    <Form.Control.Feedback type="invalid">{errores.rp}</Form.Control.Feedback>
+                  </Form.Group>
+                </Col>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>eRP</Form.Label>
+                    <Form.Control name="erp" value={erp} onChange={handleChangeAlta} isInvalid={!!errores.erp} />
+                    <Form.Control.Feedback type="invalid">{errores.erp}</Form.Control.Feedback>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            <Row>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Lactancia</Form.Label>
-                  <Form.Control type="number" name="lactancia" value={lactancia} onChange={handleChangeAlta} />
-                </Form.Group>
-              </Col>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Categoría</Form.Label>
-                  <Form.Control name="categoria" value={categoria} readOnly disabled />
-                </Form.Group>
-              </Col>
-            </Row>
+              <Row>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Lactancia</Form.Label>
+                    <Form.Control type="number" name="lactancia" value={lactancia} onChange={handleChangeAlta} />
+                  </Form.Group>
+                </Col>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Categoría</Form.Label>
+                    <Form.Control name="categoria" value={categoria} readOnly disabled />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            <Row>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Estado Productivo</Form.Label>
-                  <Form.Control as="select" name="estpro" value={estpro} onChange={handleChangeAlta}>
-                    <option value="seca">Seca</option>
-                    <option value="En Ordeñe">En Ordeñe</option>
-                  </Form.Control>
-                </Form.Group>
-              </Col>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Estado Reproductivo</Form.Label>
-                  <Form.Control as="select" name="estrep" value={estrep} onChange={handleChangeAlta}>
-                    <option value="vacia">Vacía</option>
-                    <option value="preñada">Preñada</option>
-                  </Form.Control>
-                </Form.Group>
-              </Col>
-            </Row>
+              <Row>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Estado Productivo</Form.Label>
+                    <Form.Control
+                      as="select"
+                      name="estpro"
+                      value={estpro || "seca"}
+                      onChange={(e) => guardarValores({ ...valores, estpro: e.target.value })}
+                    >
+                      <option value="seca">Seca</option>
+                      <option value="En Ordeñe">En Ordeñe</option>
+                    </Form.Control>
 
-            <Row>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Último Servicio</Form.Label>
-                  <Form.Control type="date" name="fservicio" value={fservicio} onChange={handleChangeAlta} max={hoy} />
-                </Form.Group>
-              </Col>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Último Parto</Form.Label>
-                  <Form.Control type="date" name="fparto" value={fparto} onChange={handleChangeAlta} max={hoy} />
-                </Form.Group>
-              </Col>
-            </Row>
+                  </Form.Group>
+                </Col>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Estado Reproductivo</Form.Label>
+                    <Form.Control
+                      as="select"
+                      name="estrep"
+                      value={estrep || "vacia"}
+                      onChange={(e) => guardarValores({ ...valores, estrep: e.target.value })}
+                    >
+                      <option value="vacia">Vacía</option>
+                      <option value="preñada">Preñada</option>
+                    </Form.Control>
 
-            <Row>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Último Control (Lts)</Form.Label>
-                  <Form.Control type="number" step="any" name="uc" value={uc} onChange={handleChangeAlta} />
-                </Form.Group>
-              </Col>
-              <Col lg={6}>
-                <Form.Group><Form.Label>Ración (Kgs)</Form.Label>
-                  <Form.Control type="number" step="any" name="racion" value={racion} onChange={handleChangeAlta} />
-                </Form.Group>
-              </Col>
-            </Row>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            <Row>
-              <Col>
-                <Form.Group><Form.Label>Observaciones</Form.Label>
-                  <Form.Control as="textarea" rows={2} name="observaciones" value={observaciones} onChange={handleChangeAlta} />
-                </Form.Group>
-              </Col>
-            </Row>
+              <Row>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Último Servicio</Form.Label>
+                    <Form.Control type="date" name="fservicio" value={fservicio} onChange={handleChangeAlta} max={hoy} />
+                  </Form.Group>
+                </Col>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Último Parto</Form.Label>
+                    <Form.Control type="date" name="fparto" value={fparto} onChange={handleChangeAlta} max={hoy} />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            <div className="text-end mt-3">
-              <Button variant="secondary" onClick={handleCerrarAlta} className="me-2">Cancelar</Button>
-              <Button type="submit" variant="success">Guardar</Button>
-            </div>
-          </Form>
-        </Modal.Body>
-      </Modal>
+              <Row>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Último Control (Lts)</Form.Label>
+                    <Form.Control type="number" step="any" name="uc" value={uc} onChange={handleChangeAlta} />
+                  </Form.Group>
+                </Col>
+                <Col lg={6}>
+                  <Form.Group><Form.Label>Ración (Kgs)</Form.Label>
+                    <Form.Control type="number" step="any" name="racion" value={racion} onChange={handleChangeAlta} />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col>
+                  <Form.Group><Form.Label>Observaciones</Form.Label>
+                    <Form.Control as="textarea" rows={2} name="observaciones" value={observaciones} onChange={handleChangeAlta} />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <div className="text-end mt-3">
+                <Button variant="secondary" onClick={handleCerrarAlta} className="me-2">Cancelar</Button>
+                <Button type="submit" variant="success">Guardar</Button>
+              </div>
+            </Form>
+          </Modal.Body>
+        </Modal>
       </div>
     </Layout>
   );
