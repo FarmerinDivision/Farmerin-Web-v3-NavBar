@@ -134,8 +134,9 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
                size="2"
                max="50"
                value={sug}
-               readOnly
+               onChange={changeSugerido}
             />
+
             {/* Modal de error */}
             <Modal
                show={showErrorModal}
@@ -208,7 +209,18 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
                <h5 className="fw-bold text-success">¡Ración modificada!</h5>
                <p className="text-muted mb-0">Los cambios fueron guardados correctamente.</p>
             </Modal.Body>
+
+            {/* Nuevo footer con botón */}
+            <Modal.Footer className="justify-content-center">
+               <Button
+                  variant="success"
+                  onClick={() => setShowSuccessModal(false)}
+               >
+                  Cerrar
+               </Button>
+            </Modal.Footer>
          </Modal>
+
 
       </tr>
 
