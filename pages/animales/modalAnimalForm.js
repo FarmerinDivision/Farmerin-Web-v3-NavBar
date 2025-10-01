@@ -28,6 +28,7 @@ const STATE_INICIAL = {
   anorm: '',
   fbaja: '',
   mbaja: '',
+  grupo: '',
   rodeo: 0,
   sugerido: 0,
 };
@@ -53,7 +54,7 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
   const {
     idtambo, rp, erp, lactancia, ingreso, observaciones, estpro, estrep,
     fparto, fservicio, categoria, racion, fracion, nservicio, porcentaje,
-    uc, fuc, ca, anorm, fbaja, mbaja, rodeo, sugerido
+    uc, fuc, ca, anorm, fbaja, mbaja, rodeo, sugerido, grupo
   } = valores;
 
   const requiereFechaServicio = valores.estrep === 'preñada' && !valores.fservicio;
@@ -65,7 +66,24 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
     if (animal?.id) {
       setModoEdicion(true);
       setCampoProtegido(true);
-      guardarValores({ ...animal });
+
+      // 🔥 convertir timestamps a string yyyy-MM-dd
+      const convertirFecha = (valor) => {
+        if (!valor) return '';
+        if (typeof valor === 'string') return valor; // ya está ok
+        if (valor.toDate) return format(valor.toDate(), 'yyyy-MM-dd'); // timestamp firebase
+        return '';
+      };
+
+      guardarValores({
+        ...animal,
+        ingreso: convertirFecha(animal.ingreso),
+        fparto: convertirFecha(animal.fparto),
+        fservicio: convertirFecha(animal.fservicio),
+        fracion: convertirFecha(animal.fracion),
+        fuc: convertirFecha(animal.fuc),
+        fbaja: convertirFecha(animal.fbaja),
+      });
     } else {
       guardarValores({
         ...STATE_INICIAL,
@@ -75,6 +93,7 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
       });
     }
   }, [animal]);
+
 
   function snapshotTambo(snapshot) {
     const tambosArray = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -207,11 +226,25 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
               </Form.Group>
             </Col>
 
+
+          </Row>
+          <Row>
             <Col><Form.Group><Form.Label>Lactancia</Form.Label>
               <Form.Control type="number" name="lactancia" value={lactancia} onChange={handleChange} />
             </Form.Group></Col>
-          </Row>
+            <Col>
+              <Form.Group>
+                <Form.Label>Grupo</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="grupo"
+                  value={grupo}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </Col>
 
+          </Row>
           <Row className="mt-2">
             <Col><Form.Group><Form.Label>Estado Productivo</Form.Label>
               <Form.Control as="select" name="estpro" value={estpro} onChange={handleChange}>

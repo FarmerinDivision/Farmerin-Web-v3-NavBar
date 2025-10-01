@@ -11,37 +11,63 @@ import styles from '../../styles/Parametro.module.scss'
 import ParametroEdit from '../../pages/parametros/[id]';
 
 
-const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
+const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreateEmpty = false }) => {
 
 
    const { firebase, usuario } = useContext(FirebaseContext);
    const [parametros, guardarParametros] = useState([]);
+   const [cargando, setCargando] = useState(false);
    const [animal, guardarAnimal] = useState([]);
    const [fracion, guardarFracion] = useState([]);
    const [showNuevo, setShowNuevo] = useState(false);
    const [showSuccess, setShowSuccess] = useState(false);
    const [successMsg, setSuccessMsg] = useState('');
 
+
    useEffect(() => {
-      if (idTambo) obtenerParam();
-   }, [idTambo, porcentaje]);
-
-   const obtenerParam = () => {
-      try {
-
-         firebase.db.collection('parametro')
-            .where('idtambo', '==', idTambo)
-            .where('categoria', '==', categoria)
-            .orderBy('orden')
-            .get()
-            .then(snapshotParametros)
-         firebase.db.collection('animal').where('idtambo', '==', idTambo).get().then(snapshotAnimal)
-      } catch (error) {
-         guardarDescError(error.message);
-         guardarError(true);
+      if (idTambo && groupId) {
+         obtenerParam();
       }
+   }, [idTambo, groupId])
 
+   useEffect(() => {
+      if (idTambo && groupId) {
+         obtenerParam();
+      }
+   }, [porcentaje])
 
+   const obtenerParam = async () => {
+      setCargando(true);
+      try {
+         const doc = await firebase.db.collection('parametro').doc(groupId).get();
+         if (doc.exists) {
+            const data = doc.data();
+            const cats = Array.isArray(data.parametros) ? data.parametros : [];
+            const cat = cats.find(c => c.categoria === categoria);
+            const lista = (cat?.rodeos || []).slice().sort((a, b) => a.orden - b.orden);
+            // Adapt UI rows to include ids derived from orden
+            const rows = lista.map(r => ({
+               id: `${categoria}-${r.orden}`,
+               categoria,
+               orden: r.orden,
+               condicion: r.condicion ?? r.cond ?? "", // 👈 garantiza compatibilidad
+               min: r.min,
+               max: r.max,
+               um: r.um,
+               racion: r.racion
+            }));
+
+            guardarParametros(rows);
+         } else {
+            guardarParametros([]);
+         }
+         // mantener actualización de animales como antes si se requiere porcentaje
+         await firebase.db.collection('animal').where('idtambo', '==', idTambo).get().then(snapshotAnimal)
+      } catch (error) {
+         console.log(error);
+      } finally {
+         setCargando(false);
+      }
    };
 
 
@@ -134,7 +160,8 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
                </Mensaje>
             ) : (
                <div className={styles.tablaScroll}>
-                  <StickyTable height={350} width={550}>
+                  <StickyTable height={350} width="100%">
+
                      <Table striped bordered hover responsive className={styles.tablaParam}>
                         <thead className={styles.tablaHeader}>
                            <tr>
@@ -156,6 +183,8 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
                                  guardarParametros={guardarParametros}
                                  porcentaje={porcentaje}
                                  onUpdate={obtenerParam}
+                                 groupId={groupId}
+                                 categoria={categoria}
                               />
                            ))}
                         </tbody>
@@ -179,6 +208,8 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
                <ParametroEdit
                   idParametro="0"
                   isModal={true}
+                  categoriaFija={categoria}
+                  groupId={groupId}
                   onClose={() => {
                      setShowNuevo(false);
                      setSuccessMsg('Parámetro creado con éxito.');
@@ -187,7 +218,6 @@ const DetalleParametro = ({ idTambo, categoria, porcentaje }) => {
                   onAddParam={(nuevoParam) => {
                      guardarParametros(prev => [...prev, nuevoParam].sort((a, b) => a.orden - b.orden));
                   }}
-                  categoriaFija={categoria} 
                />
 
             </Modal.Body>

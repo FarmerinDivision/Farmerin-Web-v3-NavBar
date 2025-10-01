@@ -26,7 +26,8 @@ const ParametroEdit = ({
   onUpdate = null,
   onAddParam = null,
   onSuccess = null,
-  categoriaFija = null
+  categoriaFija = null,
+  groupId = null
 }) => {
   const router = useRouter();
   const idFromRouter = router?.query?.id;
@@ -63,9 +64,24 @@ const ParametroEdit = ({
       guardarTit("Editar Parámetro");
       const obtenerParam = async () => {
         try {
-          const paramDoc = await firebase.db.collection('parametro').doc(id).get();
-          if (paramDoc.exists) {
-            guardarValores(paramDoc.data());
+          // id aquí representa un item "plano" de UI, no un doc de grupo. Leemos del doc del grupo
+          if (!groupId) return;
+          const groupDoc = await firebase.db.collection('parametro').doc(groupId).get();
+          if (groupDoc.exists) {
+            const data = groupDoc.data();
+            const categorias = Array.isArray(data.parametros) ? data.parametros : [];
+            const cat = categorias.find(c => c.categoria === (categoriaFija || 'Vaca')) || categorias[0];
+            const ordenNum = typeof idParametro === 'string' && idParametro.includes('-') ? Number(idParametro.split('-')[1]) : null;
+            const r = (cat?.rodeos || []).find(x => x.orden === ordenNum) || {};
+            guardarValores({
+              orden: r.orden || 0,
+              categoria: cat?.categoria || categoriaFija || 'Vaca',
+              condicion: r.cond || 'entre',
+              min: r.min ?? 0,
+              max: r.max ?? 0,
+              um: r.um || 'Dias Lactancia',
+              racion: r.racion ?? 8
+            });
           } else {
             guardarDescError("El parámetro no existe");
             guardarError(true);
@@ -81,16 +97,12 @@ const ParametroEdit = ({
 
   const obtenerParametros = async () => {
     try {
-      const snapshot = await firebase.db
+      const snap = await firebase.db
         .collection('parametro')
         .where('idtambo', '==', tamboSel.id)
-        .orderBy('orden')
         .get();
-      const param = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      guardarParametros(param);
+      const grupos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      guardarParametros(grupos);
     } catch (error) {
       guardarDescError(error.message);
       guardarError(true);
@@ -103,48 +115,58 @@ const ParametroEdit = ({
     if (id === "0") {
       if (!usuario) return router.push('/login');
 
-      const contarParametrosCategoria = async () => {
-        try {
-          const snapshot = await firebase.db
-            .collection('parametro')
-            .where('idtambo', '==', tamboSel.id)
-            .where('categoria', '==', categoria)
-            .get();
-
-          return snapshot.size;
-        } catch (error) {
-          guardarDescError(error.message);
-          guardarError(true);
-          return 0;
-        }
-      };
-
-      const cantParam = (await contarParametrosCategoria()) + 1;
-
-      const param = {
-        idtambo: tamboSel.id,
-        categoria,
-        orden: cantParam,
-        condicion,
-        min,
-        max,
-        um,
-        racion
-      };
-
       try {
-        const nuevoDoc = await firebase.db.collection('parametro').add(param);
-        const nuevoParam = { id: nuevoDoc.id, ...param };
+        // crear o actualizar en documento de grupo
+        let ref = null;
+        if (groupId) {
+          ref = firebase.db.collection('parametro').doc(groupId);
+        } else {
+          // si no hay grupo especificado, usar/crear grupo 0
+          const q = await firebase.db.collection('parametro')
+            .where('idtambo', '==', tamboSel.id)
+            .where('grupo', '==', 0)
+            .limit(1)
+            .get();
+          if (q.empty) {
+            const base = { idtambo: tamboSel.id, grupo: 0, parametros: [] };
+            const created = await firebase.db.collection('parametro').add(base);
+            ref = created;
+          } else {
+            ref = q.docs[0].ref;
+          }
+        }
 
-        if (onAddParam) onAddParam(nuevoParam);
+        await firebase.db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          const data = snap.data() || { idtambo: tamboSel.id, grupo: 0, parametros: [] };
+          const categorias = Array.isArray(data.parametros) ? data.parametros.slice() : [];
+          const idx = categorias.findIndex(c => c.categoria === categoria);
+          const lista = idx >= 0 ? categorias[idx].rodeos.slice() : [];
+          const nuevoOrden = lista.length + 1;
+          const nuevo = { orden: nuevoOrden, cond: condicion, min, max, um, racion };
+          if (idx >= 0) {
+            categorias[idx] = { ...categorias[idx], rodeos: [...lista, nuevo] };
+          } else {
+            categorias.push({ categoria, rodeos: [nuevo] });
+          }
+          tx.set(ref, { idtambo: tamboSel.id, grupo: (snap.data()?.grupo ?? 0), parametros: categorias }, { merge: true });
+        });
+
+        if (onAddParam) onAddParam({
+          id: `${categoria}-${Date.now()}`,
+          categoria,
+          orden: 0,
+          condicion,
+          min,
+          max,
+          um,
+          racion
+        });
 
         guardarExito(true);
         guardarDescExito("Parámetro creado con éxito!");
-
-        guardarProcesando(false); // ✅ detener spinner antes de cerrar
-
-        if (onClose) onClose(); // ✅ cerrar modal después
-
+        guardarProcesando(false);
+        if (onClose) onClose();
       } catch (error) {
         guardarDescError(error.message);
         guardarError(true);
@@ -152,11 +174,35 @@ const ParametroEdit = ({
       }
     } else {
       try {
-        await firebase.db.collection('parametro').doc(id).update(valores);
+        // actualizar dentro del documento de grupo
+        if (!groupId) return;
+        const ref = firebase.db.collection('parametro').doc(groupId);
+        await firebase.db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          if (!snap.exists) return;
+          const data = snap.data();
+          const categorias = Array.isArray(data.parametros) ? data.parametros.slice() : [];
+          const idx = categorias.findIndex(c => c.categoria === categoria);
+          if (idx === -1) return;
+          const rodeos = (categorias[idx].rodeos || []).slice();
+          const i = rodeos.findIndex(r => r.orden === valores.orden);
+          const nuevo = {
+            orden: valores.orden,
+            cond: valores.condicion,
+            min: valores.min,
+            max: valores.max,
+            um: valores.um,
+            racion: valores.racion
+          };
+          if (i !== -1) {
+            rodeos[i] = nuevo;
+          }
+          categorias[idx] = { ...categorias[idx], rodeos };
+          tx.update(ref, { parametros: categorias });
+        });
 
         if (onUpdate) onUpdate();
         if (onSuccess) onSuccess(valores);
-
         guardarProcesando(false);
       } catch (error) {
         guardarDescError(error.message);

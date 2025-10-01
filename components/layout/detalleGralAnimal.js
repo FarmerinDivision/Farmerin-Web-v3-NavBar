@@ -8,7 +8,7 @@ import styles from '../../styles/gralAnimales.module.scss'
 
 const DetalleGralAnimal = ({ animal }) => {
 
-   const { id, idtambo, rp, erp, racion, lactancia, ingreso, observaciones, estpro, estrep, fparto, fservicio, categoria, uc, ca, rodeo, nservicio, diasLact } = animal;
+   const { id, idtambo, rp, erp, racion, lactancia, ingreso, observaciones, estpro, estrep, fparto, fservicio, categoria, uc, ca, rodeo,grupo, nservicio, diasLact } = animal;
    const [show, setShow] = useState(false);
    const [calculado, guardarCalculado] = useState({})
    const handleShow = () => { setShow(true) };
@@ -37,7 +37,12 @@ const DetalleGralAnimal = ({ animal }) => {
             <td >
                {rp}
             </td>
-
+            <td >
+               {erp}
+            </td>
+            <td >
+               {grupo}
+            </td>
             <td >
                {categoria}
             </td>
@@ -71,9 +76,7 @@ const DetalleGralAnimal = ({ animal }) => {
             <td >
                {calculado.fser}
             </td>
-            <td >
-               {erp}
-            </td>
+
 
             <td>
                <div className={styles.tooltipWrapper}>

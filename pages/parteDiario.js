@@ -38,6 +38,30 @@ const ParteDiario = () => {
   const ExcelSheet = ReactExport.ExcelFile.ExcelSheet;
   const ExcelColumn = ReactExport.ExcelFile.ExcelColumn;
 
+  // Generar nombre de archivo Excel dinámico con fecha/filtros
+  const excelFilename = (() => {
+    try {
+      const hoy = format(Date.now(), 'yyyy-MM-dd');
+      let fechaEtiqueta = hoy;
+      if (valores?.tipoFecha === 'ef' && fini && ffin) {
+        fechaEtiqueta = `${fini}_a_${ffin}`;
+      } else if (valores?.tipoFecha === 'mv') {
+        fechaEtiqueta = `mes_${format(Date.now(), 'yyyy-MM')}`;
+      }
+
+      const filtros = [];
+      if (tipo && tipo !== 'todos') filtros.push(`Evento ${tipo}`);
+      if (visto && visto !== 'todos') {
+        filtros.push(visto === 'true' ? 'Vistos' : 'Pendientes');
+      }
+
+      const partes = ['Parte Diario', fechaEtiqueta, filtros.join(' - ')].filter(Boolean);
+      return partes.join(' - ');
+    } catch (e) {
+      return 'Parte Diario';
+    }
+  })();
+
   useEffect(() => {
 
     if (tamboSel) {
@@ -365,13 +389,30 @@ const ParteDiario = () => {
               </Form.Group>
               <ExcelFile
                 element={<Button variant="success" block>Excel</Button>}
-                filename="Parte Diario"
+                filename={excelFilename}
               >
                 <ExcelSheet data={eventos} name="Eventos">
                   <ExcelColumn label="Fecha" value="fevento" />
                   <ExcelColumn label="RP" value="rp" />
                   <ExcelColumn label="Evento" value="tipo" />
                   <ExcelColumn label="Detalle" value="detalle" />
+                  <ExcelColumn
+                    label="Crías"
+                    value={(row) => {
+                      try {
+                        if (row.tipo !== 'Parto' || !row.crias || !Array.isArray(row.crias)) return '';
+                        return row.crias
+                          .map((c) => {
+                            const rp = c?.rp || '';
+                            const sexo = c?.sexo || '';
+                            return `RP: ${rp} / Sexo: ${sexo}`;  
+                          })
+                          .join(' | ');
+                      } catch (e) {
+                        return '';
+                      }
+                    }}
+                  />
                   <ExcelColumn label="eRP" value="erp" />
                   <ExcelColumn label="Usuario" value="usuario" />
                 </ExcelSheet>

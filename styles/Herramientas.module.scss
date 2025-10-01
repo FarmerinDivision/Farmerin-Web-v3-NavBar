@@ -1,0 +1,79 @@
+// 🎨 Variables para colores principales
+$primary-color: #007bff;
+$primary-hover: darken($primary-color, 10%);
+$secondary-color: #6c757d;
+$danger-color: #dc3545;
+$light-gray: #f8f9fa;
+$border-color: #e0e0e0;
+
+// 🔹 Contenedor principal
+.miComponente {
+  padding: 2rem;
+
+  h3 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+    color: #333;
+    border-bottom: 2px solid $border-color;
+    padding-bottom: 0.5rem;
+  }
+
+  // 🔹 Botones
+  button {
+    background-color: $primary-color;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    margin: 0.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+
+    &:hover {
+      background-color: $primary-hover;
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      background-color: $secondary-color;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+  }
+
+  // 🔹 Listas
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+
+    li {
+      background: $light-gray;
+      margin-bottom: 0.5rem;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid $border-color;
+      font-size: 0.95rem;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      &:hover {
+        background: lighten($primary-color, 45%);
+        border-color: $primary-color;
+      }
+    }
+  }
+
+  // 🔹 Mensajes de error
+  p {
+    &.error {
+      color: $danger-color;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+  }
+}

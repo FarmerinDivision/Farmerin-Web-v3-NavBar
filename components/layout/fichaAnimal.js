@@ -54,6 +54,7 @@ const FichaAnimal = ({ animal, show, setShow }) => {
                             <Col lg={true}>
                                 <p><b>Ingreso:</b>&nbsp;{ingreso}</p>
                             </Col>
+                            
                             <Col lg={true}>
                                 <p><b>Categoria:</b>&nbsp;{categoria}</p>
                             </Col>
