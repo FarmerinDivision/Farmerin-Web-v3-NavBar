@@ -139,6 +139,8 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
           mbaja: esMuerta ? "muerte" : "",
           rodeo: 0,
           sugerido: 0,
+          // ✅ asignar mismo grupo que la madre
+          grupo: madreData.grupo,
         };
 
         const res = await firebase.db.collection(coleccion).add(nuevaCria);

@@ -50,6 +50,8 @@ const Actualizacion = () => {
             fparto: r[4],
             estrep: r[5],
             fservicio: r[6],
+            observaciones: r[7],
+            grupo: r[8],
             // racion: r[7],
             fila: fila
           }
@@ -76,27 +78,26 @@ const Actualizacion = () => {
     let fparto = '';
     let estrep;
     let fservicio = '';
-    let nservicio
-    // let racion;
-
-
+    let nservicio;
+    let grupo = null; // 👈 nuevo campo
 
     //valida que el eRP exista para el tambo
     if (a.erp && a.erp.length != 0) {
-
-
       erp = a.erp.toString();
-
       let existeeRP = false;
       try {
-        await firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).where('erp', 'in', [erp, a.erp]).get().then(snapshot => {
-          if (!snapshot.empty) {
-            snapshot.forEach(doc => {
-              id = doc.id;
-              existeeRP = true;
-            })
-          }
-        });
+        await firebase.db.collection('animal')
+          .where('idtambo', '==', tamboSel.id)
+          .where('erp', 'in', [erp, a.erp])
+          .get()
+          .then(snapshot => {
+            if (!snapshot.empty) {
+              snapshot.forEach(doc => {
+                id = doc.id;
+                existeeRP = true;
+              });
+            }
+          });
       } catch (error) {
         e = "Fila N°: " + a.fila + " / Error al consultar eRP: " + erp;
         guardarErrores(errores => [...errores, e]);
@@ -104,7 +105,6 @@ const Actualizacion = () => {
       }
 
       if (!existeeRP) {
-
         e = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - No existe el eRP en el tambo";
         guardarErrores(errores => [...errores, e]);
         errores = true;
@@ -160,7 +160,7 @@ const Actualizacion = () => {
       errores = true;
     }
 
-    //valida que la fecha de parto sea numerica (en excel son los dias transcurridos desde el 01/01/1900)
+    //valida fecha de parto
     if (isNaN(a.fparto) && (a.fparto)) {
       e = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - Formato incorrecto de fecha de parto";
       guardarErrores(errores => [...errores, e]);
@@ -178,7 +178,6 @@ const Actualizacion = () => {
         }
       }
     }
-
     //valida que si los kg de racion sean numericos y mayor a cero
     /* 
      if (isNaN(a.racion)) {
@@ -193,7 +192,6 @@ const Actualizacion = () => {
        }
      }
      */
-
     //Controla el valor del estado reproductivo
     if (a.estrep) {
       estrep = a.estrep.trim().toLowerCase();
@@ -210,7 +208,7 @@ const Actualizacion = () => {
       errores = true;
     }
 
-    //valida que la fecha de servicio sea numerica (en excel son los dias transcurridos desde el 01/01/1900)
+    //valida fecha de servicio
     if (isNaN(a.fservicio) && (a.fservicio)) {
       e = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - Formato incorrecto de fecha de servicio";
       guardarErrores(errores => [...errores, e]);
@@ -229,14 +227,13 @@ const Actualizacion = () => {
       }
     }
 
-
-
     //valida que si tiene una lactancia tenga fecha de parto
     if ((estpro == 'En Ordeñe') && (!fparto)) {
       e = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - Debe ingresar la fecha del ultimo parto";
       guardarErrores(errores => [...errores, e]);
       errores = true;
     }
+
     //valida  si está preñada tenga fecha de servicio
     if (estrep == 'preñada') {
       nservicio = 1;
@@ -249,14 +246,37 @@ const Actualizacion = () => {
       nservicio = 0;
     }
 
+    // --- Validación y conversión de grupo ---
+    if (a.grupo !== undefined && a.grupo !== null && a.grupo !== '') {
+      if (typeof a.grupo === "number") {
+        // Si Excel lo trae como número
+        grupo = a.grupo;
+      } else {
+        // Si lo trae como texto
+        const parsed = parseInt(a.grupo.toString().trim(), 10);
+        if (isNaN(parsed)) {
+          e = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - El grupo debe ser un valor numérico";
+          guardarErrores(errores => [...errores, e]);
+          errores = true;
+        } else {
+          grupo = parsed;
+        }
+      }
+    } else {
+      // 👇 Si la celda está vacía, se guarda como 0
+      grupo = 0;
+    }
+
+    // --- Validación y conversión de observaciones ---
+    let observaciones = "";
+    if (a.observaciones !== undefined && a.observaciones !== null) {
+      observaciones = a.observaciones.toString().trim();
+    }
 
     //si no hay errores, procede a la actualizacion del animal
     if (!errores) {
-
-      //creo el objeto animal
       try {
         const animal = {
-
           lactancia: a.lactancia,
           estpro: estpro,
           estrep: estrep,
@@ -264,24 +284,27 @@ const Actualizacion = () => {
           fservicio: fservicio,
           categoria: categoria,
           erp: erp,
-          // racion:racion
-        }
-
-        //insertar en base de datos
+          grupo: grupo,
+          observaciones: observaciones
+        };
 
         await firebase.db.collection('animal').doc(id).update(animal);
-        let act = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - Lact.: " + a.lactancia + " - Cat.: " + categoria + "- Est. Prod.:" + estpro + "- Est. Rep.:" + estrep;
+        let act = "Fila N°: " + a.fila + " / eRP: " + a.erp +
+          " - Lact.: " + a.lactancia +
+          " - Cat.: " + categoria +
+          " - Est. Prod.:" + estpro +
+          " - Est. Rep.:" + estrep +
+          " - Grupo:" + (grupo !== null ? grupo : "sin asignar");
+
         guardarActualizados(actualizados => [...actualizados, act]);
       } catch (error) {
-        e = "Fila N°: " + a.fila + " / eRP: " + a.erp + " -Error al actualizar el animal" + error;
+        e = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - Error al actualizar el animal " + error;
         guardarErrores(errores => [...errores, e]);
         errores = true;
       }
-
-
     }
-
   }
+
 
   const handleDragOver = (e) => {
     e.preventDefault(); // Previene el comportamiento por defecto
@@ -313,7 +336,7 @@ const Actualizacion = () => {
     <Layout titulo="Actualizacion Masiva">
       <>
         {procesando ? (
-            <ContenedorSpinner>
+          <ContenedorSpinner>
             <div className={styles.contenedorSpinner}>
               <Spinner animation="border" variant="info" />
               <div className={styles.mensajeCargando}>Procesando actualización masiva, por favor espere...</div>

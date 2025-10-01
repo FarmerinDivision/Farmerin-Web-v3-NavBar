@@ -17,6 +17,7 @@ const GralAnimales = () => {
 
   const [animales, guardarAnimales] = useState([]);
   const [rodeos, guardarRodeos] = useState([]);
+  const [grupos, guardarGrupos] = useState([]);
   const [animalesBase, guardarAnimalesBase] = useState([]);
   const [valores, guardarValores] = useState({
     idTambo: '',
@@ -24,7 +25,8 @@ const GralAnimales = () => {
     estpro: 'todos',
     estrep: 'todos',
     categoria: 'todos',
-    rodeo: 0
+    rodeo: 0,
+    grupo: 'todos'
   });
   let diasLact = 0;
 
@@ -52,6 +54,7 @@ const GralAnimales = () => {
     obtenerAnimales();
     aplicarFiltro();
     obtenerRodeos();
+    obtenerGrupos();
 
   }, [tamboSel]);
 
@@ -154,15 +157,10 @@ const GralAnimales = () => {
       });
 
     }
-    //Filtro por categoria
+    //Filtro por categoria (grupo de animal)
     if (categoria != "todos") {
       const cond = categoria.toLowerCase();
-      an = an.filter(animal => {
-        return (
-          animal.categoria.toLowerCase().includes(cond)
-        )
-      });
-
+      an = an.filter(animal => (animal.categoria || '').toLowerCase().includes(cond));
     }
     //Filtro por rodeo
     if (rodeo != 0) {
@@ -172,6 +170,11 @@ const GralAnimales = () => {
 
       });
 
+    }
+    // Filtro por grupo
+    if (valores.grupo !== 'todos') {
+      const gsel = Number(valores.grupo);
+      an = an.filter(animal => Number(animal.grupo) === gsel);
     }
     guardarAnimales(an);
 
@@ -208,6 +211,27 @@ const GralAnimales = () => {
 
     guardarRodeos(rodeos);
 
+  }
+
+  // Obtiene la lista de grupos definidos en la colección 'parametro' (nueva estructura)
+  async function obtenerGrupos() {
+    if (!tamboSel) return;
+    try {
+      const snap = await firebase.db
+        .collection('parametro')
+        .where('idtambo', '==', tamboSel.id)
+        .get();
+      const gruposVals = snap.docs
+        .map(d => d.data()?.grupo)
+        .filter(g => Number.isFinite(Number(g)))
+        .map(g => Number(g))
+        .sort((a, b) => a - b)
+        .filter((g, idx, arr) => idx === 0 || g !== arr[idx - 1]);
+      guardarGrupos(gruposVals);
+    } catch (e) {
+      console.log('Error obteniendo grupos', e);
+      guardarGrupos([]);
+    }
   }
 
 
@@ -366,7 +390,7 @@ const GralAnimales = () => {
     <Layout titulo="Reportes">
       <>
         <Botonera>
-        <h6 className={styles.titulo}>Gral Animales - Total de animales: <strong>{animales.length}</strong></h6>
+          <h6 className={styles.titulo}>Gral Animales - Total de animales: <strong>{animales.length}</strong></h6>
           <Row>
             <Col lg={true}><h6>&nbsp;</h6></Col>
             <Col lg={true}><h6>&nbsp;</h6></Col>
@@ -392,7 +416,9 @@ const GralAnimales = () => {
                 >
                   <ExcelSheet data={animales} name="Animales">
                     <ExcelColumn label="RP" value="rp" />
-                    <ExcelColumn label="Grupo" value="categoria" />
+                    <ExcelColumn label="eRP" value="erp" />
+                    <ExcelColumn label="Grupo" value="grupo" />
+                    <ExcelColumn label="Categoria" value="categoria" />
                     <ExcelColumn label="Rodeo" value="rodeo" />
                     <ExcelColumn label="Est.Rep." value="estrep" />
                     <ExcelColumn label="Est.Prod." value="estpro" />
@@ -403,7 +429,6 @@ const GralAnimales = () => {
                     <ExcelColumn label="Ración(Kg)" value="racion" />
                     <ExcelColumn label="N°Serv." value="nservicio" />
                     <ExcelColumn label="F.Serv." value="fservicio" />
-                    <ExcelColumn label="eRP" value="erp" />
                   </ExcelSheet>
                 </ExcelFile>
               </Col>
@@ -469,6 +494,24 @@ const GralAnimales = () => {
                   <Col lg={true}>
                     <Form.Group>
                       <Form.Label className={styles.filtroLabel}>Grupo</Form.Label>
+                      <Form.Control
+                        as="select"
+                        id="grupo"
+                        name="grupo"
+                        onChange={handleChange}
+                        value={valores.grupo}
+                        className={styles.filtroInput}
+                      >
+                        <option value="todos">Todos</option>
+                        {grupos.map((g) => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </Form.Control>
+                    </Form.Group>
+                  </Col>
+                  <Col lg={true}>
+                    <Form.Group>
+                      <Form.Label className={styles.filtroLabel}>Categoria</Form.Label>
                       <Form.Control
                         as="select"
                         id="categoria"
@@ -542,7 +585,7 @@ const GralAnimales = () => {
             </Mensaje>
           ) : (
             <Contenedor>
-              <StickyTable height={410}>
+              <StickyTable height={510}>
                 <Table responsive>
                   <thead>
                     <tr>
@@ -556,11 +599,27 @@ const GralAnimales = () => {
                         </div>
                       </th>
                       <th>
+                        <div className={styles.thTooltipWrapper} >
+                          <span className={styles.thContent}>
+                            eRP<p className={styles.sortIcon} />
+                          </span>
+                          <span className={styles.thTooltipText}>Boton Electronico</span>
+                        </div>
+                      </th>
+                      <th>
                         <div className={styles.thTooltipWrapper} onClick={handleClickGr}>
                           <span className={styles.thContent}>
                             Grupo <FaSort size={15} className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Grupo Animal</span>
+                        </div>
+                      </th>
+                      <th>
+                        <div className={styles.thTooltipWrapper} onClick={handleClickGr}>
+                          <span className={styles.thContent}>
+                            Categoria <FaSort size={15} className={styles.sortIcon} />
+                          </span>
+                          <span className={styles.thTooltipText}>Categoria</span>
                         </div>
                       </th>
                       <th>
@@ -582,7 +641,7 @@ const GralAnimales = () => {
                       <th>
                         <div className={styles.thTooltipWrapper} onClick={handleClickEP}>
                           <span className={styles.thContent}>
-                           Est. Prod. <FaSort size={15} className={styles.sortIcon} />
+                            Est. Prod. <FaSort size={15} className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Estado Reproductivo</span>
                         </div>
@@ -590,23 +649,23 @@ const GralAnimales = () => {
                       <th>
                         <div className={styles.thTooltipWrapper} >
                           <span className={styles.thContent}>
-                           Lact.<p className={styles.sortIcon} />
+                            Lact.<p className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Lactancia</span>
                         </div>
                       </th>
-                       <th>
+                      <th>
                         <div className={styles.thTooltipWrapper} >
                           <span className={styles.thContent}>
-                           Le.UC <p className={styles.sortIcon} />
+                            Le.UC <p className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Litros Último Control</span>
                         </div>
                       </th>
-                       <th>
+                      <th>
                         <div className={styles.thTooltipWrapper} >
                           <span className={styles.thContent}>
-                           Le.CA <p className={styles.sortIcon} />
+                            Le.CA <p className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Litros Control Anterior</span>
                         </div>
@@ -614,7 +673,7 @@ const GralAnimales = () => {
                       <th>
                         <div className={styles.thTooltipWrapper} >
                           <span className={styles.thContent}>
-                           Días Lact.<p className={styles.sortIcon} />
+                            Días Lact.<p className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Días en lactancia</span>
                         </div>
@@ -622,7 +681,7 @@ const GralAnimales = () => {
                       <th>
                         <div className={styles.thTooltipWrapper} >
                           <span className={styles.thContent}>
-                           Ración(Kg)<p className={styles.sortIcon} />
+                            Ración(Kg)<p className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Ración(Kg)</span>
                         </div>
@@ -630,7 +689,7 @@ const GralAnimales = () => {
                       <th>
                         <div className={styles.thTooltipWrapper} >
                           <span className={styles.thContent}>
-                           N°Serv.<p className={styles.sortIcon} />
+                            N°Serv.<p className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Numero de servicio</span>
                         </div>
@@ -638,23 +697,15 @@ const GralAnimales = () => {
                       <th>
                         <div className={styles.thTooltipWrapper} >
                           <span className={styles.thContent}>
-                           F.Serv.<p className={styles.sortIcon} />
+                            F.Serv.<p className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Fecha de servicio</span>
                         </div>
                       </th>
-                       <th>
+                      <th>
                         <div className={styles.thTooltipWrapper} >
                           <span className={styles.thContent}>
-                          eRP<p className={styles.sortIcon} />
-                          </span>
-                          <span className={styles.thTooltipText}>Boton Electronico</span>
-                        </div>
-                      </th>
-                       <th>
-                        <div className={styles.thTooltipWrapper} >
-                          <span className={styles.thContent}>
-                          Más...<p className={styles.sortIcon} />
+                            Ficha<p className={styles.sortIcon} />
                           </span>
                           <span className={styles.thTooltipText}>Ficha Animal</span>
                         </div>

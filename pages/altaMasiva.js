@@ -38,7 +38,10 @@ const AltaMasiva = () => {
     await readXlsxFile(file).then((rows) => {
       rows.forEach(r => {
         fila++;
-        if (fila != 1) {
+        if (fila != 1) { // saltea la cabecera
+
+          // 🔍 Debug: imprime toda la fila como array
+          console.log("Fila:", fila, "Datos:", r);
 
           const a = {
             erp: r[0],
@@ -54,16 +57,13 @@ const AltaMasiva = () => {
             estrep: r[10],
             fservicio: r[11],
             observaciones: r[12],
+            grupo: r[13],   // 👈 Verificá en consola si es acá o si en realidad es r[14]
             fila: fila
           }
 
-
           cargarAnimal(a);
-
         }
-
       });
-
     })
     guardarFile(null);
     guardarProcesando(false);
@@ -83,6 +83,19 @@ const AltaMasiva = () => {
     let fservicio = '';
     let nservicio;
 
+    // --- Validación grupo ---
+    let grupo = 0;
+    if (a.grupo === undefined || a.grupo === null || a.grupo === '') {
+      grupo = 0;
+    } else {
+      grupo = Number(a.grupo);
+      if (isNaN(grupo)) {
+        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - El grupo debe ser un número";
+        guardarErrores(errores => [...errores, e]);
+        errores = true;
+        grupo = 0; // valor por defecto si no es válido
+      }
+    }
 
     //valida que el RP no exista
     if (a.rp && a.rp.length != 0) {
@@ -99,11 +112,8 @@ const AltaMasiva = () => {
         await firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).where('rp', '==', rp).get().then(snapshot => {
           if (!snapshot.empty) {
             snapshot.forEach(doc => {
-
               existeRP = true;
-
             });
-
           }
         });
       } catch (error) {
@@ -113,7 +123,6 @@ const AltaMasiva = () => {
       }
 
       if (existeRP) {
-
         e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - El RP ya existe en el tambo";
         guardarErrores(errores => [...errores, e]);
         errores = true;
@@ -137,18 +146,13 @@ const AltaMasiva = () => {
           guardarErrores(errores => [...errores, e]);
           errores = true;
         } else {
-
           let existeERP = false;
           try {
-
             await firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).where('erp', '==', a.erp).get().then(snapshot => {
               if (!snapshot.empty) {
                 snapshot.forEach(doc => {
-
                   existeERP = true;
-
                 });
-
               }
             });
           } catch (error) {
@@ -173,7 +177,6 @@ const AltaMasiva = () => {
       errores = true;
     } else {
       try {
-
         ingreso = new Date("1899-12-31");
         ingreso.setDate(ingreso.getDate() + a.ingreso);
         ingreso = format(ingreso, 'yyyy-MM-dd');
@@ -183,7 +186,6 @@ const AltaMasiva = () => {
         errores = true;
       }
     }
-
 
     //valida que la lactancia contenga valores
     if (a.lactancia != 0) {
@@ -230,7 +232,7 @@ const AltaMasiva = () => {
       errores = true;
     }
 
-    //valida que la fecha de parto sea numerica (en excel son los dias transcurridos desde el 01/01/1900)
+    //valida que la fecha de parto sea numerica
     if (isNaN(a.fparto) && (a.fparto)) {
       e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Formato incorrecto de fecha de parto";
       guardarErrores(errores => [...errores, e]);
@@ -248,7 +250,8 @@ const AltaMasiva = () => {
         }
       }
     }
-    //valida que si los kg de racion sean numericos y mayor a cero
+
+    //valida que si los kg de racion sean numericos
     if (isNaN(a.racion)) {
       e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Los Kg. de racion debe ser un valor numerico";
       guardarErrores(errores => [...errores, e]);
@@ -277,7 +280,7 @@ const AltaMasiva = () => {
       errores = true;
     }
 
-    //valida que la fecha de servicio sea numerica (en excel son los dias transcurridos desde el 01/01/1900)
+    //valida que la fecha de servicio sea numerica
     if (isNaN(a.fservicio) && (a.fservicio)) {
       e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Formato incorrecto de fecha de servicio";
       guardarErrores(errores => [...errores, e]);
@@ -295,7 +298,6 @@ const AltaMasiva = () => {
         }
       }
     }
-
 
     //valida que si el control lechero tiene valores, sea numerico
     if (isNaN(a.uc)) {
@@ -322,17 +324,10 @@ const AltaMasiva = () => {
       nservicio = 0;
     }
 
-
     //si no hay errores, procede al alta del animal
     if (!errores) {
-      /*
-      let act = "Fila N°: " + a.fila + " Log: "+ingreso ;
-      guardarActualizados(actualizados => [...actualizados, act]);
-      */
-      //creo el objeto animal
       try {
         const animal = {
-
           idtambo: tamboSel.id,
           ingreso: ingreso,
           rp: rp,
@@ -354,24 +349,22 @@ const AltaMasiva = () => {
           fbaja: '',
           mbaja: '',
           rodeo: 0,
-          sugerido: 0
+          sugerido: 0,
+          grupo: grupo  // <-- Nuevo campo
         }
 
         //insertar en base de datos
-
         await firebase.db.collection('animal').add(animal);
-        let act = "Fila N°: " + a.fila + " / RP: " + a.rp + " - eRP: " + a.erp + " - Lact.: " + a.lactancia + " - Cat.: " + categoria + "- Est. Prod.:" + estpro;
+        let act = "Fila N°: " + a.fila + " / RP: " + a.rp + " - eRP: " + a.erp + " - Lact.: " + a.lactancia + " - Cat.: " + categoria + "- Est. Prod.:" + estpro + " - Grupo:" + grupo;
         guardarActualizados(actualizados => [...actualizados, act]);
       } catch (error) {
         e = "Fila N°: " + a.fila + " / RP: " + a.rp + " -Error al dar de alta el animal" + error;
         guardarErrores(errores => [...errores, e]);
         errores = true;
       }
-
-
     }
-
   }
+
 
 
   const onFileChange = e => {
@@ -398,7 +391,7 @@ const AltaMasiva = () => {
     }
   };
 
-  
+
   return (
     <Layout titulo="Alta Masiva">
       {procesando ? (

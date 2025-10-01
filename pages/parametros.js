@@ -5,21 +5,36 @@ import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
 import DetalleParametro from '../components/layout/detalleParametro';
 import SelectTambo from '../components/layout/selectTambo';
-import { Button, DropdownButton, Dropdown, Row, Col } from 'react-bootstrap';
+import { Button, DropdownButton, Dropdown, Row, Col, Modal } from 'react-bootstrap';
+import { RiAddLine, RiEditBoxLine, RiDeleteBin2Line } from 'react-icons/ri';
 import { format } from 'date-fns';
 import { addNotification } from '../redux/notificacionSlice';
 import styles from '../styles/Parametro.module.scss';
+import { Mensaje } from '../components/ui/Elementos';
 
 const Parametros = () => {
   const [valor, setValor] = useState(0);
   const { firebase, setPorc, tamboSel } = useContext(FirebaseContext);
   const [selectedChange, setSelectedChange] = useState(null);
   const [isIncrease, setIsIncrease] = useState(true);
+  const [grupos, setGrupos] = useState([]);
+  const [cargandoGrupos, setCargandoGrupos] = useState(false);
+  const [showNuevoGrupo, setShowNuevoGrupo] = useState(false);
+  const [nuevoGrupoId, setNuevoGrupoId] = useState(null);
+  const [editGroup, setEditGroup] = useState({ id: null, value: '', subtitle: '' });
+  const [deleteGroupId, setDeleteGroupId] = useState(null);
+  const [showSuccessGroup, setShowSuccessGroup] = useState(false);
+  const [successMsgGroup, setSuccessMsgGroup] = useState('');
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
   const dispatch = useDispatch();
 
   useEffect(() => {
     if (tamboSel) {
       obtenerPorcentaje();
+      cargarGrupos();
+    } else {
+      setGrupos([]);
     }
   }, [tamboSel]);
 
@@ -32,9 +47,129 @@ const Parametros = () => {
     }
   };
 
+  const abrirEditarGrupo = (g) => {
+    setEditGroup({ id: g.id, value: String(g.grupo ?? ''), subtitle: g.subtitulo || '' });
+  };
+
+  const guardarEdicionGrupo = async () => {
+    if (!editGroup.id) return;
+    try {
+      const num = Number(editGroup.value);
+      if (!Number.isFinite(num)) return;
+      const update = { grupo: num, subtitulo: (editGroup.subtitle || '').trim() };
+      await firebase.db.collection('parametro').doc(editGroup.id).update(update);
+      setEditGroup({ id: null, value: '', subtitle: '' });
+      await cargarGrupos();
+      setSuccessMsgGroup('Grupo actualizado correctamente.');
+      setShowSuccessGroup(true);
+    } catch (e) {
+      console.error('Error renombrando grupo', e);
+    }
+  };
+
+  const confirmarEliminarGrupo = (id) => setDeleteGroupId(id);
+
+  const eliminarGrupo = async () => {
+    if (!deleteGroupId || deletingGroup) return;
+    const idAEliminar = deleteGroupId;
+    setDeletingGroup(true);
+    // Optimista: cerrar modal, mostrar éxito y actualizar UI al instante
+    const gruposPrevios = grupos;
+    setDeleteGroupId(null);
+    setGrupos(prev => prev.filter(g => g.id !== idAEliminar));
+    setSuccessMsgGroup('Grupo eliminado correctamente.');
+    setShowSuccessGroup(true);
+
+    try {
+      await firebase.db.collection('parametro').doc(idAEliminar).delete();
+      // Refrescar en background para asegurar consistencia
+      cargarGrupos();
+    } catch (e) {
+      console.error('Error eliminando grupo', e);
+      // Revertir cambios optimistas
+      setGrupos(gruposPrevios);
+      setSuccessMsgGroup('No se pudo eliminar el grupo. Intente nuevamente.');
+      setShowSuccessGroup(true);
+    } finally {
+      setDeletingGroup(false);
+    }
+  };
+
   function snapshotParametros(snapshot) {
     setValor(snapshot.data().porcentaje);
   }
+
+  const cargarGrupos = async () => {
+    if (!tamboSel) return;
+    setCargandoGrupos(true);
+    try {
+      let snap;
+      try {
+        snap = await firebase.db
+          .collection('parametro')
+          .where('idtambo', '==', tamboSel.id)
+          .orderBy('grupo')
+          .get();
+      } catch (errOrder) {
+        // fallback sin orderBy por si falta índice o hay tipos mixtos
+        console.warn('Fallo orderBy("grupo"), usando fallback sin orden.', errOrder);
+        snap = await firebase.db
+          .collection('parametro')
+          .where('idtambo', '==', tamboSel.id)
+          .get();
+      }
+      const data = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        // Solo documentos de grupo (tienen el campo 'parametros' como array)
+        .filter(d => Array.isArray(d.parametros))
+        .sort((a, b) => Number(a.grupo ?? 0) - Number(b.grupo ?? 0));
+      setGrupos(data);
+    } catch (error) {
+      console.error('Error cargando grupos', error);
+    } finally {
+      setCargandoGrupos(false);
+    }
+  };
+
+  const crearNuevoGrupo = async () => {
+    if (!tamboSel || creatingGroup) return;
+    setCreatingGroup(true);
+    try {
+      // calcular próximo número de grupo en memoria
+      const maxGrupo = grupos.reduce((acc, g) => Math.max(acc, Number(g.grupo ?? 0)), -1);
+      const nuevoGrupoNumero = isFinite(maxGrupo) && maxGrupo >= 0 ? maxGrupo + 1 : 0;
+      const base = {
+        idtambo: tamboSel.id,
+        grupo: nuevoGrupoNumero,
+        parametros: [
+          { categoria: 'Vaca', rodeos: [] },
+          { categoria: 'Vaquillona', rodeos: [] }
+        ]
+      };
+
+      // crear ref primero para obtener ID inmediatamente y abrir el modal sin esperar red
+      const ref = firebase.db.collection('parametro').doc();
+      setNuevoGrupoId(ref.id);
+      setShowNuevoGrupo(true); // abrir modal ya
+
+      // escribir en background (sin bloquear UI)
+      ref.set(base)
+        .then(() => {
+          // refrescar lista sin bloquear
+          cargarGrupos();
+        })
+        .catch((error) => {
+          console.error('Error creando grupo', error);
+          setShowNuevoGrupo(false);
+          setSuccessMsgGroup('No se pudo crear el grupo. Intente nuevamente.');
+          setShowSuccessGroup(true);
+        })
+        .finally(() => setCreatingGroup(false));
+    } catch (error) {
+      console.error('Error creando grupo', error);
+      setCreatingGroup(false);
+    }
+  };
 
   const handleApplyChange = async () => {
     if (selectedChange === null || !tamboSel) return;
@@ -58,7 +193,7 @@ const Parametros = () => {
       // ✅ Batch update para animales (más rápido)
       const snapshot = await firebase.db
         .collection('animal')
-        .where('tamboId', '==', tamboSel.id)
+        .where('idtambo', '==', tamboSel.id)
         .get();
 
       const batch = firebase.db.batch();
@@ -115,7 +250,7 @@ const Parametros = () => {
 
       const snapshot = await firebase.db
         .collection('animal')
-        .where('tamboId', '==', tamboSel.id)
+        .where('idtambo', '==', tamboSel.id)
         .get();
 
       const batch = firebase.db.batch();
@@ -223,6 +358,11 @@ const Parametros = () => {
               </Dropdown.Item>
             ))}
           </DropdownButton>
+
+          <Button className={`${styles.nuevoGrupoBtn} ${styles.mlAuto}`} onClick={crearNuevoGrupo} disabled={creatingGroup}>
+            <RiAddLine size={18} />
+            {creatingGroup ? 'Creando…' : 'Nuevo grupo'}
+          </Button>
         </div>
 
         {selectedChange !== null && (
@@ -235,28 +375,178 @@ const Parametros = () => {
 
         {tamboSel ? (
           <>
-            <Row className="gx-4 gy-4 mt-3">
-              <Col md={6}>
-                <DetalleParametro
-                  idTambo={tamboSel.id}
-                  categoria="Vaquillona"
-                  porcentaje={porcentaje}
-                />
-              </Col>
-              <Col md={6}>
-                <DetalleParametro
-                  idTambo={tamboSel.id}
-                  categoria="Vaca"
-                  porcentaje={porcentaje}
-                />
-              </Col>
-            </Row>
+            {/* Botón de nuevo grupo movido a la barra de acciones superior */}
+            {cargandoGrupos ? (
+              <div className={styles.spinnerContainerParametros}>
+                <div className={styles.spinnerParametros}></div>
+                <div className={styles.loaderParametros}>
+                  <p>Cargando</p>
+                  <div className={styles.wordsParametros}>
+                    <span className={styles.wordParametro}>Grupos configurados</span>
+                    <span className={styles.wordParametro}>Paratros de Vacas</span>
+                    <span className={styles.wordParametro}>Parametros de Vaquillonas</span>
+                    <span className={styles.wordParametro}>Unidades de medida</span>
+                    <span className={styles.wordParametro}>Rodeo y Orden</span>
+                  </div>
+                </div>
+              </div>
+            ) : grupos.length === 0 ? (
+              <Mensaje>
+                <div className={styles.sinGrupos}>No hay grupos configurados. Cree uno nuevo.</div>
+              </Mensaje>
+            ) : (
+              grupos.map((g) => (
+                <div key={g.id} className={styles.cardGrupo}>
+                  <div className={styles.headerGrupo}>
+                    <h2 className={styles.tituloGrupo}>Grupo {g.grupo}{g.subtitulo ? ` - ${g.subtitulo}` : ''}</h2>
+                    <div className={styles.accionesGrupo}>
+                      <div className={styles.tooltipWrapper}>
+                        <Button variant="outline-primary" size="sm" onClick={() => abrirEditarGrupo(g)}>
+                          <RiEditBoxLine size={25} />
+                        </Button>
+                        <span className={styles.tooltipText}>Editar grupo</span>
+                      </div>
+                      <div className={styles.tooltipWrapper}>
+                        <Button variant="outline-danger" size="sm" onClick={() => confirmarEliminarGrupo(g.id)}>
+                          <RiDeleteBin2Line size={25} />
+                        </Button>
+                        <span className={styles.tooltipText}>Eliminar grupo</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Row className="gx-4 gy-4 mt-2">
+                    {(g.parametros || []).map((cat) => (
+                      <Col md={6} key={cat.categoria}>
+                        <DetalleParametro
+                          idTambo={tamboSel.id}
+                          groupId={g.id}
+                          categoria={cat.categoria}
+                          porcentaje={porcentaje}
+                        />
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              ))
+            )}
           </>
         ) : (
           <SelectTambo />
         )}
       </div>
-    </Layout>
+
+      {showNuevoGrupo && (
+        <div className={styles.overlayCard}>
+          <div className={styles.paramCardContainer}>
+            <div className={styles.paramCardHeader}>
+              <h4 className={styles.paramCardTitle}>
+                Nuevo Grupo creado • Añadir parámetros iniciales
+              </h4>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={() => setShowNuevoGrupo(false)}
+              >
+                ✕
+              </Button>
+            </div>
+
+            <div className={styles.paramCardBody}>
+              <Row className="gx-4 gy-4">
+                <Col md={6} className={styles.modalParamCol}>
+                  <h5 className={styles.modalParamColTitulo}>Parametros para Vaca</h5>
+                  <DetalleParametro
+                    idTambo={tamboSel?.id}
+                    groupId={nuevoGrupoId}
+                    categoria="Vaca"
+                    porcentaje={porcentaje}
+                  />
+                </Col>
+                <Col md={6} className={styles.modalParamCol}>
+                  <h5 className={styles.modalParamColTitulo}>Parametros para Vaquillona</h5>
+                  <DetalleParametro
+                    idTambo={tamboSel?.id}
+                    groupId={nuevoGrupoId}
+                    categoria="Vaquillona"
+                    porcentaje={porcentaje}
+                  />
+                </Col>
+              </Row>
+            </div>
+
+            <div className={styles.paramCardFooter}>
+              <Button variant="primary" onClick={() => setShowNuevoGrupo(false)}>
+                Finalizar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
+      {/* Modal éxito acciones sobre grupo */}
+      <Modal show={showSuccessGroup} onHide={() => setShowSuccessGroup(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>✅ Acción completada</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>{successMsgGroup}</p>
+          <p className="text-muted">(Si no ve el cambio, salga y vuelva a entrar para actualizar.)</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowSuccessGroup(false)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal editar grupo */}
+      <Modal show={!!editGroup.id} onHide={() => setEditGroup({ id: null, value: '', subtitle: '' })} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Editar número de grupo</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <label className="form-label">Número de grupo</label>
+            <input
+              type="number"
+              className="form-control"
+              value={editGroup.value}
+              onChange={(e) => setEditGroup({ ...editGroup, value: e.target.value })}
+              min={0}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Subtítulo (opcional)</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Ej: Holando"
+              value={editGroup.subtitle}
+              onChange={(e) => setEditGroup({ ...editGroup, subtitle: e.target.value })}
+              maxLength={40}
+            />
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setEditGroup({ id: null, value: '', subtitle: '' })}>Cancelar</Button>
+          <Button variant="primary" onClick={guardarEdicionGrupo}>Guardar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal eliminar grupo */}
+      <Modal show={!!deleteGroupId} onHide={() => setDeleteGroupId(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>¿Eliminar grupo?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Esta acción eliminará el grupo y todos sus parámetros. ¿Desea continuar?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDeleteGroupId(null)}>Cancelar</Button>
+          <Button variant="danger" onClick={eliminarGrupo}>Eliminar</Button>
+        </Modal.Footer>
+      </Modal>
+    </Layout >
   );
 };
 

@@ -8,7 +8,7 @@ import { format } from 'date-fns'
 
 const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada }) => {
 
-   const { id, rp, lactancia, estrep, fparto, fservicio, categoria, racion, uc, ca, anorm, sugerido, rodeo, actu, diasLact, diasPre, fuc, fracion } = animal;
+   const { id, rp, lactancia, estrep, fparto, fservicio, categoria, racion, uc, ca, anorm, sugerido, rodeo, actu, diasLact, diasPre, fuc, fracion, grupo } = animal;
    const [sug, guardarSug] = useState(0);
    const [error, guardarError] = useState(false);
    const [descError, guardarDescError] = useState('');
@@ -94,19 +94,20 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
 
       <tr>
          <td >{rp} </td>
-         <td >{lactancia}</td>
+         <td >{grupo}</td>
          <td >{categoria}</td>
          <td >{rodeo}</td>
+         <td >{diasLact}</td>
+         <td >{lactancia}</td>
+         <td >{parseFloat(ca).toFixed(2)}</td>
          <td >{parseFloat(uc).toFixed(2)}</td>
          <td >{formattedDate} </td>
-         <td >{parseFloat(ca).toFixed(2)}</td>
-         <td >{anorm}</td>
-         <td >{diasLact}</td>
+         {/*<td >{anorm}</td> */}
          <td >{estrep}</td>
          <td >{diasPre}</td>
-         <td> {racionModificada}</td>
          <td >{format(firebase.timeStampToDate(fracion), 'dd/MM/yyyy')}
          </td>
+         <td> {racionModificada}</td>
 
          <td>
 

@@ -11,8 +11,8 @@ import {
 import ParametroEdit from '../../pages/parametros/[id]';
 import styles from '../../styles/Parametro.module.scss';
 
-const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpdate }) => {
-  const { id, orden, condicion, min, max, um, racion, categoria } = parametro;
+const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpdate, groupId, categoria }) => {
+  const { id, orden, condicion, min, max, um, racion } = parametro;
   const { firebase } = useContext(FirebaseContext);
 
   const [showModal, setShowModal] = useState(false);
@@ -28,55 +28,78 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
   };
 
 
-
   const eliminarParam = async () => {
-    await firebase.db.collection('parametro').doc(id).delete();
-    const actualizados = parametros
-      .filter(p => p.id !== id)
-      .map((param, i) => {
-        const actualizado = { ...param, orden: i + 1 };
-        firebase.db.collection('parametro').doc(param.id).update(actualizado);
-        return actualizado;
-      });
-
+    // operar dentro del documento de grupo
+    const ref = firebase.db.collection('parametro').doc(groupId);
+    await firebase.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) return;
+      const data = snap.data();
+      const categorias = Array.isArray(data.parametros) ? data.parametros.slice() : [];
+      const idx = categorias.findIndex(c => c.categoria === categoria);
+      if (idx === -1) return;
+      let rodeos = (categorias[idx].rodeos || []).slice();
+      // remover por orden
+      rodeos = rodeos.filter(r => r.orden !== orden);
+      // reordenar consecutivos
+      rodeos = rodeos.sort((a,b) => a.orden - b.orden).map((r, i) => ({ ...r, orden: i + 1 }));
+      categorias[idx] = { ...categorias[idx], rodeos };
+      tx.update(ref, { parametros: categorias });
+    });
+    // actualizar estado local
+    const actualizados = parametros.filter(p => p.orden !== orden).map((p, i) => ({ ...p, orden: i + 1 }));
     guardarParametros(actualizados);
   };
 
-  const handleDown = () => {
-    const parOrd = parametros.map(p => {
-      if (p.id === id) {
-        p.orden += 1;
-        firebase.db.collection('parametro').doc(p.id).update(p);
-        return p;
-      }
-      if (p.orden === orden + 1) {
-        p.orden -= 1;
-        firebase.db.collection('parametro').doc(p.id).update(p);
-        return p;
-      }
-      return p;
+  const handleDown = async () => {
+    if (orden === parametros.length) return;
+    const ref = firebase.db.collection('parametro').doc(groupId);
+    await firebase.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) return;
+      const data = snap.data();
+      const categorias = Array.isArray(data.parametros) ? data.parametros.slice() : [];
+      const idx = categorias.findIndex(c => c.categoria === categoria);
+      if (idx === -1) return;
+      const rodeos = (categorias[idx].rodeos || []).slice();
+      const i = rodeos.findIndex(r => r.orden === orden);
+      const j = rodeos.findIndex(r => r.orden === orden + 1);
+      if (i === -1 || j === -1) return;
+      [rodeos[i].orden, rodeos[j].orden] = [rodeos[j].orden, rodeos[i].orden];
+      categorias[idx] = { ...categorias[idx], rodeos };
+      tx.update(ref, { parametros: categorias });
     });
-
-    parOrd.sort((a, b) => a.orden - b.orden);
+    const parOrd = parametros.map(p => {
+      if (p.orden === orden) return { ...p, orden: p.orden + 1 };
+      if (p.orden === orden + 1) return { ...p, orden: p.orden - 1 };
+      return p;
+    }).sort((a,b) => a.orden - b.orden);
     guardarParametros(parOrd);
   };
 
-  const handleUp = () => {
-    const parOrd = parametros.map(p => {
-      if (p.id === id) {
-        p.orden -= 1;
-        firebase.db.collection('parametro').doc(p.id).update(p);
-        return p;
-      }
-      if (p.orden === orden - 1) {
-        p.orden += 1;
-        firebase.db.collection('parametro').doc(p.id).update(p);
-        return p;
-      }
-      return p;
+  const handleUp = async () => {
+    if (orden === 1) return;
+    const ref = firebase.db.collection('parametro').doc(groupId);
+    await firebase.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) return;
+      const data = snap.data();
+      const categorias = Array.isArray(data.parametros) ? data.parametros.slice() : [];
+      const idx = categorias.findIndex(c => c.categoria === categoria);
+      if (idx === -1) return;
+      const rodeos = (categorias[idx].rodeos || []).slice();
+      const i = rodeos.findIndex(r => r.orden === orden);
+      const j = rodeos.findIndex(r => r.orden === orden - 1);
+      if (i === -1 || j === -1) return;
+      [rodeos[i].orden, rodeos[j].orden] = [rodeos[j].orden, rodeos[i].orden];
+      categorias[idx] = { ...categorias[idx], rodeos };
+      tx.update(ref, { parametros: categorias });
     });
-
-    parOrd.sort((a, b) => a.orden - b.orden);
+    const parOrd = parametros.map(p => {
+      if (p.orden === orden) return { ...p, orden: p.orden - 1 };
+      if (p.orden === orden - 1) return { ...p, orden: p.orden + 1 };
+      return p;
+    }).sort((a,b) => a.orden - b.orden);
     guardarParametros(parOrd);
   };
 
@@ -149,19 +172,11 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
             isModal={true}
             onClose={handleClose}
             onUpdate={onUpdate}
-            onSuccess={(updatedData) => {
-              const actualizados = parametros.map(p =>
-                p.id === id ? { ...p, ...updatedData } : p
-              );
-              guardarParametros(actualizados);
-              setShowModal(false);
-              setSuccessMsg('Parámetro actualizado correctamente.');
-              setShowSuccess(true);
-            }}
+            groupId={groupId}
+            categoriaFija={categoria}
           />
         </Modal.Body>
       </Modal>
-
 
       {/* Modal de confirmación de eliminación */}
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>

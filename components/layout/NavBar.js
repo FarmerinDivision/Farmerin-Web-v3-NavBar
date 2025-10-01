@@ -213,6 +213,7 @@ const NavBar = () => {
           </div>
 
           <Link href="/ayuda"><span>Ayuda</span></Link>
+          <Link href="/MOTIVODEBAJA"><span>CAMBIO DE RACIONES</span></Link>
           <Link href="/perfilFarmerin">
             <span style={{ position: "relative", display: "inline-block" }}>
               Mi Farmerin - {tamboSel.nombre}

@@ -31,6 +31,7 @@ const Control = () => {
     const [orderAn, guardarOrderAn] = useState('asc');
     const [orderDl, guardarOrderDl] = useState('asc');
     const [orderDP, guardarOrderDP] = useState('asc');
+    const [orderGrupo, setOrderGrupo] = useState('asc');
     const [orderRac, guardarOrderRac] = useState('asc');
     const [showModal, setShowModal] = useState(false);
     const [modalMessages, setModalMessages] = useState([]);
@@ -244,6 +245,21 @@ const Control = () => {
 
     }
 
+
+    const handleClickGrupo = e => {
+        e.preventDefault();
+        if (orderGrupo === 'asc') {
+            const ordenados = animales.sort((a, b) => (a.grupo < b.grupo ? 1 : -1));
+            setOrderGrupo('desc');
+            guardarAnimales([...ordenados]);
+        } else {
+            const ordenados = animales.sort((a, b) => (a.grupo > b.grupo ? 1 : -1));
+            setOrderGrupo('asc');
+            guardarAnimales([...ordenados]);
+        }
+    };
+
+
     const handleClickRo = e => {
         e.preventDefault();
         if (orderRo == 'asc') {
@@ -301,20 +317,21 @@ const Control = () => {
 
     }
 
+    /*  
     const handleClickAn = e => {
-        e.preventDefault();
-        if (orderAn == 'asc') {
-            const a = animales.sort((a, b) => (a.anorm < b.anorm) ? 1 : -1);
-            guardarOrderAn('desc');
-            guardarAnimales(a);
-        } else {
-            const b = animales.sort((a, b) => (a.anorm > b.anorm) ? 1 : -1);
-            guardarOrderAn('asc');
-            guardarAnimales(b);
-        }
-
-    }
-
+          e.preventDefault();
+          if (orderAn == 'asc') {
+              const a = animales.sort((a, b) => (a.anorm < b.anorm) ? 1 : -1);
+              guardarOrderAn('desc');
+              guardarAnimales(a);
+          } else {
+              const b = animales.sort((a, b) => (a.anorm > b.anorm) ? 1 : -1);
+              guardarOrderAn('asc');
+              guardarAnimales(b);
+          }
+  
+      }
+  */
     const handleClickDl = e => {
         e.preventDefault();
         if (orderDl == 'asc') {
@@ -442,12 +459,12 @@ const Control = () => {
                                             </th>
 
                                             <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickLact}>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickGrupo}>
                                                     <span className={styles.thContent}>
-                                                        Lact.
+                                                        Grupo
                                                         <FaSort size={15} className={styles.sortIcon} />
                                                     </span>
-                                                    <span className={styles.thTooltipText}>Número de lactancia</span>
+                                                    <span className={styles.thTooltipText}>Grupo asignado</span>
                                                 </div>
                                             </th>
 
@@ -472,6 +489,36 @@ const Control = () => {
                                             </th>
 
                                             <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickDl}>
+                                                    <span className={styles.thContent}>
+                                                        Días Lact.
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Días en lactancia</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickLact}>
+                                                    <span className={styles.thContent}>
+                                                        Lact.
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Número de lactancia</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
+                                                <div className={styles.thTooltipWrapper} onClick={handleClickCA}>
+                                                    <span className={styles.thContent}>
+                                                        Le.CA
+                                                        <FaSort size={15} className={styles.sortIcon} />
+                                                    </span>
+                                                    <span className={styles.thTooltipText}>Litros Control Anterior</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
                                                 <div className={styles.thTooltipWrapper} onClick={handleClickUC}>
                                                     <span className={styles.thContent}>
                                                         Le.UC
@@ -488,17 +535,8 @@ const Control = () => {
                                                 </div>
                                             </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickCA}>
-                                                    <span className={styles.thContent}>
-                                                        Le.CA
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Litros Control Anterior</span>
-                                                </div>
-                                            </th>
 
-                                            <th>
+                                            { /* <th>
                                                 <div className={styles.thTooltipWrapper} onClick={handleClickAn}>
                                                     <span className={styles.thContent}>
                                                         Anorm.
@@ -506,17 +544,7 @@ const Control = () => {
                                                     </span>
                                                     <span className={styles.thTooltipText}>Anomalías</span>
                                                 </div>
-                                            </th>
-
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickDl}>
-                                                    <span className={styles.thContent}>
-                                                        Días Lact.
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Días en lactancia</span>
-                                                </div>
-                                            </th>
+                                            </th>*/}
 
                                             <th>
                                                 <div className={styles.thTooltipWrapper} onClick={handleClickER}>
@@ -539,19 +567,19 @@ const Control = () => {
                                             </th>
 
                                             <th>
+                                                <div className={styles.thTooltipWrapper}>
+                                                    <span className={styles.thContent}>F.Racion</span>
+                                                    <span className={styles.thTooltipText}>Fecha última modificación de ración</span>
+                                                </div>
+                                            </th>
+
+                                            <th>
                                                 <div className={styles.thTooltipWrapper} onClick={handleClickRac}>
                                                     <span className={styles.thContent}>
                                                         Ración
                                                         <FaSort size={15} className={styles.sortIcon} />
                                                     </span>
                                                     <span className={styles.thTooltipText}>Ración actual (Kg)</span>
-                                                </div>
-                                            </th>
-
-                                            <th>
-                                                <div className={styles.thTooltipWrapper}>
-                                                    <span className={styles.thContent}>F.Racion</span>
-                                                    <span className={styles.thTooltipText}>Fecha última modificación de ración</span>
                                                 </div>
                                             </th>
 
