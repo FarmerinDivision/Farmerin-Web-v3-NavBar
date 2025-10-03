@@ -20,9 +20,16 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
+  // --- NUEVO ---
   const handleShow = () => setShowModal(true);
+
+  // cerrar SOLO el modal de edición
   const handleClose = () => {
     setShowModal(false);
+  };
+
+  // nueva función para mostrar el modal de "éxito"
+  const handleSuccess = () => {
     setSuccessMsg('Parámetro actualizado correctamente.');
     setShowSuccess(true);
   };
@@ -42,7 +49,7 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
       // remover por orden
       rodeos = rodeos.filter(r => r.orden !== orden);
       // reordenar consecutivos
-      rodeos = rodeos.sort((a,b) => a.orden - b.orden).map((r, i) => ({ ...r, orden: i + 1 }));
+      rodeos = rodeos.sort((a, b) => a.orden - b.orden).map((r, i) => ({ ...r, orden: i + 1 }));
       categorias[idx] = { ...categorias[idx], rodeos };
       tx.update(ref, { parametros: categorias });
     });
@@ -73,7 +80,7 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
       if (p.orden === orden) return { ...p, orden: p.orden + 1 };
       if (p.orden === orden + 1) return { ...p, orden: p.orden - 1 };
       return p;
-    }).sort((a,b) => a.orden - b.orden);
+    }).sort((a, b) => a.orden - b.orden);
     guardarParametros(parOrd);
   };
 
@@ -99,7 +106,7 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
       if (p.orden === orden) return { ...p, orden: p.orden - 1 };
       if (p.orden === orden - 1) return { ...p, orden: p.orden + 1 };
       return p;
-    }).sort((a,b) => a.orden - b.orden);
+    }).sort((a, b) => a.orden - b.orden);
     guardarParametros(parOrd);
   };
 
@@ -170,13 +177,15 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
           <ParametroEdit
             idParametro={id}
             isModal={true}
-            onClose={handleClose}
+            onClose={handleClose}      // sigue cerrando solo
+            onSuccess={handleSuccess}  // nuevo: abre modal de éxito
             onUpdate={onUpdate}
             groupId={groupId}
             categoriaFija={categoria}
           />
         </Modal.Body>
       </Modal>
+
 
       {/* Modal de confirmación de eliminación */}
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>

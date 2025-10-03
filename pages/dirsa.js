@@ -391,41 +391,48 @@ const Dirsa = () => {
                     return;
                 }
 
+                // 🔑 Map de encabezados posibles (incluye Ranking)
                 const encabezadoMap = {
                     "rp": "RP",
+                    "animal": "RP",           // 👈 en Ranking puede venir como "Animal"
                     "le.uc": "Le.UC",
                     "leche uc": "Le.UC",
-                    "uc": "Le.UC"
+                    "uc": "Le.UC",
+                    "producción": "Le.UC",    // 👈 en Ranking puede venir como "Producción" o similar
                 };
 
-                const encabezadosRaw = fullData[2]; // Tercera fila: encabezados reales
+                // ⚠️ En Ranking los encabezados suelen estar en la primera fila (0), no en la fila 2
+                const encabezadosRaw = fullData[0].some(h => h.toString().toLowerCase().includes("animal"))
+                    ? fullData[0]   // Si la primera fila trae "Animal", la usamos
+                    : fullData[2];  // Si no, seguimos con la lógica normal
+
                 const encabezados = encabezadosRaw.map(h => {
                     const key = h?.toString().trim().toLowerCase();
                     return encabezadoMap[key] || h?.toString().trim();
                 });
 
-                const datos = fullData.slice(3).map(row => {
+                // ⚙️ Recorrer datos a partir de la fila siguiente
+                const datos = fullData.slice(1).map(row => {
                     const obj = {};
                     encabezados.forEach((encabezado, idx) => {
                         let val = row[idx];
-
-                        // 👇 Corrección clave: si Le.UC viene como número, forzamos a string con coma
                         if (encabezado === "Le.UC" && typeof val === "string") {
                             val = val.toString().replace(".", ",");
                         }
-
                         obj[encabezado] = val;
                     });
                     return obj;
                 });
 
-                const datosLimpios = datos.map((item) => {
-                    const nuevo = { ...item };
-                    if (nuevo["RP"]) {
-                        nuevo["RP"] = nuevo["RP"].toString().trim().replace(/\s+/g, "").toUpperCase();
-                    }
-                    return nuevo;
-                }).filter(item => item["RP"]);
+                const datosLimpios = datos
+                    .map((item) => {
+                        const nuevo = { ...item };
+                        if (nuevo["RP"]) {
+                            nuevo["RP"] = nuevo["RP"].toString().trim().replace(/\s+/g, "").toUpperCase();
+                        }
+                        return nuevo;
+                    })
+                    .filter(item => item["RP"]);
 
                 if (datosLimpios.length === 0) {
                     setErrores(["No hay datos válidos en el archivo de control lechero."]);
@@ -457,6 +464,7 @@ const Dirsa = () => {
                 setIsLoading(false);
             }
         };
+
 
         reader.readAsArrayBuffer(archivoLechero);
     };

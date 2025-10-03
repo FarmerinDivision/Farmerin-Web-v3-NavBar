@@ -82,6 +82,7 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
       guardarSug(e.target.value);
 
    }
+   /*
    let formattedDate = ""
    console.log("fuc:", fuc, rp)
    console.log("firebase:", firebase.timeStampToDate(fuc))
@@ -89,6 +90,21 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
       formattedDate = format(firebase.timeStampToDate(fuc), 'dd/MM/yyyy')
       console.log("formattedDate:", formattedDate, rp)
    } catch (error) { console.log(error, rp) }
+   */
+
+   // funcion para formatear la fecha
+   const safeFormat = (val) => {
+      try {
+         const d = firebase.timeStampToDate(val);
+         if (!(d instanceof Date)) return '---';
+         return isNaN(d.getTime()) ? '---' : format(d, 'dd/MM/yyyy');
+      } catch {
+         return '---';
+      }
+   };
+
+
+
    return (
 
 
@@ -101,11 +117,11 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
          <td >{lactancia}</td>
          <td >{parseFloat(ca).toFixed(2)}</td>
          <td >{parseFloat(uc).toFixed(2)}</td>
-         <td >{formattedDate} </td>
+         <td >{safeFormat(fuc)} </td>
          {/*<td >{anorm}</td> */}
          <td >{estrep}</td>
          <td >{diasPre}</td>
-         <td >{format(firebase.timeStampToDate(fracion), 'dd/MM/yyyy')}
+         <td >{safeFormat(fracion)}
          </td>
          <td> {racionModificada}</td>
 

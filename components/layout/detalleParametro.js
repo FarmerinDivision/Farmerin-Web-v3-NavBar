@@ -204,7 +204,6 @@ const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreate
                <Modal.Title>Nuevo Parámetro</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-
                <ParametroEdit
                   idParametro="0"
                   isModal={true}
@@ -219,9 +218,9 @@ const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreate
                      guardarParametros(prev => [...prev, nuevoParam].sort((a, b) => a.orden - b.orden));
                   }}
                />
-
             </Modal.Body>
          </Modal>
+
          <Modal show={showSuccess} onHide={() => setShowSuccess(false)} centered>
             <Modal.Header closeButton>
                <Modal.Title>✅ Acción completada</Modal.Title>
