@@ -166,7 +166,15 @@ const ParametroEdit = ({
         guardarExito(true);
         guardarDescExito("Parámetro creado con éxito!");
         guardarProcesando(false);
+
+        // cerrar modal de edición
         if (onClose) onClose();
+
+        // mostrar modal de éxito desde el padre, si existe
+        setTimeout(() => {
+          if (onSuccess) onSuccess();
+        }, 200);
+
       } catch (error) {
         guardarDescError(error.message);
         guardarError(true);
@@ -202,8 +210,17 @@ const ParametroEdit = ({
         });
 
         if (onUpdate) onUpdate();
-        if (onSuccess) onSuccess(valores);
+
+        // 👇 cerrar el modal de edición primero
+        if (onClose) onClose();
+
+        // 👇 después de un pequeño delay, mostrar modal de éxito
+        setTimeout(() => {
+          if (onSuccess) onSuccess(valores);
+        }, 200);
+
         guardarProcesando(false);
+
       } catch (error) {
         guardarDescError(error.message);
         guardarError(true);
