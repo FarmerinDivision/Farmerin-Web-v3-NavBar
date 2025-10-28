@@ -188,6 +188,7 @@ const NavBar = () => {
             <div className={styles.dropdownContent}>
               <Link href="/gralAnimales"><span>Gral. Animales</span></Link>
               <Link href="/produccion"><span>Producción</span></Link>
+              <Link href="/ProductividadMensualDirsa"><span>Producción Dirsa</span></Link>
               <Link href="/parteDiario"><span>Parte Diario</span></Link>
               <Link href="/recepciones"><span>Recepciones</span></Link>
             </div>
@@ -211,9 +212,7 @@ const NavBar = () => {
               <Link href="/dirsa"><span>Dirsa</span></Link>
             </div>
           </div>
-
           <Link href="/ayuda"><span>Ayuda</span></Link>
-          <Link href="/MOTIVODEBAJA"><span>CAMBIO DE RACIONES</span></Link>
           <Link href="/perfilFarmerin">
             <span style={{ position: "relative", display: "inline-block" }}>
               Mi Farmerin - {tamboSel.nombre}

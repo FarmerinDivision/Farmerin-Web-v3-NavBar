@@ -27,6 +27,10 @@ const Parametros = () => {
   const [successMsgGroup, setSuccessMsgGroup] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState(false);
+  const [showSubtitleModal, setShowSubtitleModal] = useState(false);
+
+
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -51,21 +55,35 @@ const Parametros = () => {
     setEditGroup({ id: g.id, value: String(g.grupo ?? ''), subtitle: g.subtitulo || '' });
   };
 
-  const guardarEdicionGrupo = async () => {
-    if (!editGroup.id) return;
-    try {
-      const num = Number(editGroup.value);
-      if (!Number.isFinite(num)) return;
-      const update = { grupo: num, subtitulo: (editGroup.subtitle || '').trim() };
-      await firebase.db.collection('parametro').doc(editGroup.id).update(update);
-      setEditGroup({ id: null, value: '', subtitle: '' });
+const guardarEdicionGrupo = async () => {
+  if (!editGroup.id) return;
+  try {
+    const num = Number(editGroup.value);
+    if (!Number.isFinite(num)) return;
+
+    const update = {
+      grupo: num,
+      subtitulo: (editGroup.subtitle || '').trim(),
+    };
+
+    await firebase.db.collection('parametro').doc(editGroup.id).update(update);
+
+    // 🔹 Cierra el modal de edición inmediatamente
+    setEditGroup({ id: null, value: '', subtitle: '' });
+
+    // 🔹 Espera un instante para permitir que se cierre el modal anterior
+    setTimeout(async () => {
       await cargarGrupos();
-      setSuccessMsgGroup('Grupo actualizado correctamente.');
-      setShowSuccessGroup(true);
-    } catch (e) {
-      console.error('Error renombrando grupo', e);
-    }
-  };
+      setShowSubtitleModal(true); // 🔹 Muestra el modal de confirmación
+    }, 250);
+  } catch (e) {
+    console.error('Error renombrando grupo', e);
+    setSuccessMsgGroup('No se pudo actualizar el subtítulo. Intente nuevamente.');
+    setShowSuccessGroup(true);
+  }
+};
+
+
 
   const confirmarEliminarGrupo = (id) => setDeleteGroupId(id);
 
@@ -392,8 +410,12 @@ const Parametros = () => {
               </div>
             ) : grupos.length === 0 ? (
               <Mensaje>
-                <div className={styles.sinGrupos}>No hay grupos configurados. Cree uno nuevo.</div>
+                <div className={styles.sinGruposCard}>
+                  <h3>📋 Sin grupos configurados</h3>
+                  <p>Comience creando un nuevo grupo para definir los parámetros de alimentación.</p>
+                </div>
               </Mensaje>
+
             ) : (
               grupos.map((g) => (
                 <div key={g.id} className={styles.cardGrupo}>
@@ -546,6 +568,53 @@ const Parametros = () => {
           <Button variant="danger" onClick={eliminarGrupo}>Eliminar</Button>
         </Modal.Footer>
       </Modal>
+      {/* 🔹 Modal específico para cambio de subtítulo */}
+      <Modal
+        show={showSubtitleModal}
+        onHide={() => setShowSubtitleModal(false)}
+        centered
+        size="sm"
+        backdrop={true}
+        dialogClassName="modal-alert-success"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title></Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center p-4">
+          <div className="mb-3">
+            <span
+              style={{
+                display: 'inline-block',
+                backgroundColor: '#28a745',
+                borderRadius: '50%',
+                width: '70px',
+                height: '70px',
+                lineHeight: '70px',
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="40"
+                height="40"
+                fill="white"
+                viewBox="0 0 16 16"
+              >
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.97 11.03a.75.75 0 0 0 1.07 0l3.992-3.992a.75.75 0 1 0-1.06-1.06L7.5 9.439 5.53 7.47a.75.75 0 0 0-1.06 1.06l2.5 2.5z" />
+              </svg>
+            </span>
+          </div>
+          <h5 className="fw-bold text-success">Subtítulo cambiado correctamente</h5>
+          <p className="text-muted mb-0">
+            Si no ve el cambio reflejado, salga y vuelva a entrar en la sección Parámetros.
+          </p>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="success" onClick={() => setShowSubtitleModal(false)}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
     </Layout >
   );
 };

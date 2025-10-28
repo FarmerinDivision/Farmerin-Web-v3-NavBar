@@ -40,6 +40,7 @@ const STATE_INICIAL = {
   fbaja: '',
   mbaja: '',
   rodeo: 0,
+  grupo: 0,
   sugerido: 0
 };
 
@@ -67,7 +68,7 @@ const Animales = () => {
 
   const {
     ingreso, rp, erp, lactancia, estpro, estrep, observaciones,
-    categoria, fservicio, fparto, uc, racion
+    categoria, fservicio, fparto, uc, racion, grupo
   } = valores;
 
   const hoy = format(Date.now(), 'yyyy-MM-dd');
@@ -271,6 +272,23 @@ const Animales = () => {
                 <Col lg={6}>
                   <Form.Group><Form.Label>Ración (Kgs)</Form.Label>
                     <Form.Control type="number" step="any" name="racion" value={racion} onChange={handleChangeAlta} />
+                  </Form.Group>
+                </Col>
+                <Col lg={6}>
+                  <Form.Group>
+                    <Form.Label>Grupo</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="grupo"
+                      value={grupo}
+                      onChange={handleChangeAlta}
+                      min="0"
+                      step="1"
+                      placeholder="Ej: 12"
+                    />
+                    <Form.Text className="text-muted">
+                      Ingresá el número de grupo (solo números).
+                    </Form.Text>
                   </Form.Group>
                 </Col>
               </Row>

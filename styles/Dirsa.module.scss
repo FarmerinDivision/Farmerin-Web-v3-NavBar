@@ -59,3 +59,67 @@
 .result-item {
   margin-bottom: 0.25rem;
 }
+
+/// ============================= DIRSA PRODUCCION ============================//
+.form {
+  background: #f2f4f8;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.select {
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.acciones {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.button {
+  background-color: #1b829b !important;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  color: #fff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.button:hover {
+  background-color: #157186 !important;
+}
+
+.mensajeCaja {
+  background-color: #ffbf5a;
+  color: #444;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.spinnerText {
+  margin-top: 10px;
+  color: #444;
+}
+
+.tabla {
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+
+  th {
+    background-color: #1b829b;
+    color: white;
+    text-align: center;
+  }
+
+  td {
+    text-align: center;
+    vertical-align: middle;
+  }
+}

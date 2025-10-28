@@ -350,6 +350,7 @@ const AltaMasiva = () => {
           mbaja: '',
           rodeo: 0,
           sugerido: 0,
+          porcentaje: 1,
           grupo: grupo  // <-- Nuevo campo
         }
 

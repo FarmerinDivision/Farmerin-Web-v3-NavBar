@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { FirebaseContext } from '../../firebase2';
 import useValidacion from '../../hook/useValidacion';
 import validarCrearAnimal from '../../validacion/validarCrearAnimal';
-import { Form, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
+import { Form, Button, Row, Col, Spinner, Card, Modal } from 'react-bootstrap';
 import { format } from 'date-fns';
 
 const hoy = format(Date.now(), 'yyyy-MM-dd');
@@ -30,6 +30,7 @@ const STATE_INICIAL = {
   fbaja: '',
   mbaja: '',
   rodeo: 0,
+  grupo: 0,
   sugerido: 0
 };
 
@@ -78,11 +79,21 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
     }
   };
 
+  // ✅ Función para validar el campo grupo
+  const validarGrupo = () => {
+    if (valores.grupo === '' || valores.grupo === null || isNaN(valores.grupo)) {
+      throw new Error("El campo 'Grupo' es obligatorio y debe ser numérico.");
+    }
+  };
+
   async function altaAnimal() {
     setProcesando(true);
     setMensajeError('');
+    setMensajeExito('');
+
     try {
       if (!usuario) throw new Error("No autorizado");
+      validarGrupo();
 
       // Validar RP duplicado
       const rpSnap = await firebase.db.collection('animal')
@@ -104,9 +115,12 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
         if (!erpSnap.empty) throw new Error("El eRP ya está asociado a otro animal.");
       }
 
+      // 👉 Crear el animal en Firebase
       await firebase.db.collection('animal').add(valores);
-      setMensajeExito("Animal dado de alta con éxito.");
-      if (onSuccess) onSuccess();
+
+      // ✅ Mostrar el modal de éxito inmediatamente
+      setMensajeExito("✅ Animal dado de alta con éxito.");
+
     } catch (e) {
       setMensajeError(e.message);
     } finally {
@@ -114,11 +128,14 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
     }
   }
 
+
   async function editarAnimal() {
     setProcesando(true);
     setMensajeError('');
+    setMensajeExito('');
     try {
       if (!usuario) throw new Error("No autorizado");
+      validarGrupo();
 
       // Validar duplicado RP
       const rpSnap = await firebase.db.collection('animal')
@@ -147,7 +164,7 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
       }
 
       await firebase.db.collection('animal').doc(animalId).update(valores);
-      setMensajeExito("Animal editado con éxito.");
+      setMensajeExito("✅ Animal editado con éxito.");
       if (onSuccess) onSuccess();
     } catch (e) {
       setMensajeError(e.message);
@@ -158,14 +175,13 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
 
   const {
     ingreso, rp, erp, lactancia, estpro, estrep, categoria,
-    fservicio, fparto, uc, racion, observaciones, fracion, nservicio,
-    porcentaje, fuc, ca, anorm, fbaja, mbaja, rodeo, sugerido
+    fservicio, fparto, uc, racion, observaciones, fracion,
+    grupo
   } = valores;
 
   return (
     <Form onSubmit={handleSubmit}>
-      {mensajeError && <Alert variant="danger">{mensajeError}</Alert>}
-      {mensajeExito && <Alert variant="success">{mensajeExito}</Alert>}
+
       {procesando && <Spinner animation="border" className="mb-3" />}
 
       <Row>
@@ -189,7 +205,7 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
           </Form.Group>
         </Col>
         <Col md={6}>
-          <Form.Group><Form.Label>eRP (boton electronico)</Form.Label>
+          <Form.Group><Form.Label>eRP (botón electrónico)</Form.Label>
             <Form.Control name="erp" value={erp} onChange={handleChange} isInvalid={!!errores.erp} />
             <Form.Control.Feedback type="invalid">{errores.erp}</Form.Control.Feedback>
           </Form.Group>
@@ -254,10 +270,33 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
         </Col>
       </Row>
 
+      {/* ✅ Grupo obligatorio y numérico */}
+      <Row>
+        <Col md={6}>
+          <Form.Group>
+            <Form.Label>Grupo</Form.Label>
+            <Form.Control
+              type="number"
+              name="grupo"
+              value={grupo}
+              onChange={handleChange}
+              min="0"
+              step="1"
+              required
+              placeholder="Ej: 5"
+            />
+            <Form.Text className="text-muted">
+              Número de grupo (solo valores numéricos).
+            </Form.Text>
+          </Form.Group>
+        </Col>
+      </Row>
+
       <Form.Group>
         <Form.Label>Observaciones</Form.Label>
         <Form.Control as="textarea" rows={2} name="observaciones" value={observaciones} onChange={handleChange} />
       </Form.Group>
+
       <div className="text-end mt-4">
         {onCancel && (
           <Button variant="secondary" className="me-2" onClick={onCancel}>
@@ -268,6 +307,73 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
           {modo === 'alta' ? 'Guardar' : 'Actualizar'}
         </Button>
       </div>
+      {/* ✅ MODAL DE ÉXITO */}
+      {/* ✅ MODAL DE ÉXITO */}
+      <Modal
+        show={!!mensajeExito}
+        onHide={() => setMensajeExito('')}
+        centered
+        backdrop="static"
+        keyboard={false}
+        className="modal-success"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="w-100 text-center fs-4 fw-bold">
+            ✅ Éxito
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="fs-5 mb-3">{mensajeExito}</p>
+          <p className="opacity-75">
+            El animal fue registrado correctamente en la base de datos.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="light"
+            className="text-success fw-semibold px-4"
+            onClick={() => {
+              setMensajeExito('');
+              if (onSuccess) onSuccess();
+            }}
+          >
+            Aceptar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ⚠️ MODAL DE ERROR */}
+      <Modal
+        show={!!mensajeError}
+        onHide={() => setMensajeError('')}
+        centered
+        backdrop="static"
+        keyboard={false}
+        className="modal-error"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="w-100 text-center fs-4 fw-bold">
+            ⚠️ Error
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="fs-5 mb-3">{mensajeError}</p>
+          <p className="opacity-75">
+            Verificá los datos ingresados o intentá nuevamente.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="light"
+            className="text-danger fw-semibold px-4"
+            onClick={() => setMensajeError('')}
+          >
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+
     </Form>
   );
 };

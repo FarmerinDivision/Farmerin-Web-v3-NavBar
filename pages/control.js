@@ -40,6 +40,7 @@ const Control = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [loading, setLoading] = useState(true);
 
     const { firebase, tamboSel } = useContext(FirebaseContext);
     const dispatch = useDispatch(); // Ensure dispatch is defined
@@ -48,23 +49,31 @@ const Control = () => {
     let promL = 0;
     let diasLact = 0;
     let diasPre = 0;
+
     useEffect(() => {
-
         if (tamboSel) {
-
-            const obtenerAnim = () => {
+            const obtenerAnim = async () => {
                 try {
-                    firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).where('estpro', '==', 'En Ordeñe').where('fbaja', '==', '').orderBy('rp').get().then(snapshotAnimal)
+                    const snapshot = await firebase.db
+                        .collection('animal')
+                        .where('idtambo', '==', tamboSel.id)
+                        .where('estpro', '==', 'En Ordeñe')
+                        .where('fbaja', '==', '')
+                        .orderBy('rp')
+                        .get();
+
+                    snapshotAnimal(snapshot);
                 } catch (error) {
-                    console.log(error)
+                    console.log(error);
+                } finally {
+                    setTimeout(() => setLoading(false), 1000); // simula animación suave
                 }
-            }
-            //busca los animales en ordeñe
+            };
             obtenerAnim();
             mostrarMensajeModal();
-
         }
-    }, [tamboSel])
+    }, [tamboSel]);
+
 
     const mostrarMensajeModal = async () => {
         try {
@@ -128,55 +137,92 @@ const Control = () => {
         }
     }
 
+    // ✅ Función segura para parsear cualquier formato posible de fecha
+    function parseFecha(fechaStr) {
+        if (!fechaStr) return null;
+
+        // 🔹 Si ya es objeto Date válido
+        if (fechaStr instanceof Date && !isNaN(fechaStr)) return fechaStr;
+
+        // 🔹 Si viene como timestamp (por ejemplo, de Firebase)
+        if (typeof fechaStr === 'object' && fechaStr.seconds) {
+            return new Date(fechaStr.seconds * 1000);
+        }
+
+        // 🔹 Si viene como string
+        if (typeof fechaStr === 'string') {
+            let normalizada = fechaStr.trim();
+
+            // Caso europeo: dd/MM/yyyy
+            if (normalizada.includes('/')) {
+                const partes = normalizada.split('/');
+                if (partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4) {
+                    // Detecta si es formato europeo (dd/MM/yyyy)
+                    const [dia, mes, anio] = partes;
+                    return new Date(`${anio}-${mes}-${dia}`);
+                } else if (partes[0].length === 4 && partes[1].length === 2 && partes[2].length === 2) {
+                    // Formato tipo 2025/02/20 → convertir a válido
+                    return new Date(normalizada.replace(/\//g, '-'));
+                }
+            }
+
+            // Caso ISO normal (2021-10-01)
+            if (normalizada.includes('-')) {
+                return new Date(normalizada);
+            }
+        }
+
+        return null; // No se pudo convertir
+    }
+
 
 
     function snapshotAnimal(snapshot) {
         const an = snapshot.docs.map(doc => {
+            const data = doc.data(); // 🔹 Ahora data está correctamente definida
+
+            let diasLact = 0;
+            let diasPre = 0;
+
             try {
-                diasLact = differenceInDays(Date.now(), new Date(doc.data().fparto));
+                // Calcula los días de lactancia
+                const fechaParto = parseFecha(data.fparto);
+                diasLact = fechaParto ? differenceInDays(Date.now(), fechaParto) : 0;
             } catch {
                 diasLact = 0;
             }
 
             try {
-                //Calcula los dias de preñez
-                if (doc.data().estrep == "vacia") {
-                    diasPre = 0;
+                // Calcula los días de preñez
+                if (data.estrep !== "vacia") {
+                    const fechaServicio = parseFecha(data.fservicio);
+                    diasPre = fechaServicio ? differenceInDays(Date.now(), fechaServicio) : 0;
                 } else {
-                    diasPre = differenceInDays(Date.now(), new Date(doc.data().fservicio));
+                    const fechaServicio = parseFecha(data.fservicio);
+                    diasPre = fechaServicio ? differenceInDays(Date.now(), fechaServicio) : 0;
                 }
             } catch {
                 diasPre = 0;
-            };
+            }
+
             return {
                 id: doc.id,
-                diasLact: diasLact,
-                diasPre: diasPre,
+                diasLact,
+                diasPre,
                 actu: false,
-                racionModificada: calcularRacionModificada(doc.data()), // Cálculo actualizado
-                ...doc.data()
-            }
+                racionModificada: calcularRacionModificada(data),
+                ...data
+            };
+        });
 
-        })
+        // 🔹 Ordena los animales según la diferencia entre ración actual y sugerida (de mayor a menor)
+        an.sort((a, b) => {
+            const difa = Math.abs(parseInt(a.racion) - parseInt(a.sugerido));
+            const difb = Math.abs(parseInt(b.racion) - parseInt(b.sugerido));
+            return difb - difa;
+        });
 
-        //aca, antes de guardar animales, recorro el array an y le agrego el sugerido 
-        //y la diferencia entre el actual y el sugerido. Despues ordeno en forma descendente 
-        //por diferencia y despues guardo animales. En detalle de control, elimino el calculo de sugerido.
-        function compare(a, b) {
-
-            let difa = Math.abs(parseInt(a.racion) - parseInt(a.sugerido));
-            let difb = Math.abs(parseInt(b.racion) - parseInt(b.sugerido));
-
-            if (difa < difb) {
-                return 1;
-            }
-            if (difa > difb) {
-                return -1;
-            }
-            return 0;
-        }
-
-        an.sort(compare);
+        // 🔹 Guarda el resultado en el estado
         guardarAnimales(an);
     }
 
@@ -429,114 +475,138 @@ const Control = () => {
     return (
         <Layout titulo="Nutricion">
             <>
-                <Botonera>
-                    <h6 className={styles.resumenNutricion}>
-                        <strong className={styles.nombreControl}>Control de alimentación:</strong> <strong>{animales.length}</strong> animales -  <strong className={styles.nombreControl}>Promedio actual:</strong> <strong>{promRacMod}</strong> Kgs.- <strong className={styles.nombreControl}>Promedio Sugerido:</strong> <strong>{promSug} </strong> Kgs.- <strong className={styles.nombreControl}>Promedio Dias Lact.:</strong> <strong>{promLac}</strong> Dias.
-                    </h6>
-                </Botonera>
-
-                {tamboSel ? (
-                    animales.length == 0 ? (
-                        <Mensaje>
-                            <div className={styles.mensajeCaja}>
-                                <h2 className={styles.tituloSinResultados}>No se encontraron resultados</h2>
+                {/* Loader visible solo mientras carga */}
+                {loading ? (
+                    <div className={styles.spinnerContainerControl}>
+                        <div className={styles.spinnerControl}></div>
+                        <div className={styles.loaderControl}>
+                            <p>Cargando</p>
+                            <div className={styles.wordsControl}>
+                                <span className={styles.wordControles}>Grupos</span>
+                                <span className={styles.wordControles}>Dias de lactancia</span>
+                                <span className={styles.wordControles}>Racion</span>
+                                <span className={styles.wordControles}>Racion sugerida</span>
+                                <span className={styles.wordControles}>Categoria</span>
                             </div>
-                        </Mensaje>
-                    ) : (
-                        <Contenedor>
-                            <StickyTable className={styles.stickyTable} height={660}>
-                                <Table responsive>
-                                    <thead>
-                                        <tr>
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickRP}>
-                                                    <span className={styles.thContent}>
-                                                        RP
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Caravana</span>
-                                                </div>
-                                            </th>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <Botonera>
+                            <h6 className={styles.resumenNutricion}>
+                                <strong className={styles.nombreControl}>Control de alimentación:</strong>{" "}
+                                <strong>{animales.length}</strong> animales -{" "}
+                                <strong className={styles.nombreControl}>Promedio actual:</strong>{" "}
+                                <strong>{promRacMod}</strong> Kgs.-{" "}
+                                <strong className={styles.nombreControl}>Promedio Sugerido:</strong>{" "}
+                                <strong>{promSug}</strong> Kgs.-{" "}
+                                <strong className={styles.nombreControl}>Promedio Días Lact.:</strong>{" "}
+                                <strong>{promLac}</strong> Días.
+                            </h6>
+                        </Botonera>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickGrupo}>
-                                                    <span className={styles.thContent}>
-                                                        Grupo
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Grupo asignado</span>
-                                                </div>
-                                            </th>
+                        {tamboSel ? (
+                            animales.length === 0 ? (
+                                <Mensaje>
+                                    <div className={styles.mensajeCaja}>
+                                        <h2 className={styles.tituloSinResultados}>No se encontraron resultados</h2>
+                                    </div>
+                                </Mensaje>
+                            ) : (
+                                <Contenedor>
+                                    <StickyTable className={styles.stickyTable} height={660}>
+                                        <Table responsive>
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickRP}>
+                                                            <span className={styles.thContent}>
+                                                                RP
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Caravana</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickGr}>
-                                                    <span className={styles.thContent}>
-                                                        Categ
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Categoría del animal</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickGrupo}>
+                                                            <span className={styles.thContent}>
+                                                                Grupo
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Grupo asignado</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickRo}>
-                                                    <span className={styles.thContent}>
-                                                        Rodeo
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Rodeo asignado</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickGr}>
+                                                            <span className={styles.thContent}>
+                                                                Categ
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Categoría del animal</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickDl}>
-                                                    <span className={styles.thContent}>
-                                                        Días Lact.
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Días en lactancia</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickRo}>
+                                                            <span className={styles.thContent}>
+                                                                Rodeo
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Rodeo asignado</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickLact}>
-                                                    <span className={styles.thContent}>
-                                                        Lact.
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Número de lactancia</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickDl}>
+                                                            <span className={styles.thContent}>
+                                                                Días Lact.
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Días en lactancia</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickCA}>
-                                                    <span className={styles.thContent}>
-                                                        Le.CA
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Litros Control Anterior</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickLact}>
+                                                            <span className={styles.thContent}>
+                                                                Lact.
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Número de lactancia</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickUC}>
-                                                    <span className={styles.thContent}>
-                                                        Le.UC
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Litros Último Control</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickCA}>
+                                                            <span className={styles.thContent}>
+                                                                Le.CA
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Litros Control Anterior</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper}>
-                                                    <span className={styles.thContent}>F.UC</span>
-                                                    <span className={styles.thTooltipText}>Fecha de Último Control</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickUC}>
+                                                            <span className={styles.thContent}>
+                                                                Le.UC
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Litros Último Control</span>
+                                                        </div>
+                                                    </th>
+
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper}>
+                                                            <span className={styles.thContent}>F.UC</span>
+                                                            <span className={styles.thTooltipText}>Fecha de Último Control</span>
+                                                        </div>
+                                                    </th>
 
 
-                                            { /* <th>
+                                                    { /* <th>
                                                 <div className={styles.thTooltipWrapper} onClick={handleClickAn}>
                                                     <span className={styles.thContent}>
                                                         Anorm.
@@ -546,200 +616,221 @@ const Control = () => {
                                                 </div>
                                             </th>*/}
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickER}>
-                                                    <span className={styles.thContent}>
-                                                        Est. Rep.
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Estado Reproductivo</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickER}>
+                                                            <span className={styles.thContent}>
+                                                                Est. Rep.
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Estado Reproductivo</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickDP}>
-                                                    <span className={styles.thContent}>
-                                                        Días Preñ.
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Días de preñez</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickDP}>
+                                                            <span className={styles.thContent}>
+                                                                Días Preñ.
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Días de preñez</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper}>
-                                                    <span className={styles.thContent}>F.Racion</span>
-                                                    <span className={styles.thTooltipText}>Fecha última modificación de ración</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper}>
+                                                            <span className={styles.thContent}>F.Racion</span>
+                                                            <span className={styles.thTooltipText}>Fecha última modificación de ración</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickRac}>
-                                                    <span className={styles.thContent}>
-                                                        Ración
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Ración actual (Kg)</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickRac}>
+                                                            <span className={styles.thContent}>
+                                                                Ración
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Ración actual (Kg)</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.controlTooltip}>
-                                                    <Button
-                                                        className={styles.controlBtn}
-                                                        onClick={() => setShowConfirmModal(true)}
-                                                    >
-                                                        <RiSendPlaneLine />
-                                                    </Button>
-                                                    <span className={styles.controlTooltipText}>Asignar la ración sugerida a todos</span>
-                                                </div>
-                                            </th>
+                                                    <th>
+                                                        <div className={styles.controlTooltip}>
+                                                            <Button
+                                                                className={styles.controlBtn}
+                                                                onClick={() => setShowConfirmModal(true)}
+                                                            >
+                                                                <RiSendPlaneLine />
+                                                            </Button>
+                                                            <span className={styles.controlTooltipText}>Asignar la ración sugerida a todos</span>
+                                                        </div>
+                                                    </th>
 
-                                            <th>
-                                                <div className={styles.thTooltipWrapper}>
-                                                    <span className={styles.thContent}>R.Sugerida</span>
-                                                    <span className={styles.thTooltipText}>Ración Sugerida</span>
-                                                </div>
-                                            </th>
-                                        </tr>
-                                    </thead>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper}>
+                                                            <span className={styles.thContent}>R.Sugerida</span>
+                                                            <span className={styles.thTooltipText}>Ración Sugerida</span>
+                                                        </div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
 
-                                    <tbody>
-                                        {animales.map(a => (
-                                            <DetalleControl
-                                                key={a.id}
-                                                animal={a}
-                                                animales={animales}
-                                                guardarAnimales={guardarAnimales}
-                                                racionModificada={a.racionModificada}
-                                                aplicarRacionSugerida={aplicarRacionSugerida}
-                                            />
-                                        ))}
-                                    </tbody>
-                                </Table>
-                            </StickyTable>
-                        </Contenedor>
-                    )
-                ) : (
-                    <SelectTambo />
+                                            <tbody>
+                                                {animales.map((a) => (
+                                                    <DetalleControl
+                                                        key={a.id}
+                                                        animal={a}
+                                                        animales={animales}
+                                                        guardarAnimales={guardarAnimales}
+                                                        racionModificada={a.racionModificada}
+                                                        aplicarRacionSugerida={aplicarRacionSugerida}
+                                                    />
+                                                ))}
+                                            </tbody>
+                                        </Table>
+                                    </StickyTable>
+                                </Contenedor>
+                            )
+                        ) : (
+                            <SelectTambo />
+                        )}
+
+                        {/* Modales existentes */}
+                        {/* 🔹 Modal de notificaciones */}
+                        <Modal show={showModal} onHide={() => setShowModal(false)}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Notificaciones</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <ul>
+                                    {modalMessages.map((message, index) => (
+                                        <li key={index}>{message}</li>
+                                    ))}
+                                </ul>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={() => setShowModal(false)}>
+                                    Cerrar
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+
+                        {/* 🔹 Modal de confirmación */}
+                        <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Confirmar Aplicación</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                ¿Estás seguro de que deseas aplicar la ración sugerida a todos los animales?
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
+                                    Cancelar
+                                </Button>
+                                <Button variant="primary" onClick={handleConfirmApply}>
+                                    Confirmar
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+
+                        {/* 🔹 Modal de éxito */}
+                        <Modal
+                            show={showSuccessModal}
+                            onHide={() => setShowSuccessModal(false)}
+                            centered
+                            size="sm"
+                            backdrop={true}
+                            dialogClassName="modal-alert-success"
+                        >
+                            <Modal.Header closeButton>
+                                <Modal.Title>Acción completada</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body className="text-center p-4">
+                                <div className="mb-3">
+                                    <span
+                                        style={{
+                                            display: "inline-block",
+                                            backgroundColor: "#28a745",
+                                            borderRadius: "50%",
+                                            width: "70px",
+                                            height: "70px",
+                                            lineHeight: "70px",
+                                        }}
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="40"
+                                            height="40"
+                                            fill="white"
+                                            viewBox="0 0 16 16"
+                                        >
+                                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.97 11.03a.75.75 0 0 0 1.07 0l3.992-3.992a.75.75 0 1 0-1.06-1.06L7.5 9.439 5.53 7.47a.75.75 0 0 0-1.06 1.06l2.5 2.5z" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <h5 className="fw-bold text-success">¡Ración modificada!</h5>
+                                <p className="text-muted mb-0">
+                                    Los cambios fueron guardados correctamente.
+                                </p>
+                            </Modal.Body>
+                            <Modal.Footer className="justify-content-center">
+                                <Button variant="success" onClick={() => setShowSuccessModal(false)}>
+                                    Cerrar
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+
+                        {/* 🔹 Modal de error */}
+                        <Modal
+                            show={showErrorModal}
+                            onHide={() => setShowErrorModal(false)}
+                            centered
+                            size="sm"
+                            backdrop={true}
+                            dialogClassName="modal-alert-error"
+                        >
+                            <Modal.Header closeButton>
+                                <Modal.Title>Error</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body className="text-center p-4">
+                                <div className="mb-3">
+                                    <span
+                                        style={{
+                                            display: "inline-block",
+                                            backgroundColor: "#dc3545",
+                                            borderRadius: "50%",
+                                            width: "70px",
+                                            height: "70px",
+                                            lineHeight: "70px",
+                                        }}
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="40"
+                                            height="40"
+                                            fill="white"
+                                            viewBox="0 0 16 16"
+                                        >
+                                            <path d="M7.001 4a.999.999 0 0 1 2 0l-.35 4.35a.65.65 0 0 1-1.3 0L7 4zM8 12a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 8 12z" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <h5 className="fw-bold text-danger">Error</h5>
+                                <p className="text-muted mb-0">{errorMessage}</p>
+                            </Modal.Body>
+                            <Modal.Footer className="justify-content-center">
+                                <Button variant="danger" onClick={() => setShowErrorModal(false)}>
+                                    Cerrar
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+                    </>
                 )}
-
-                {/* Modal de notificaciones */}
-                <Modal show={showModal} onHide={() => setShowModal(false)}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Notificaciones</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <ul>
-                            {modalMessages.map((message, index) => (
-                                <li key={index}>{message}</li>
-                            ))}
-                        </ul>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowModal(false)}>
-                            Cerrar
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-
-                {/* Modal de confirmación */}
-                <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Confirmar Aplicación</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        ¿Estás seguro de que deseas aplicar la ración sugerida a todos los animales?
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
-                            Cancelar
-                        </Button>
-                        <Button variant="primary" onClick={handleConfirmApply}>
-                            Confirmar
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-
-
-                {/* Modal de acción completa */}
-                <Modal
-                    show={showSuccessModal}
-                    onHide={() => setShowSuccessModal(false)}
-                    centered
-                    size="sm"
-                    backdrop="static"
-                    dialogClassName="modal-alert-success"
-                >
-                    <Modal.Body className="text-center p-4">
-                        <div className="mb-3">
-                            <span
-                                style={{
-                                    display: 'inline-block',
-                                    backgroundColor: '#28a745',
-                                    borderRadius: '50%',
-                                    width: '70px',
-                                    height: '70px',
-                                    lineHeight: '70px',
-                                }}
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="40"
-                                    height="40"
-                                    fill="white"
-                                    viewBox="0 0 16 16"
-                                >
-                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.97 11.03a.75.75 0 0 0 1.07 0l3.992-3.992a.75.75 0 1 0-1.06-1.06L7.5 9.439 5.53 7.47a.75.75 0 0 0-1.06 1.06l2.5 2.5z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <h5 className="fw-bold text-success">¡Ración modificada!</h5>
-                        <p className="text-muted mb-0">Los cambios fueron guardados correctamente.</p>
-                    </Modal.Body>
-                </Modal>
-                {/* Modal de error */}
-                <Modal
-                    show={showErrorModal}
-                    onHide={() => setShowErrorModal(false)}
-                    centered
-                    size="sm"
-                    backdrop="static"
-                    dialogClassName="modal-alert-error"
-                >
-                    <Modal.Body className="text-center p-4">
-                        <div className="mb-3">
-                            <span
-                                style={{
-                                    display: 'inline-block',
-                                    backgroundColor: '#dc3545',
-                                    borderRadius: '50%',
-                                    width: '70px',
-                                    height: '70px',
-                                    lineHeight: '70px',
-                                }}
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="40"
-                                    height="40"
-                                    fill="white"
-                                    viewBox="0 0 16 16"
-                                >
-                                    <path d="M7.001 4a.999.999 0 0 1 2 0l-.35 4.35a.65.65 0 0 1-1.3 0L7 4zM8 12a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 8 12z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <h5 className="fw-bold text-danger">Error</h5>
-                        <p className="text-muted mb-0">{errorMessage}</p>
-                    </Modal.Body>
-                </Modal>
-
-
             </>
         </Layout>
     );
 
+
 }
 
 export default Control
+

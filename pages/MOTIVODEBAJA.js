@@ -1,290 +1,451 @@
-import React, { useState, useContext } from "react";
-import { FirebaseContext } from '../firebase2';
+// pages/actualizacion.js
+import React, { useState, useContext, useRef } from 'react';
 import Layout from '../components/layout/layout';
-import styles from '../styles/Herramientas.module.scss';
+import { Botonera, Mensaje, ContenedorSpinner } from '../components/ui/Elementos';
+import { FirebaseContext } from '../firebase2';
+import { Row, Col, Form, Button, Spinner, Alert } from 'react-bootstrap';
+import { v4 as uuidv4 } from 'uuid';
+import Detalle from '../components/layout/detalle';
+import SelectTambo from '../components/layout/selectTambo';
+import { useActualizarAnimales } from '../components/layout/useActualizarAnimales';
+import { useActualizarErpGrupo } from '../components/layout/useActualizarERPGrupo';
+import styles from '../styles/actualizacionMasiva.module.scss';
 
-const MiComponente = () => {
-  const [animales, setAnimales] = useState([]);
-  const [animalesFijos, setAnimalesFijos] = useState([]); // animales del tambo fijo
-  const [animalesGrupo, setAnimalesGrupo] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const [error, setError] = useState(null);
-  const { firebase, tamboSel } = useContext(FirebaseContext);
+const Actualizacion = () => {
+  const { tamboSel } = useContext(FirebaseContext);
 
-  // ID de tambo fijo que vos definís
-  const TAMBO_FIJO_ID = "jGWqeJjPAW3yJtAZpKJr";
+  // ---- useActualizarAnimales ----
+  const [fileAnimales, setFileAnimales] = useState(null);
+  const [fileNameAnimales, setFileNameAnimales] = useState('Ningún archivo seleccionado');
+  const [mensajeAnimales, setMensajeAnimales] = useState(null);
+  const inputRefAnimales = useRef(null);
 
-  // 🔹 Obtener animales del tambo seleccionado
-  const obtenerAnimales = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const querySnapshot = await firebase.db.collection('animal')
-        .where('idtambo', '==', tamboSel.id)
-        .get();
+  const {
+    cargarExcel: cargarAnimales,
+    errores: erroresAnimales,
+    actualizados: actualizadosAnimales,
+    procesando: procesandoAnimales,
+  } = useActualizarAnimales(tamboSel);
 
-      const listaAnimales = [];
-      querySnapshot.forEach((doc) => {
-        listaAnimales.push({ id: doc.id, ...doc.data() });
-      });
+  // ---- useActualizarERPGrupo ----
+  const [fileERP, setFileERP] = useState(null);
+  const [fileNameERP, setFileNameERP] = useState('Ningún archivo seleccionado');
+  const [mensajeERP, setMensajeERP] = useState(null);
+  const inputRefERP = useRef(null);
 
-      setAnimales(listaAnimales);
-    } catch (error) {
-      console.error("Error obteniendo animales:", error);
-      setError("Error obteniendo animales. Por favor, intenta de nuevo.");
-    } finally {
-      setLoading(false);
+  // 👇 Agregá estos estados arriba en el componente
+  const [mostrarMasErroresAnimales, setMostrarMasErroresAnimales] = useState(false);
+  const [mostrarMasActualizadosAnimales, setMostrarMasActualizadosAnimales] = useState(false);
+
+  // Si querés también para ERP:
+  const [mostrarMasErroresERP, setMostrarMasErroresERP] = useState(false);
+  const [mostrarMasActualizadosERP, setMostrarMasActualizadosERP] = useState(false);
+
+
+
+  const {
+    cargarExcel: cargarERP,
+    errores: erroresERP,
+    actualizados: actualizadosERP,
+    procesando: procesandoERP,
+  } = useActualizarErpGrupo(tamboSel);
+
+  // ----- Handlers Animales -----
+  const onFileChangeAnimales = (e) => {
+    const f = e.target.files[0];
+    console.log('onFileChangeAnimales -> file:', f);
+    if (f) {
+      setFileAnimales(f);
+      setFileNameAnimales(f.name);
+      setMensajeAnimales(null);
     }
   };
 
-
-  // 🔹 Obtener animales de un tambo fijo y asignar grupo=0
-  const obtenerAnimalesConGrupo = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const querySnapshot = await firebase.db.collection('animal')
-        .where('idtambo', '==', TAMBO_FIJO_ID)
-        .get();
-
-      const listaAnimales = [];
-      querySnapshot.forEach((doc) => {
-        listaAnimales.push({ id: doc.id, ...doc.data() });
-      });
-
-      if (listaAnimales.length === 0) {
-        alert("No se encontraron animales en el tambo fijo.");
-        setAnimalesGrupo([]);
-        return;
-      }
-
-      // batch update para agregar grupo = 0
-      const batch = firebase.db.batch();
-      for (const animal of listaAnimales) {
-        const animalRef = firebase.db.collection('animal').doc(animal.id);
-        batch.update(animalRef, { grupo: 0 });
-      }
-      await batch.commit();
-
-      // reflejar en el estado local
-      const listaConGrupo = listaAnimales.map(a => ({
-        ...a,
-        grupo: 0,
-      }));
-
-      setAnimalesGrupo(listaConGrupo);
-      alert(`Se actualizaron ${listaConGrupo.length} animales con grupo=0`);
-    } catch (error) {
-      console.error("Error obteniendo/actualizando animales con grupo:", error);
-      setError("Error procesando los animales.");
-    } finally {
-      setLoading(false);
-    }
+  const clearFileAnimales = () => {
+    setFileAnimales(null);
+    setFileNameAnimales('Ningún archivo seleccionado');
+    setMensajeAnimales(null);
   };
 
-
-
-
-
-
-  // 🔹 Obtener animales de un tambo fijo
-  const obtenerAnimalesFijos = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const querySnapshot = await firebase.db.collection('animal')
-        .where('idtambo', '==', TAMBO_FIJO_ID)
-        .get();
-
-      const listaAnimales = [];
-      querySnapshot.forEach((doc) => {
-        listaAnimales.push({ id: doc.id, ...doc.data() });
-      });
-
-      setAnimalesFijos(listaAnimales);
-      alert(`Se obtuvieron ${listaAnimales.length} animales del tambo fijo.`);
-    } catch (error) {
-      console.error("Error obteniendo animales del tambo fijo:", error);
-      setError("Error obteniendo animales del tambo fijo.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🔹 Actualizar racion a 5
-  // 🔹 Actualizar racion y fracion
-  const actualizarRacionFijos = async () => {
-    if (animalesFijos.length === 0) {
-      alert("Primero obtené los animales del tambo fijo.");
+  const handleSubmitAnimales = (e) => {
+    e.preventDefault();
+    console.log('handleSubmitAnimales -> fileAnimales:', fileAnimales, 'cargarAnimales:', cargarAnimales);
+    if (!fileAnimales) {
+      setMensajeAnimales('No seleccionaste ningún archivo.');
       return;
     }
-
-    setUpdating(true);
-    setError(null);
-    try {
-      const batch = firebase.db.batch();
-
-      for (const animal of animalesFijos) {
-        const animalRef = firebase.db.collection('animal').doc(animal.id);
-        batch.update(animalRef, {
-          racion: 5,
-          fracion: firebase.nowTimeStamp()  // 👈 acá se guarda el timestamp
-        });
-      }
-
-      await batch.commit();
-
-      // 🔹 Reflejar cambios en la lista local
-      setAnimalesFijos(prev =>
-        prev.map(a => ({
-          ...a,
-          racion: 5,
-          fracion: new Date() // para que también lo veas actualizado en la UI
-        }))
-      );
-
-      alert("Raciones y fracion actualizadas correctamente.");
-    } catch (error) {
-      console.error("Error actualizando raciones:", error);
-      setError("Error actualizando raciones.");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  // Función original de actualizar eventos
-  const actualizarEventos = async () => {
-    if (animales.length === 0) {
-      alert("No hay animales para actualizar.");
+    if (typeof cargarAnimales !== 'function') {
+      setMensajeAnimales('Función de carga no disponible. Revisá el hook useActualizarAnimales.');
+      console.error('cargarAnimales no es una función:', cargarAnimales);
       return;
     }
+    cargarAnimales(fileAnimales);
+  };
 
-    setUpdating(true);
-    setError(null);
-    try {
-      const batch = firebase.db.batch();
-
-      for (const animal of animales) {
-        const eventosRef = firebase.db.collection('animal').doc(animal.id).collection('eventos');
-
-        const eventosSnapshot = await eventosRef.get();
-        eventosSnapshot.forEach((doc) => {
-          batch.delete(doc.ref);
-        });
-
-        const nuevoEvento = {
-          fecha: new Date(),
-          descripcion: "Evento agregado automáticamente",
-          tipo: "actualizacion",
-        };
-
-        const nuevoEventoRef = eventosRef.doc();
-        batch.set(nuevoEventoRef, nuevoEvento);
-      }
-
-      await batch.commit();
-      alert("Eventos actualizados correctamente.");
-    } catch (error) {
-      console.error("Error actualizando eventos:", error);
-      setError("Error actualizando eventos. Intenta nuevamente.");
-    } finally {
-      setUpdating(false);
+  // ----- Handlers ERP -----
+  const onFileChangeERP = (e) => {
+    const f = e.target.files[0];
+    console.log('onFileChangeERP -> file:', f);
+    if (f) {
+      setFileERP(f);
+      setFileNameERP(f.name);
+      setMensajeERP(null);
     }
   };
 
-  // 🔹 Nueva función para asignar grupo=0 a los animales obtenidos
-  const asignarGrupoAnimales = async () => {
-    if (animales.length === 0) {
-      alert("Primero obtené los animales del tambo seleccionado.");
+  const clearFileERP = () => {
+    setFileERP(null);
+    setFileNameERP('Ningún archivo seleccionado');
+    setMensajeERP(null);
+  };
+
+  const handleSubmitERP = (e) => {
+    e.preventDefault();
+    console.log('handleSubmitERP -> fileERP:', fileERP, 'cargarERP:', cargarERP);
+    if (!fileERP) {
+      setMensajeERP('No seleccionaste ningún archivo.');
       return;
     }
-
-    setUpdating(true);
-    setError(null);
-    try {
-      const batch = firebase.db.batch();
-
-      for (const animal of animales) {
-        const animalRef = firebase.db.collection('animal').doc(animal.id);
-        batch.update(animalRef, { grupo: 0 });
-      }
-
-      await batch.commit();
-
-      // 🔹 Reflejar cambios en la UI
-      setAnimales(prev =>
-        prev.map(a => ({
-          ...a,
-          grupo: 0,
-        }))
-      );
-
-      alert("Se asignó grupo=0 a todos los animales.");
-    } catch (error) {
-      console.error("Error asignando grupo:", error);
-      setError("Error asignando grupo a los animales.");
-    } finally {
-      setUpdating(false);
+    if (typeof cargarERP !== 'function') {
+      setMensajeERP('Función de carga no disponible. Revisá el hook useActualizarERPGrupo.');
+      console.error('cargarERP no es una función:', cargarERP);
+      return;
     }
+    cargarERP(fileERP);
   };
 
+  const procesando = procesandoAnimales || procesandoERP;
 
   return (
-    <Layout titulo="Herramientas">
-      <div className={styles.miComponente}>
-        {/* 🔹 Botones */}
-        <div className={styles.acciones}>
-          <button onClick={obtenerAnimales} disabled={loading}>
-            {loading ? "Cargando..." : "Obtener Animales"}
-          </button>
+    <Layout titulo="Actualización Masiva">
+      {procesando ? (
+        <ContenedorSpinner>
+          <div className={styles.contenedorSpinner}>
+            <Spinner animation="border" variant="info" />
+            <div className={styles.mensajeCargando}>Procesando actualización...</div>
+          </div>
+        </ContenedorSpinner>
+      ) : (
+        <>
+          {!tamboSel ? (
+            <div className="container mt-4">
+              <Alert variant="info">Seleccioná un tambo antes de cargar planillas.</Alert>
+              <SelectTambo />
+            </div>
+          ) : (
+            <div className="container mt-4">
+              <Row>
+                {/* ======== IZQUIERDA: Actualizar Animales ======== */}
+                <Col md={6}>
+                  <div className={styles.sectionBox}>
+                    <h5 className="text-center mb-3">🐄 Actualizar Animales</h5>
 
-          {/* Este botón aparece solo si hay animales */}
-          {animales.length > 0 && (
-            <button onClick={asignarGrupoAnimales} disabled={updating}>
-              {updating ? "Asignando..." : "Asignar Grupo=0"}
-            </button>
+                    {/* 📥 Planillas ejemplo */}
+                    <Botonera>
+                      <div className={styles.descargaWrapper}>
+                        <h6 className={styles.descargaTitulo}>📄 Planillas para animales</h6>
+                        <p className={styles.descargaSubtitulo}>
+                          Descargá un modelo o una plantilla vacía:
+                        </p>
+                        <div className={styles.botonGrupo}>
+                          <a
+                            href="/docs/planilla-modelo-actualizacionMasiva.xlsx"
+                            download
+                            className={styles.btnDescarga}
+                          >
+                            📘 Modelo
+                          </a>
+                          <a
+                            href="/docs/planilla-vacia-actualizacionMasiva.xlsx"
+                            download
+                            className={styles.btnDescarga}
+                          >
+                            📄 Vacía
+                          </a>
+                        </div>
+                      </div>
+                    </Botonera>
+
+                    {/* 📤 Cargar archivo */}
+                    {/* 📤 Cargar archivo Animales con Drag & Drop */}
+                    <Botonera>
+                      <Form onSubmit={handleSubmitAnimales} className="text-center">
+                        {mensajeAnimales && <Alert variant="warning">{mensajeAnimales}</Alert>}
+
+                        <input
+                          id="fileAnimales"
+                          ref={inputRefAnimales}
+                          type="file"
+                          style={{ display: 'none' }}
+                          onChange={onFileChangeAnimales}
+                          accept=".xlsx,.xls"
+                        />
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 8,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            border: '2px dashed #ccc',
+                            padding: '1rem',
+                            borderRadius: '8px',
+                            backgroundColor: '#f9f9f9',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => inputRefAnimales.current && inputRefAnimales.current.click()}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            const f = e.dataTransfer.files[0];
+                            if (f) {
+                              setFileAnimales(f);
+                              setFileNameAnimales(f.name);
+                              setMensajeAnimales(null);
+                            }
+                          }}
+                        >
+                          <Button
+                            className={styles.btnSeleccionArchivo}
+                            type="button"
+                          >
+                            📎 Seleccionar o arrastrar archivo
+                          </Button>
+
+                          <div className={styles.nombreArchivo}>{fileNameAnimales}</div>
+
+                          {fileAnimales && (
+                            <Button variant="danger" onClick={(e) => { e.stopPropagation(); clearFileAnimales(); }}>
+                              Borrar
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="mt-3">
+                          <button
+                            className="button-ActMasiva"
+                            type="submit"
+                            disabled={!fileAnimales || procesandoAnimales}
+                          >
+                            <span className="span-ActMasiva">Cargar Planilla Animales</span>
+                          </button>
+                        </div>
+                      </Form>
+                    </Botonera>
+
+
+                    {/* 🧾 Resultados */}
+                    <Mensaje>
+                      {/* ====== Errores Animales ====== */}
+                      {erroresAnimales.length > 0 && (
+                        <div className={`${styles.alertaBox} ${styles.errorBox}`}>
+                          <div className={styles.alertaHeader}>❌ Errores encontrados</div>
+
+                          {erroresAnimales
+                            .slice(0, mostrarMasErroresAnimales ? erroresAnimales.length : 5)
+                            .map((e) => (
+                              <Detalle key={uuidv4()} info={e} />
+                            ))}
+
+                          {erroresAnimales.length > 5 && (
+                            <button
+                              type="button"
+                              className={styles.btnVerMas}
+                              onClick={() => setMostrarMasErroresAnimales(!mostrarMasErroresAnimales)}
+                            >
+                              {mostrarMasErroresAnimales ? 'Ver menos' : 'Ver más'}
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ====== Actualizados Animales ====== */}
+                      {actualizadosAnimales.length > 0 && (
+                        <div className={`${styles.alertaBox} ${styles.successBox}`}>
+                          <div className={styles.alertaHeader}>✅ Actualizaciones realizadas</div>
+
+                          {actualizadosAnimales
+                            .slice(0, mostrarMasActualizadosAnimales ? actualizadosAnimales.length : 5)
+                            .map((a) => (
+                              <Detalle key={uuidv4()} info={a} />
+                            ))}
+
+                          {actualizadosAnimales.length > 5 && (
+                            <button
+                              type="button"
+                              className={styles.btnVerMas}
+                              onClick={() => setMostrarMasActualizadosAnimales(!mostrarMasActualizadosAnimales)}
+                            >
+                              {mostrarMasActualizadosAnimales ? 'Ver menos' : 'Ver más'}
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                    </Mensaje>
+                  </div>
+                </Col>
+
+                {/* ======== DERECHA: Actualizar ERP/Grupo ======== */}
+                <Col md={6}>
+                  <div className={styles.sectionBox}>
+                    <h5 className="text-center mb-3">🔢 Actualizar ERP / Grupo</h5>
+
+                    {/* 📥 Planillas ejemplo */}
+                    <Botonera>
+                      <div className={styles.descargaWrapper}>
+                        <h6 className={styles.descargaTitulo}>📄 Planillas ERP/Grupo</h6>
+                        <p className={styles.descargaSubtitulo}>
+                          Descargá un modelo o una plantilla vacía:
+                        </p>
+                        <div className={styles.botonGrupo}>
+                          <a
+                            href="/docs/planilla-modelo-actualizacionMasivaErpGrupo.xlsx"
+                            download
+                            className={styles.btnDescarga}
+                          >
+                            📘 Modelo
+                          </a>
+                          <a
+                            href="/docs/planilla-vacia-actualizacionMasivaErpGrupo.xlsx"
+                            download
+                            className={styles.btnDescarga}
+                          >
+                            📄 Vacía
+                          </a>
+                        </div>
+                      </div>
+                    </Botonera>
+
+                    {/* 📤 Cargar archivo */}
+                    {/* 📤 Cargar archivo ERP con Drag & Drop */}
+                    <Botonera>
+                      <Form onSubmit={handleSubmitERP} className="text-center">
+                        {mensajeERP && <Alert variant="warning">{mensajeERP}</Alert>}
+
+                        <input
+                          id="fileERP"
+                          ref={inputRefERP}
+                          type="file"
+                          style={{ display: 'none' }}
+                          onChange={onFileChangeERP}
+                          accept=".xlsx,.xls"
+                        />
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 8,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            border: '2px dashed #ccc',
+                            padding: '1rem',
+                            borderRadius: '8px',
+                            backgroundColor: '#f9f9f9',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => inputRefERP.current && inputRefERP.current.click()}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            const f = e.dataTransfer.files[0];
+                            if (f) {
+                              setFileERP(f);
+                              setFileNameERP(f.name);
+                              setMensajeERP(null);
+                            }
+                          }}
+                        >
+                          <Button className={styles.btnSeleccionArchivo} variant="outline-primary">
+                            📎 Seleccionar o arrastrar archivo
+                          </Button>
+
+                          <div className={styles.nombreArchivo}>{fileNameERP}</div>
+
+                          {fileERP && (
+                            <Button variant="danger" onClick={(e) => { e.stopPropagation(); clearFileERP(); }}>
+                              Borrar
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="mt-3">
+                          <button
+                            className="button-ActMasiva"
+                            type="submit"
+                            disabled={!fileERP || procesandoERP}
+                          >
+                            <span className="span-ActMasiva">Cargar Planilla ERP/Grupo</span>
+                          </button>
+                        </div>
+                      </Form>
+                    </Botonera>
+
+                    {/* 🧾 Resultados */}
+                    <Mensaje>
+                      {(erroresERP.length > 0 || actualizadosERP.length > 0) && (
+                        <div className={styles.alertasWrapper}>
+
+                          {/* ====== Errores ERP ====== */}
+                          {erroresERP.length > 0 && (
+                            <div className={`${styles.alertaBox} ${styles.errorBox}`}>
+                              <div className={styles.alertaHeader}>❌ Errores encontrados</div>
+
+                              {erroresERP
+                                .slice(0, mostrarMasErroresERP ? erroresERP.length : 5)
+                                .map((e) => (
+                                  <Detalle key={uuidv4()} info={e} />
+                                ))}
+
+                              {erroresERP.length > 5 && (
+                                <button
+                                  type="button"
+                                  className={styles.btnVerMas}
+                                  onClick={() => setMostrarMasErroresERP(!mostrarMasErroresERP)}
+                                >
+                                  {mostrarMasErroresERP ? 'Ver menos' : 'Ver más'}
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {/* ====== Actualizados ERP ====== */}
+                          {actualizadosERP.length > 0 && (
+                            <div className={`${styles.alertaBox} ${styles.successBox}`}>
+                              <div className={styles.alertaHeader}>✅ Actualizaciones realizadas</div>
+
+                              {actualizadosERP
+                                .slice(0, mostrarMasActualizadosERP ? actualizadosERP.length : 5)
+                                .map((a) => (
+                                  <Detalle key={uuidv4()} info={a} />
+                                ))}
+
+                              {actualizadosERP.length > 5 && (
+                                <button
+                                  type="button"
+                                  className={styles.btnVerMas}
+                                  onClick={() => setMostrarMasActualizadosERP(!mostrarMasActualizadosERP)}
+                                >
+                                  {mostrarMasActualizadosERP ? 'Ver menos' : 'Ver más'}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Mensaje>
+
+                  </div>
+                </Col>
+              </Row>
+            </div>
           )}
-
-          <button onClick={obtenerAnimalesConGrupo} disabled={loading}>
-            {loading ? "Cargando..." : "Obtener Animales + Grupo=0"}
-          </button>
-        </div>
-
-        {/* 🔹 Mensajes de error */}
-        {error && <p className={styles.error}>{error}</p>}
-
-        {/* 🔹 Lista animales del tambo seleccionado */}
-        <h3>Animales del tambo seleccionado</h3>
-        <ul>
-          {animales.length === 0 && !loading && <li>No se encontraron animales.</li>}
-          {animales.map((animal) => (
-            <li key={animal.id}>
-              <span>Nombre: {animal.rp}</span>
-              <span>ID: {animal.erp}</span>
-              <span>Ración: {animal.racion || "N/A"}</span>
-              <span>Grupo: {animal.grupo ?? "Sin grupo"}</span>
-            </li>
-          ))}
-        </ul>
-
-        {/* 🔹 Lista animales con grupo */}
-        <h3>Animales del tambo fijo con grupo=0</h3>
-        <ul>
-          {animalesGrupo.length === 0 && !loading && <li>No se encontraron animales.</li>}
-          {animalesGrupo.map((animal) => (
-            <li key={animal.id}>
-              <span>Nombre: {animal.rp}</span>
-              <span>ID: {animal.erp}</span>
-              <span>Grupo: {animal.grupo}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+        </>
+      )}
     </Layout>
   );
-
-
 };
 
-export default MiComponente;
+export default Actualizacion;

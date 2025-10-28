@@ -6,7 +6,7 @@ import DetalleEventoAnimal from './detalleEventoAnimal';
 import styles from '../../styles/gralAnimales.module.scss';
 
 const FichaAnimal = ({ animal, show, setShow }) => {
-    const { id, rp, erp, lactancia, ingreso, categoria, estrep, nservicio, fservicio, estpro, fparto, racion, uc, ca, anorm, observaciones } = animal;
+    const { id, rp, erp, lactancia, ingreso, categoria, estrep, nservicio, fservicio, estpro, fparto, racion, uc, ca, anorm, observaciones, grupo, fuc } = animal;
 
     const handleClose = () => { setShow(false) };
     const [eventos, guardarEventos] = useState([]);
@@ -22,6 +22,14 @@ const FichaAnimal = ({ animal, show, setShow }) => {
         }
 
     }, []);
+
+    // Función para formatear timestamp de Firebase
+    const formatDate = (timestamp) => {
+        if (!timestamp) return '';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toISOString().split('T')[0]; // yyyy-mm-dd
+    };
+
 
     function snapshotEventos(snapshot) {
         const eve = snapshot.docs.map(doc => {
@@ -49,59 +57,44 @@ const FichaAnimal = ({ animal, show, setShow }) => {
             <Modal.Body>
                 <Tabs defaultActiveKey="general" >
                     <Tab eventKey="general" title="General">
-                        &nbsp;
-                        <Row>
-                            <Col lg={true}>
-                                <p><b>Ingreso:</b>&nbsp;{ingreso}</p>
-                            </Col>
-                            
-                            <Col lg={true}>
-                                <p><b>Categoria:</b>&nbsp;{categoria}</p>
-                            </Col>
-                            <Col lg={true}>
-                                <p><b>Lactancias:</b>&nbsp;{lactancia}</p>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col lg={true}>
-                                <p><b>Est. Rep.:</b>&nbsp;{estrep}</p>
-                            </Col>
-                            <Col lg={true}>
-                                <p><b>Ult. Serv.:</b>&nbsp;{fservicio}</p>
-                            </Col>
-                            <Col lg={true}>
-                                <p><b>Nro. Serv.:</b>&nbsp;{nservicio}</p>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col lg={true}>
-                                <p><b>Est. Prod.:</b>&nbsp;{estpro}</p>
-                            </Col>
-                            <Col lg={true}>
-                                <p><b>Ult. Parto:</b>&nbsp;{fparto}</p>
-                            </Col>
-                            <Col lg={true}>
-                                <p><b>Ración:</b>&nbsp;{racion}</p>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col lg={true}>
-                                <p><b>C. Lechero:</b>&nbsp;{uc}</p>
-                            </Col>
-                            <Col lg={true}>
-                                <p><b>Anorm.:</b>&nbsp;{anorm}</p>
-                            </Col>
-                            <Col lg={true}>
-                                <p><b>C. Anterior:</b>&nbsp;{ca}</p>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col lg={true}>
-                                <p><b>Observaciones:</b>&nbsp;{observaciones}</p>
-                            </Col>
-                        </Row>
+                        <div className="p-3">
+                            <Row>
+                                {/* Primera columna */}
+                                <Col lg={4}>
+                                    <p><b>Est. Prod.:</b> {estpro}</p>
+                                    <p><b>Est. Rep.:</b> {estrep}</p>
+                                    <p><b>Categoría:</b> {categoria}</p>
+                                    <p><b>Grupo:</b> {grupo}</p>
+                                    <p><b>Ración:</b> {racion}</p>
+                                </Col>
 
+                                {/* Segunda columna */}
+                                <Col lg={4}>
+                                    <p><b>Ult. Serv.:</b> {fservicio}</p>
+                                    <p><b>Ult. Parto:</b> {fparto}</p>
+                                    <p><b>Ult. Control:</b> {formatDate(fuc)}</p>
+                                    <p><b>Ingreso:</b> {ingreso}</p>
+                                </Col>
+
+                                {/* Tercera columna */}
+                                <Col lg={4}>
+                                    <p><b>Lactancias:</b> {lactancia}</p>
+                                    <p><b>Nro. Serv.:</b> {nservicio}</p>
+                                    <p><b>C. Anterior:</b> {ca}</p>
+                                    <p><b>C. Lechero:</b> {uc}</p>
+                                    <p><b>Anorm.:</b> {anorm}</p>
+                                </Col>
+                            </Row>
+
+                            {/* Observaciones debajo en el medio */}
+                            <Row className="mt-3">
+                                <Col lg={{ span: 8, offset: 2 }}>
+                                    <p><b>Observaciones:</b> {observaciones}</p>
+                                </Col>
+                            </Row>
+                        </div>
                     </Tab>
+
                     <Tab eventKey="eventos" title="Eventos">
                         {eventos.length === 0 ? (
                             <Alert variant="warning">No hay eventos registrados</Alert>
