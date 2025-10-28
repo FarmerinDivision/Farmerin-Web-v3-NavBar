@@ -87,14 +87,39 @@ const NavBar = () => {
     const tambosArray = tambos.map(t => t.id);
     if (!firebase || tambosArray.length === 0) return;
     try {
-      const snapshot = await firebase.db.collection('alerta')
-        .where('idtambo', 'in', tambosArray)
-        .orderBy('fecha', 'desc')
-        .get();
-      const alertasTambos = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const chunk = (arr, size) => arr.reduce((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
+      const getFechaMs = (f) => {
+        if (!f) return 0;
+        if (f instanceof Date) return f.getTime();
+        if (typeof f?.toDate === 'function') return f.toDate().getTime();
+        if (typeof f === 'string') return new Date(f).getTime() || 0;
+        return 0;
+      };
+
+      let docs = [];
+      if (tambosArray.length <= 10) {
+        const snapshot = await firebase.db.collection('alerta')
+          .where('idtambo', 'in', tambosArray)
+          .orderBy('fecha', 'desc')
+          .get();
+        docs = snapshot.docs;
+      } else {
+        const chunks = chunk(tambosArray, 10);
+        const promises = chunks.map(ids =>
+          firebase.db.collection('alerta')
+            .where('idtambo', 'in', ids)
+            .orderBy('fecha', 'desc')
+            .get()
+        );
+        const snaps = await Promise.all(promises);
+        docs = snaps.flatMap(s => s.docs);
+      }
+
+      const byId = new Map();
+      for (const d of docs) {
+        byId.set(d.id, { id: d.id, ...d.data() });
+      }
+      const alertasTambos = Array.from(byId.values()).sort((a, b) => getFechaMs(b.fecha) - getFechaMs(a.fecha));
       setAlertas(alertasTambos);
       const sinLeer = alertasTambos.filter(a => !a.visto);
       setAlertasSinLeer(sinLeer);

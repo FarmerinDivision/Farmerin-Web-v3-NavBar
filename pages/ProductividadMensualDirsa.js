@@ -28,11 +28,14 @@ const ProductividadMensualDirsa = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[Dirsa] handleSubmit: inicio', { tamboSel, mesSeleccionado });
     if (!tamboSel) {
+      console.log('[Dirsa] handleSubmit: sin tambo seleccionado');
       setMensaje('Seleccioná un tambo para continuar.');
       return;
     }
     if (!mesSeleccionado) {
+      console.log('[Dirsa] handleSubmit: sin mes seleccionado');
       setMensaje('Seleccioná un mes.');
       return;
     }
@@ -43,45 +46,73 @@ const ProductividadMensualDirsa = () => {
 
     try {
       // Obtenemos todos los animales del tambo seleccionado
-      const animalesSnap = await firebase.db.collection('animal').get();
+      console.log('[Dirsa] Cargando animales del tambo seleccionado...');
+      const animalesSnap = await firebase.db
+        .collection('animal')
+        .where('idtambo', '==', tamboSel.id)
+        .get();
+      console.log('[Dirsa] Animales cargados:', animalesSnap.size);
 
       let resultados = [];
+      const mesIndexSel = MESES.indexOf(mesSeleccionado);
+      console.log('[Dirsa] Índice de mes seleccionado:', mesIndexSel, mesSeleccionado);
 
       // Recorremos cada animal y buscamos los eventos correspondientes
       for (const animalDoc of animalesSnap.docs) {
+        console.log('[Dirsa] Procesando animal', { animalId: animalDoc.id });
         const eventosSnap = await firebase.db
           .collection('animal')
           .doc(animalDoc.id)
           .collection('eventos')
           .where('tipo', '==', 'Control Lechero mediante planilla Dirsa')
           .get();
+        console.log('[Dirsa] Eventos encontrados para animal', animalDoc.id, ':', eventosSnap.size);
 
         eventosSnap.forEach((evDoc) => {
           const ev = evDoc.data();
+          console.log('[Dirsa] Evento leído', { eventoId: evDoc.id, ev });
 
-          // Convertir campo fecha a texto legible
-          let fechaTexto = '';
+          // Normalizar fecha a Date
+          let fechaDate = null;
           if (ev.fecha?.seconds) {
-            fechaTexto = format(new Date(ev.fecha.seconds * 1000), "d 'de' MMMM 'de' yyyy");
+            fechaDate = new Date(ev.fecha.seconds * 1000);
+          } else if (typeof ev.fecha?.toDate === 'function') {
+            fechaDate = ev.fecha.toDate();
           } else if (typeof ev.fecha === 'string') {
-            fechaTexto = ev.fecha.toLowerCase();
+            const parsed = new Date(ev.fecha);
+            if (!isNaN(parsed)) fechaDate = parsed;
+          }
+          if (!fechaDate) {
+            console.log('[Dirsa] Evento sin fecha válida, se omite', { eventoId: evDoc.id, fecha: ev.fecha });
+            return;
           }
 
-          // Filtrar por mes seleccionado (nombre en español)
-          if (fechaTexto.includes(mesSeleccionado)) {
+          console.log('[Dirsa] Fecha normalizada', { eventoId: evDoc.id, fechaDate });
+
+          // Filtrar por mes seleccionado con índice numérico
+          if (fechaDate.getMonth() === mesIndexSel) {
+            const animalData = animalDoc.data() || {};
+            const fechaStr = format(fechaDate, 'dd/MM/yyyy');
+            console.log('[Dirsa] Evento coincide con mes seleccionado', { eventoId: evDoc.id, fechaStr });
             resultados.push({
               id: evDoc.id,
               animalId: animalDoc.id,
-              nombre: ev.nombre || animalDoc.data().nombre || '',
-              fecha: fechaTexto,
-              RP: ev.RP || '',
-              raza: ev.raza || '',
-              observaciones: ev.observaciones || '',
+              fecha: fechaStr,
+              RP: ev.rp || animalData.rp || '',
+              ERP: ev.erp || animalData.erp || '',
+              detalle: ev.detalle || '',
+            });
+          } else {
+            console.log('[Dirsa] Evento NO coincide con mes seleccionado', {
+              eventoId: evDoc.id,
+              mesEvento: fechaDate.getMonth(),
+              mesSeleccionado: mesIndexSel
             });
           }
         });
       }
 
+      console.log('[Dirsa] Total resultados:', resultados.length);
       if (resultados.length === 0) {
         setMensaje('No se encontraron controles lecheros para el mes seleccionado.');
       }
@@ -91,6 +122,7 @@ const ProductividadMensualDirsa = () => {
       console.error('Error al obtener los eventos:', error);
       setMensaje('Ocurrió un error al cargar los datos.');
     } finally {
+      console.log('[Dirsa] Finaliza búsqueda');
       setProcesando(false);
     }
   };
@@ -102,7 +134,8 @@ const ProductividadMensualDirsa = () => {
           <Row>
             <Col md={6}>
               <Form.Label>Seleccioná el mes</Form.Label>
-              <Form.Select
+              <Form.Control
+                as="select"
                 value={mesSeleccionado}
                 onChange={(e) => setMesSeleccionado(e.target.value)}
                 className={styles.select}
@@ -111,7 +144,7 @@ const ProductividadMensualDirsa = () => {
                 {MESES.map((m, i) => (
                   <option key={i} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>
                 ))}
-              </Form.Select>
+              </Form.Control>
             </Col>
             <Col md={6} className={styles.acciones}>
               <Button variant="info" type="submit" className={styles.button}>

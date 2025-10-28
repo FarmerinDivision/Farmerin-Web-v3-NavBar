@@ -27,12 +27,39 @@ export const NotificacionesProvider = ({ children }) => {
   const cargarNotificaciones = async () => {
     const tambosArray = tambos.map(t => t.id);
     try {
-      const snapshot = await firebase.db.collection('alerta')
-        .where('idtambo', 'in', tambosArray)
-        .orderBy('fecha', 'desc')
-        .get();
+      const chunk = (arr, size) => arr.reduce((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
+      const getFechaMs = (f) => {
+        if (!f) return 0;
+        if (f instanceof Date) return f.getTime();
+        if (typeof f?.toDate === 'function') return f.toDate().getTime();
+        if (typeof f === 'string') return new Date(f).getTime() || 0;
+        return 0;
+      };
 
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      let docs = [];
+      if (tambosArray.length <= 10) {
+        const snapshot = await firebase.db.collection('alerta')
+          .where('idtambo', 'in', tambosArray)
+          .orderBy('fecha', 'desc')
+          .get();
+        docs = snapshot.docs;
+      } else {
+        const chunks = chunk(tambosArray, 10);
+        const promises = chunks.map(ids =>
+          firebase.db.collection('alerta')
+            .where('idtambo', 'in', ids)
+            .orderBy('fecha', 'desc')
+            .get()
+        );
+        const snaps = await Promise.all(promises);
+        docs = snaps.flatMap(s => s.docs);
+      }
+
+      const byId = new Map();
+      for (const d of docs) {
+        byId.set(d.id, { id: d.id, ...d.data() });
+      }
+      const data = Array.from(byId.values()).sort((a, b) => getFechaMs(b.fecha) - getFechaMs(a.fecha));
       setNotificaciones(data);
       setSinLeer(data.filter(a => !a.visto));
     } catch (err) {
