@@ -213,7 +213,6 @@ const NavBar = () => {
             <div className={styles.dropdownContent}>
               <Link href="/gralAnimales"><span>Gral. Animales</span></Link>
               <Link href="/produccion"><span>Producción</span></Link>
-              <Link href="/ProductividadMensualDirsa"><span>Producción Dirsa</span></Link>
               <Link href="/parteDiario"><span>Parte Diario</span></Link>
               <Link href="/recepciones"><span>Recepciones</span></Link>
             </div>
@@ -234,7 +233,14 @@ const NavBar = () => {
               <Link href="/listados"><span>Listados</span></Link>
               <Link href="/altaMasiva"><span>Alta Masiva</span></Link>
               <Link href="/actualizacion"><span>Actualización Masiva</span></Link>
-              <Link href="/dirsa"><span>Dirsa</span></Link>
+            </div>
+          </div>
+          <div className={styles.dropdown}>
+            <button className={styles.dropbtn}>Dirsa</button>
+            <div className={styles.dropdownContent}>
+              <Link href="/dirsa"><span>Cargar eventos</span></Link>
+              <Link href="/ProductividadMensualDirsa"><span>Reporte de producción</span></Link>
+              <Link href="/proximamente"><span>Reporte de eventos</span></Link>
             </div>
           </div>
           <Link href="/ayuda"><span>Ayuda</span></Link>

@@ -307,7 +307,7 @@ const Dirsa = () => {
 
         const extension = archivoLechero.name.split('.').pop().toLowerCase();
 
-        // 📥 Si es CSV
+        // 🧩 === ARCHIVOS CSV ===
         if (extension === 'csv') {
             Papa.parse(archivoLechero, {
                 header: true,
@@ -316,158 +316,144 @@ const Dirsa = () => {
                     try {
                         const encabezadoMap = {
                             "rp": "RP",
+                            "animal": "RP",
                             "le.uc": "Le.UC",
                             "leche uc": "Le.UC",
-                            "uc": "Le.UC"
+                            "uc": "Le.UC",
+                            "producción": "Le.UC"
                         };
 
                         const data = results.data.map(row => {
                             const obj = {};
-
                             for (const key in row) {
                                 const normalizedKey = encabezadoMap[key.trim().toLowerCase()] || key.trim();
                                 obj[normalizedKey] = row[key];
                             }
-
-                            if (obj["RP"]) {
-                                obj["RP"] = obj["RP"].toString().trim().toUpperCase();
-                            }
-
+                            if (obj["RP"]) obj["RP"] = obj["RP"].toString().trim().toUpperCase();
                             return obj;
                         }).filter(item => item["RP"]);
 
-                        if (data.length === 0) {
-                            setErrores(["No hay datos válidos en el CSV."]);
-                            setIsLoading(false);
-                            return;
-                        }
-
-                        if (!tamboSel || !tamboSel.id) {
-                            setErrores(["Debes seleccionar un tambo antes de actualizar el control lechero."]);
-                            setIsLoading(false);
-                            return;
-                        }
+                        if (data.length === 0) throw new Error("No hay datos válidos en el CSV.");
+                        if (!tamboSel?.id) throw new Error("Debes seleccionar un tambo antes de actualizar el control lechero.");
 
                         setTotal(data.length);
                         await subirControlLechero(
-                            data,
-                            tamboSel,
-                            setErrores,
-                            setActualizados,
+                            data, tamboSel, setErrores, setActualizados,
                             () => setProcesados(prev => prev + 1),
-                            firebase,
-                            usuario
+                            firebase, usuario
                         );
                     } catch (error) {
                         console.error("Error procesando CSV:", error);
-                        setErrores(["Error procesando el archivo CSV."]);
+                        setErrores([error.message]);
                     } finally {
                         setIsLoading(false);
                     }
                 }
             });
-
-            return; // 🔚 no seguir con .xlsx
+            return;
         }
 
-
-        // 📥 Si es XLSX o XLS
+        // 🧩 === ARCHIVOS EXCEL (.xlsx, .xls, .xlsm) ===
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
+                // 🧱 Verificar encabezado ZIP (PK)
+                const isZip = data[0] === 0x50 && data[1] === 0x4B;
+                let workbook;
+
+                try {
+                    if (isZip) {
+                        // XLSX moderno
+                        workbook = XLSX.read(data, { type: 'array' });
+                    } else {
+                        // XLS antiguo o binario
+                        console.warn("⚠️ El archivo no parece ZIP, intentando leer como formato XLS (binario)...");
+                        const binaryStr = new TextDecoder("latin1").decode(data);
+                        workbook = XLSX.read(binaryStr, { type: 'binary' });
+                    }
+                } catch (err) {
+                    console.error("❌ Error leyendo archivo Excel:", err);
+                    throw new Error("El archivo Excel no es válido o está dañado.");
+                }
+
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const fullData = XLSX.utils.sheet_to_json(sheet, {
                     header: 1,
                     raw: false,
                     defval: ""
                 });
 
-                if (fullData.length < 3) {
-                    setErrores(["El archivo tiene menos de 3 filas, no contiene encabezados válidos."]);
-                    setIsLoading(false);
-                    return;
-                }
+                if (fullData.length < 2) throw new Error("El archivo no contiene suficientes filas para procesar.");
 
-                // 🔑 Map de encabezados posibles (incluye Ranking)
+                // 🔑 Map de encabezados posibles
                 const encabezadoMap = {
                     "rp": "RP",
-                    "animal": "RP",           // 👈 en Ranking puede venir como "Animal"
+                    "animal": "RP",
                     "le.uc": "Le.UC",
                     "leche uc": "Le.UC",
                     "uc": "Le.UC",
-                    "producción": "Le.UC",    // 👈 en Ranking puede venir como "Producción" o similar
+                    "producción": "Le.UC",
+                    "produccion": "Le.UC",
                 };
 
-                // ⚠️ En Ranking los encabezados suelen estar en la primera fila (0), no en la fila 2
-                const encabezadosRaw = fullData[0].some(h => h.toString().toLowerCase().includes("animal"))
-                    ? fullData[0]   // Si la primera fila trae "Animal", la usamos
-                    : fullData[2];  // Si no, seguimos con la lógica normal
+                // 📋 Detectar encabezados reales
+                const encabezadosRaw = fullData[0].some(h => h?.toString().toLowerCase().includes("animal"))
+                    ? fullData[0]
+                    : fullData.find(row => row.some(celda => celda?.toString().toLowerCase().includes("rp"))) || fullData[0];
 
                 const encabezados = encabezadosRaw.map(h => {
                     const key = h?.toString().trim().toLowerCase();
                     return encabezadoMap[key] || h?.toString().trim();
                 });
 
-                // ⚙️ Recorrer datos a partir de la fila siguiente
+                // 🧠 Parsear filas
                 const datos = fullData.slice(1).map(row => {
                     const obj = {};
                     encabezados.forEach((encabezado, idx) => {
                         let val = row[idx];
                         if (encabezado === "Le.UC" && typeof val === "string") {
-                            val = val.toString().replace(".", ",");
+                            val = val.replace(".", ",");
                         }
                         obj[encabezado] = val;
                     });
                     return obj;
                 });
 
+                // 🚿 Limpiar y filtrar
                 const datosLimpios = datos
-                    .map((item) => {
+                    .map(item => {
                         const nuevo = { ...item };
-                        if (nuevo["RP"]) {
-                            nuevo["RP"] = nuevo["RP"].toString().trim().replace(/\s+/g, "").toUpperCase();
-                        }
+                        if (nuevo["RP"]) nuevo["RP"] = nuevo["RP"].toString().trim().replace(/\s+/g, "").toUpperCase();
                         return nuevo;
                     })
                     .filter(item => item["RP"]);
 
-                if (datosLimpios.length === 0) {
-                    setErrores(["No hay datos válidos en el archivo de control lechero."]);
-                    setIsLoading(false);
-                    return;
-                }
+                if (datosLimpios.length === 0)
+                    throw new Error("No hay datos válidos en el archivo de control lechero.");
 
-                if (!tamboSel || !tamboSel.id) {
-                    setErrores(["Debes seleccionar un tambo antes de actualizar el control lechero."]);
-                    setIsLoading(false);
-                    return;
-                }
+                if (!tamboSel?.id)
+                    throw new Error("Debes seleccionar un tambo antes de actualizar el control lechero.");
 
                 setTotal(datosLimpios.length);
                 await subirControlLechero(
-                    datosLimpios,
-                    tamboSel,
-                    setErrores,
-                    setActualizados,
+                    datosLimpios, tamboSel, setErrores, setActualizados,
                     () => setProcesados(prev => prev + 1),
-                    firebase,
-                    usuario
+                    firebase, usuario
                 );
 
             } catch (error) {
-                console.error("Error leyendo el archivo de control lechero XLSX:", error);
-                setErrores(["Error procesando el archivo XLSX."]);
+                console.error("Error procesando archivo Excel:", error);
+                setErrores([`Error: ${error.message}`]);
             } finally {
                 setIsLoading(false);
             }
         };
 
-
         reader.readAsArrayBuffer(archivoLechero);
     };
+
 
     return (
         <Layout titulo="Dirsa">

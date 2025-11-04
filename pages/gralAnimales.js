@@ -401,36 +401,55 @@ const GralAnimales = () => {
 
             {animales.length > 0 ? (
               <Col lg={true}>
-                <ExcelFile
-                  element={
-                    <Button
-                      variant="success"
-                      type="submit"
-                      block
-                      className={styles.botonExcel}
+                {(() => {
+                  // 📅 Fecha actual formateada (YYYY-MM-DD)
+                  const fechaActual = new Date().toISOString().slice(0, 10);
+
+                  // 🧭 Construir parte del nombre según filtro activo
+                  let filtroActivo = "";
+                  if (rp && rp.trim() !== "") filtroActivo = `_RP-${rp.trim().replace(/\s+/g, "")}`;
+                  else if (valores.categoria !== "todos") filtroActivo = `_Cat-${valores.categoria}`;
+                  else if (valores.grupo !== "todos") filtroActivo = `_Grupo-${valores.grupo}`;
+                  else if (valores.rodeo !== 0) filtroActivo = `_Rodeo-${valores.rodeo}`;
+                  else if (valores.estrep !== "todos") filtroActivo = `_EstRep-${valores.estrep}`;
+                  else if (valores.estpro !== "todos") filtroActivo = `_EstPro-${valores.estpro}`;
+
+                  // 🧾 Nombre final del archivo
+                  const nombreArchivo = `GrlAnimales${filtroActivo}_${fechaActual}`;
+
+                  return (
+                    <ExcelFile
+                      element={
+                        <Button
+                          variant="success"
+                          type="button"
+                          block
+                          className={styles.botonExcel}
+                        >
+                          Excel
+                        </Button>
+                      }
+                      filename={nombreArchivo}
                     >
-                      Excel
-                    </Button>
-                  }
-                  filename="Animales"
-                >
-                  <ExcelSheet data={animales} name="Animales">
-                    <ExcelColumn label="RP" value="rp" />
-                    <ExcelColumn label="eRP" value="erp" />
-                    <ExcelColumn label="Grupo" value="grupo" />
-                    <ExcelColumn label="Categoria" value="categoria" />
-                    <ExcelColumn label="Rodeo" value="rodeo" />
-                    <ExcelColumn label="Est.Rep." value="estrep" />
-                    <ExcelColumn label="Est.Prod." value="estpro" />
-                    <ExcelColumn label="Nro.Lact." value="lactancia" />
-                    <ExcelColumn label="Le.UC" value="uc" />
-                    <ExcelColumn label="Le.CA" value="ca" />
-                    <ExcelColumn label="Dias Lact." value="diasLact" />
-                    <ExcelColumn label="Ración(Kg)" value="racion" />
-                    <ExcelColumn label="N°Serv." value="nservicio" />
-                    <ExcelColumn label="F.Serv." value="fservicio" />
-                  </ExcelSheet>
-                </ExcelFile>
+                      <ExcelSheet data={animales} name="GrlAnimales">
+                        <ExcelColumn label="RP" value="rp" />
+                        <ExcelColumn label="eRP" value="erp" />
+                        <ExcelColumn label="Grupo" value="grupo" />
+                        <ExcelColumn label="Categoria" value="categoria" />
+                        <ExcelColumn label="Rodeo" value="rodeo" />
+                        <ExcelColumn label="Est.Rep." value="estrep" />
+                        <ExcelColumn label="Est.Prod." value="estpro" />
+                        <ExcelColumn label="Nro.Lact." value="lactancia" />
+                        <ExcelColumn label="Le.UC" value="uc" />
+                        <ExcelColumn label="Le.CA" value="ca" />
+                        <ExcelColumn label="Dias Lact." value="diasLact" />
+                        <ExcelColumn label="Ración(Kg)" value="racion" />
+                        <ExcelColumn label="N°Serv." value="nservicio" />
+                        <ExcelColumn label="F.Serv." value="fservicio" />
+                      </ExcelSheet>
+                    </ExcelFile>
+                  );
+                })()}
               </Col>
             ) : (
               <Col lg={true}></Col>
@@ -503,9 +522,12 @@ const GralAnimales = () => {
                         className={styles.filtroInput}
                       >
                         <option value="todos">Todos</option>
-                        {grupos.map((g) => (
-                          <option key={g} value={g}>{g}</option>
-                        ))}
+                        {grupos.length !== 0 &&
+                          grupos.map((g) => (
+                            <option key={g} value={g}>
+                              {g}
+                            </option>
+                          ))}
                       </Form.Control>
                     </Form.Group>
                   </Col>

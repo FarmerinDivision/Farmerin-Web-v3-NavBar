@@ -1,0 +1,103 @@
+/* proximamnete.module.scss */
+/* Basado en el markup de Uiverse con estilos convertidos a SCSS module */
+
+/* Container */
+.service-card {
+  width: 300px;                    /* w-[300px] */
+  box-shadow: 0 10px 15px rgba(0,0,0,0.12), 0 4px 6px rgba(0,0,0,0.06); /* shadow-xl */
+  cursor: pointer;
+  scroll-snap-align: start;        /* snap-start */
+  flex-shrink: 0;                  /* shrink-0 */
+  padding: 2rem 1.5rem;            /* py-8 px-6 */
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;                    /* gap-3 */
+  transition: all 0.3s ease;       /* transition-all duration-300 */
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover state similar to group hover */
+.service-card:hover {
+  background-color: #202127;       /* hover:bg-[#202127] */
+}
+
+/* Icon */
+.icon {
+  width: 3rem;   /* w-12 */
+  height: 3rem;  /* h-12 */
+  font-size: 1.25rem; /* text-5xl approximate */
+  stroke: #333;   /* stroke-gray-800 */
+  transition: stroke 0.25s ease;
+  /* Use currentColor pattern: set color to control stroke if needed */
+}
+
+/* change stroke on parent hover */
+.service-card:hover .icon {
+  stroke: #bdbdbd; /* group-hover:stroke-gray-400 */
+}
+
+/* Title */
+.title {
+  font-weight: 700;          /* font-bold */
+  font-size: 1.5rem;         /* text-2xl */
+  color: rgba(0,0,0,0.8);    /* text-black/80 */
+  margin: 0;
+  transition: color 0.25s ease;
+}
+
+.service-card:hover .title {
+  color: #ffffff;            /* group-hover:text-white */
+}
+
+/* Description */
+.description {
+  color: #3d3d3d;            /* text-gray-400 */
+  font-size: 0.875rem;       /* text-sm */
+  margin: 0;
+  line-height: 1.25rem;
+}
+
+/* Big number on bottom-right */
+.number {
+  font-size: 3rem;           /* text-5xl */
+  font-weight: 700;
+  align-self: flex-end;
+  margin-top: 0.5rem;
+  -webkit-text-stroke: 1px gray;
+  -webkit-text-fill-color: transparent;
+  /* fallback for non-webkit browsers */
+  color: transparent;
+  text-shadow: 0 0 0 rgba(0,0,0,0.0);
+  transition: -webkit-text-fill-color 0.2s ease, color 0.2s ease;
+}
+
+/* On hover, keep number visible (if you want filled color on hover) */
+.service-card:hover .number {
+  -webkit-text-fill-color: transparent; /* stays outlined */
+  color: #ffffff; /* fallback so some browsers show it */
+}
+
+/* Small responsive tweak */
+@media (max-width: 420px) {
+  .service-card {
+    width: 90%;
+    padding: 1.5rem;
+  }
+  .number {
+    font-size: 2.5rem;
+  }
+}
+
+/* Centrado total en pantalla */
+.centerWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;      /* ocupa alto completo */
+  width: 100%;
+  background: #111;   /* opcional (queda más estilo “próximamente” 🤘) */
+}

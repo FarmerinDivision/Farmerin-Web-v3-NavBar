@@ -47,14 +47,22 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
         console.log(`🔍 Conversión → Original: "${litrosStrOriginal}", Normalizado: "${litrosStr}", Convertido: ${litros}`);
 
         // Detalle
+        // ✅ Detalle seguro
         let detalleEvento = "";
-        if (!litrosStr) {
+
+        if (!litrosStr || litrosStr.trim() === "") {
             detalleEvento = "No se actualizó el control, la casilla estaba vacía";
-        } else if (esValorEspecial) {
-            detalleEvento = litrosStr.toLowerCase(); // "enferma" o "fiscalizada"
-        } else {
-            detalleEvento = `${litros.toFixed(1)} lts.`; // valor convertido con 1 decimal
         }
+        else if (esValorEspecial) {
+            detalleEvento = litrosStr.toLowerCase(); // "enferma" o "fiscalizada"
+        }
+        else if (typeof litros === "number" && !isNaN(litros)) {
+            detalleEvento = `${litros.toFixed(1)} lts.`;
+        }
+        else {
+            detalleEvento = "Valor no numérico o inválido en la planilla";
+        }
+
 
         console.log(`📊 Datos procesados → RP: "${rp}", Le.UC convertido: ${litros}, Detalle: "${detalleEvento}"`);
 
@@ -73,22 +81,69 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
         try {
             console.log(`🔍 Buscando el RP: '${rp}' en el tambo ID: '${tamboSel.nombre}'`);
 
-            const snapshot = await firebase.db.collection('animal')
-                .where('idtambo', '==', tamboSel.id)
-                .where('rp', '==', rp)
-                .get();
+            // 🧩 Normalizar RP antes de buscar
+            let rpNormalizado = rp
+                ? rp.toString().trim().replace(/\s+/g, "").toUpperCase()
+                : null;
+
+            if (!rpNormalizado) {
+                console.warn(`⚠️ RP inválido o vacío: ${rp}`);
+                setErrores(prev => [...prev, `RP inválido o vacío: ${rp}`]);
+                return;
+            }
+
+            // 🔤 Detectar si contiene letras (E0013, A25, etc.)
+            const contieneLetras = /[A-Z]/i.test(rpNormalizado);
+
+            let snapshot;
+
+            // 🧠 Si el RP contiene letras, buscar solo como string
+            if (contieneLetras) {
+                snapshot = await firebase.db.collection('animal')
+                    .where('idtambo', '==', tamboSel.id)
+                    .where('rp', '==', rpNormalizado)
+                    .get();
+            } else {
+                // 🔢 Si es puramente numérico, probar varias variantes
+                const rpNumero = parseInt(rpNormalizado, 10);
+                const variantes = [rpNormalizado, rpNumero.toString(), rpNumero];
+
+                // Intentar búsqueda con 'in'
+                snapshot = await firebase.db.collection('animal')
+                    .where('idtambo', '==', tamboSel.id)
+                    .where('rp', 'in', variantes)
+                    .get();
+
+                // Si no encuentra y empieza con ceros, probar sin ellos
+                if (snapshot.empty && rpNormalizado.startsWith("0")) {
+                    const rpSinCeros = rpNormalizado.replace(/^0+/, "");
+                    const rpNumSinCeros = parseInt(rpSinCeros, 10);
+                    const variantesSinCero = [rpSinCeros, rpNumSinCeros.toString(), rpNumSinCeros];
+                    snapshot = await firebase.db.collection('animal')
+                        .where('idtambo', '==', tamboSel.id)
+                        .where('rp', 'in', variantesSinCero)
+                        .get();
+                }
+            }
+
 
             if (!snapshot.empty) {
                 console.log(`✅ RP '${rp}' encontrado (${snapshot.size} coincidencias).`);
 
                 snapshot.forEach(async (doc) => {
                     const fechaEvento = firebase.nowTimeStamp();  // 👈 fecha del momento de carga
-
+                    // 🧩 Obtener datos del animal (para incluir ERP)
+                    const animalData = doc.data();
+                    const erp = animalData?.erp || null;
+                    
                     await firebase.db.collection('animal').doc(doc.id).collection('eventos').add({
                         fecha: fechaEvento,
                         tipo: 'Control Lechero mediante planilla Dirsa',
                         detalle: detalleEvento,
-                        usuario: `${usuarios.displayName} - Dirsa`
+                        usuario: `${usuarios.displayName} - Dirsa`,
+                        idtambo: tamboSel.id,
+                        rp: rpNormalizado,
+                        erp: erp
                     });
 
 
