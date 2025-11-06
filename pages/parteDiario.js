@@ -159,75 +159,85 @@ const ParteDiario = () => {
   }
 
 
-  function buscarEventos(an, iniciob, finb) {
-    try {
-      let query = firebase.db.collection('animal').doc(an.id).collection('eventos')
-        .where('fecha', '>=', iniciob)
-        .where('fecha', '<=', finb);
+function buscarEventos(an, iniciob, finb) {
+  try {
+    let query = firebase.db.collection('animal').doc(an.id).collection('eventos')
+      .where('fecha', '>=', iniciob)
+      .where('fecha', '<=', finb);
 
-      // Filtro de visto
-      if (visto !== 'todos') {
-        if (visto === 'true') query = query.where('vistoUsuario', 'array-contains', usuario.uid);
-      }
-
-      // Filtro de tipo de evento
-      if (tipo !== 'todos') {
-        query = query.where('tipo', '==', tipo);
-      }
-
-      function snapshotEventos(snapshot) {
-        const nuevosEventos = [];
-
-        snapshot.docs.forEach(doc => {
-          const data = doc.data();
-
-          if ((tipo === 'todos' && data.tipo !== 'Control Lechero') || tipo !== 'todos') {
-            let fevento;
-            try {
-              fevento = format(firebase.timeStampToDate(data.fecha), 'dd/MM/yyyy');
-            } catch (error) {
-              fevento = 'error';
-            }
-
-            let erp;
-            try {
-              erp = an.erp.toString();
-            } catch (error) {
-              erp = '';
-            }
-
-            const e = {
-              id: doc.id,
-              animal: an,
-              rp: an.rp,
-              erp: erp,
-              fevento: fevento,
-              ...data
-            };
-
-            const noVisto = visto === 'false' && (!e.vistoUsuario || e.vistoUsuario.indexOf(usuario.uid) === -1);
-            const todoVisto = visto !== 'false';
-
-            if (noVisto || todoVisto) {
-              nuevosEventos.push(e);
-            }
-          }
-        });
-
-        // Fusionar con eventos actuales y eliminar duplicados
-        guardarEventos(eventosPrevios => {
-          const todos = [...eventosPrevios, ...nuevosEventos];
-          return eliminarEventosDuplicados(todos);
-        });
-      }
-
-      query.get().then(snapshotEventos);
-
-    } catch (error) {
-      setMensajeAlert(error.message);
-      setShowAlert(true);
+    // Filtro de visto
+    if (visto !== 'todos') {
+      if (visto === 'true') query = query.where('vistoUsuario', 'array-contains', usuario.uid);
     }
+
+    // Filtro de tipo de evento
+    if (tipo !== 'todos') {
+      query = query.where('tipo', '==', tipo);
+    }
+
+    function snapshotEventos(snapshot) {
+      const nuevosEventos = [];
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+
+        // --- FILTRO: excluir "Control Lechero" y usuarios " - Dirsa" ---
+        const tipoEvento = (data.tipo || '').trim();
+        const nombreUsuario = (data.usuario || '').trim();
+        const esDirsa = nombreUsuario.toLowerCase().endsWith('- dirsa');
+
+        // Saltar si es "Control Lechero" o si es usuario Dirsa
+        if (tipoEvento === 'Control Lechero' || esDirsa) {
+          return;
+        }
+        // ---------------------------------------------------------------
+
+        let fevento;
+        try {
+          fevento = format(firebase.timeStampToDate(data.fecha), 'dd/MM/yyyy');
+        } catch (error) {
+          fevento = 'error';
+        }
+
+        let erp;
+        try {
+          erp = an.erp.toString();
+        } catch (error) {
+          erp = '';
+        }
+
+        const e = {
+          id: doc.id,
+          animal: an,
+          rp: an.rp,
+          erp: erp,
+          fevento: fevento,
+          ...data
+        };
+
+        const noVisto = visto === 'false' && (!e.vistoUsuario || e.vistoUsuario.indexOf(usuario.uid) === -1);
+        const todoVisto = visto !== 'false';
+
+        if (noVisto || todoVisto) {
+          nuevosEventos.push(e);
+        }
+      });
+
+      // Fusionar con eventos actuales y eliminar duplicados
+      guardarEventos(eventosPrevios => {
+        const todos = [...eventosPrevios, ...nuevosEventos];
+        return eliminarEventosDuplicados(todos);
+      });
+    }
+
+    query.get().then(snapshotEventos);
+
+  } catch (error) {
+    setMensajeAlert(error.message);
+    setShowAlert(true);
   }
+}
+
 
 
   const handleClickRP = e => {
@@ -444,8 +454,6 @@ const ParteDiario = () => {
                   <option value="Baja">Baja</option>
                   <option value="Celo">Celo</option>
                   <option value="Cambio eRP">Cambio eRP</option>
-                  <option value="Control Lechero">Control Lechero</option>
-                  <option value="Control Lechero mediante planilla Dirsa">Control Lechero de Dirsa</option>
                   <option value="Parto">Parto</option>
                   <option value="Rechazo">Rechazo</option>
                   <option value="Secado">Secado</option>

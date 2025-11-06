@@ -240,7 +240,7 @@ const NavBar = () => {
             <div className={styles.dropdownContent}>
               <Link href="/dirsa"><span>Cargar eventos</span></Link>
               <Link href="/ProductividadMensualDirsa"><span>Reporte de producción</span></Link>
-              <Link href="/proximamente"><span>Reporte de eventos</span></Link>
+              <Link href="/reporteDirsa"><span>Reporte de eventos</span></Link>
             </div>
           </div>
           <Link href="/ayuda"><span>Ayuda</span></Link>

@@ -499,3 +499,266 @@
     transform: translateY(-400%);
   }
 }
+
+
+//////////// ------------------ REPORTE DE EVENTOS ------------------------------ ////////////
+/* ================================
+   PALETA ACTUALIZADA
+   ================================ */
+
+$color-primary: #287fb8; // 🔹 Azul corporativo principal
+$color-success: #4cb050; // 🟩 Verde para tooltips
+$color-white: #ffffff;
+$font-main: 'Inter', 'Roboto', sans-serif;
+
+/* ================================
+   BOTONES PRINCIPALES
+   ================================ */
+
+.parteBtn {
+  font-family: $font-main;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 0.9rem 2rem;
+  min-width: 190px;
+  border-radius: 10px !important;
+  border: 1px solid transparent;
+  color: $color-white !important;
+  background: linear-gradient(135deg, $color-primary, darken($color-primary, 10%));
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+
+  &:hover {
+    background: linear-gradient(135deg, lighten($color-primary, 10%), $color-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  &.activo {
+    background: $color-primary !important;
+    box-shadow: 0 0 0 4px rgba($color-primary, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    font-size: 0.95rem;
+    padding: 0.8rem 1.5rem;
+    min-width: unset;
+  }
+}
+
+
+/* ================================
+   CONTENEDOR DE BOTONES (Mes + Por Fecha)
+   ================================ */
+
+.botoneraAccionesMF {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: flex-start; // 🔹 los empuja a la derecha
+  margin-top: 0.5rem;
+  width: 100%;
+
+  .parteBtn,
+  .parteBtn {
+    flex: 0 0 auto;
+    min-width: 180px;
+  }
+
+  @media (max-width: 768px) {
+    justify-content: center;
+    flex-direction: column;
+
+    .parteBtn,
+    .parteBtn {
+      width: 100%;
+    }
+  }
+}
+
+
+
+/* ================================
+   CONTENEDOR DE BOTONES (Buscar + Excel)
+   ================================ */
+
+.botoneraAcciones {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: flex-end; // 🔹 los empuja a la derecha
+  margin-top: 0.5rem;
+  width: 100%;
+
+  .btnBuscar,
+  .btnExcel {
+    flex: 0 0 auto;
+    min-width: 180px;
+  }
+
+  @media (max-width: 768px) {
+    justify-content: center;
+    flex-direction: column;
+
+    .btnBuscar,
+    .btnExcel {
+      width: 100%;
+    }
+  }
+}
+
+/* ================================
+   BOTONES DE ACCIÓN (Buscar / Excel)
+   ================================ */
+
+.btnBuscar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: $color-primary;
+  color: $color-white;
+  border: none;
+  font-family: $font-main;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  border-radius: 8px;
+  padding: 0.9rem 1.2rem;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+
+  &:hover {
+    background: lighten($color-primary, 7%);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.btnExcel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: $color-primary;
+  color: $color-white;
+  border: none;
+  font-family: $font-main;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  border-radius: 8px;
+  padding: 0.9rem 1.2rem;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+
+  &:hover {
+    background: lighten($color-primary, 7%);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ================================
+   TOOLTIP DEL BOTÓN DE EXCEL
+   ================================ */
+
+.tooltipExcel {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltipExcelText {
+  visibility: hidden;
+  opacity: 0;
+  width: 180px;
+  background-color: #4cb050;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: opacity 0.25s ease-in-out;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+
+.tooltipExcel:hover .tooltipExcelText {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* ================================
+   TOOLTIP
+   ================================ */
+
+.parteTooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.parteTooltipText {
+  visibility: hidden;
+  width: 140px;
+  background-color: $color-success; // 🟩 Verde
+  color: $color-white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.parteTooltip:hover .parteTooltipText {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* ================================
+   SPINNER (Centrado en pantalla)
+   ================================ */
+
+.spinnerOverlay {
+  position: fixed; // 🔹 lo fija sobre toda la ventana
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; // 🔹 centra vertical
+  align-items: center; // 🔹 centra horizontal
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 9999; // 🔹 siempre por encima de todo
+}
+
+.spinnerText {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #287fb8; // color corporativo
+  text-align: center;
+}

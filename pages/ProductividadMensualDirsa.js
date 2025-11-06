@@ -8,12 +8,16 @@ import { format } from 'date-fns';
 import styles from '../styles/Dirsa.module.scss';
 import {
   BarChart,
+  ComposedChart,
   Bar,
   XAxis,
+  Line,
   YAxis,
   Tooltip,
   CartesianGrid,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Legend,
+  LabelList
 } from 'recharts';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -55,6 +59,22 @@ const ProductividadMensualDirsa = () => {
   const anioActual = new Date().getFullYear();
   const AÑOS = [];
   for (let y = 2025; y <= anioActual + 1; y++) AÑOS.push(y);
+
+
+  // ✅ Cuando cambia el mes o el año, se limpian los datos
+  const limpiarDatos = () => {
+    setEventos([]);
+    setDatosAnuales([]);
+    setMensaje('');
+    setMostrarGrafico(false);
+    setMostrarFiscalizadas(false);
+
+    // ✅ Nuevo mensaje al cambiar el mes/año
+    setMensaje("Presione buscar para obtener la información del mes seleccionado.");
+  };
+
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -194,7 +214,12 @@ const ProductividadMensualDirsa = () => {
       RP: ev.RP,
       eRP: ev.ERP,
       Fecha: ev.fecha,
-      Detalle: ev.detalle
+      Detalle: ev.detalle,
+      Estado: ev.fiscalizada
+        ? "Fiscalizada"
+        : ev.detalle?.toLowerCase().includes("enferma")
+          ? "Enferma"
+          : "Normal"
     }));
 
     const ws = XLSX.utils.json_to_sheet(datosExcel);
@@ -209,6 +234,7 @@ const ProductividadMensualDirsa = () => {
     saveAs(blob, nombreArchivo);
   };
 
+
   const litrosPorEvento = eventos
     .filter(ev => !ev.fiscalizada)
     .map(ev => ev.litros || 0);
@@ -218,7 +244,27 @@ const ProductividadMensualDirsa = () => {
     ? (totalMensual / eventos.filter(ev => !ev.fiscalizada).length).toFixed(2)
     : 0;
 
-  const eventosFiscalizados = eventos.filter(ev => ev.fiscalizada);
+  const eventosFiscalizados = eventos.filter(ev =>
+    ev.fiscalizada ||
+    ev.detalle?.toLowerCase().includes("enferma")
+  );
+
+
+  // --- Pre-procesamiento: generar datos escalados para que la línea se dibuje sobre las barras
+  const datosAnualesScaled = (datosAnuales || []).map(d => ({ ...d })); // copia
+
+  if (datosAnualesScaled.length > 0) {
+    const maxTotal = Math.max(...datosAnualesScaled.map(d => d.total || 0));
+    const maxProm = Math.max(...datosAnualesScaled.map(d => d.promedio || 0));
+    const factor = (maxProm > 0) ? (maxTotal / maxProm) : 1;
+
+    // Multiplicamos por un 1.03 para posicionar el punto ligeramente POR ENCIMA de la barra
+    datosAnualesScaled.forEach(d => {
+      d.promedioScaled = Number(((d.promedio || 0) * factor * 1.03).toFixed(2));
+      // dejamos d.promedio intacto (valor real), y agregamos promedioScaled para plotear
+    });
+  }
+
 
   return (
     <Layout titulo="Productividad Mensual Dirsa">
@@ -235,9 +281,13 @@ const ProductividadMensualDirsa = () => {
                 <Form.Control
                   as="select"
                   value={mesSeleccionado}
-                  onChange={(e) => setMesSeleccionado(e.target.value)}
+                  onChange={(e) => {
+                    setMesSeleccionado(e.target.value);
+                    limpiarDatos();   // 👈 limpia datos automáticamente
+                  }}
                   className={styles.select}
                 >
+
                   <option value="">-- Seleccioná un mes --</option>
                   {MESES.map((m, i) => (
                     <option key={i} value={m}>
@@ -252,9 +302,13 @@ const ProductividadMensualDirsa = () => {
                 <Form.Control
                   as="select"
                   value={anioSeleccionado}
-                  onChange={(e) => setAnioSeleccionado(parseInt(e.target.value))}
+                  onChange={(e) => {
+                    setAnioSeleccionado(parseInt(e.target.value));
+                    limpiarDatos();   // 👈 limpia datos automáticamente
+                  }}
                   className={styles.select}
                 >
+
                   {AÑOS.map((a, i) => (
                     <option key={i} value={a}>{a}</option>
                   ))}
@@ -308,10 +362,10 @@ const ProductividadMensualDirsa = () => {
               <div
                 className={styles.BotonesPD}
                 onClick={() => setMostrarFiscalizadas(!mostrarFiscalizadas)}
-                title="Ver fiscalizadas"
+                title="Ver enfermas/fiscalizadas"
               >
                 <span className={styles.tooltipDP}>Ver fiscalizadas</span>
-                <span>{mostrarFiscalizadas ? `Ocultar fiscalizadas` : `Ver fiscalizadas (${eventosFiscalizados.length})`}</span>
+                <span>{mostrarFiscalizadas ? `Ocultar enfermas/fiscalizadas` : `Ver enfermas/fiscalizadas (${eventosFiscalizados.length})`}</span>
               </div>
 
               <div className={styles.BotonesPD} onClick={exportarExcel}>
@@ -344,9 +398,15 @@ const ProductividadMensualDirsa = () => {
                     <td>{ev.RP}</td>
                     <td>{ev.ERP}</td>
                     <td>{ev.fecha}</td>
-                    <td style={{ color: "#4cb050", fontWeight: "bold" }}>
+                    <td
+                      style={{
+                        color: ev.detalle?.toLowerCase().includes("enferma") ? "#4cb050" : "#4cb050",
+                        fontWeight: "bold"
+                      }}
+                    >
                       {ev.detalle}
                     </td>
+
                   </tr>
                 ))}
               </tbody>
@@ -420,28 +480,80 @@ const ProductividadMensualDirsa = () => {
             }}>
               Gráfico  <u style={{ textDecorationColor: "#4cb050", textDecorationThickness: "3px" }}>Anual </u> de Control Lechero mediante Dirsa
             </h3>
-            <ResponsiveContainer width="100%" height={420}>
-              <BarChart data={datosAnuales}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mes" />
-                <YAxis tickFormatter={(value) => value.toLocaleString("es-AR")} /> {/* PUNTO DE LOS MILES EJE Y  */}
-                <Tooltip
-                  formatter={(value, name) => {
-                    if (name === "Total mensual") {
-                      return value.toLocaleString("es-AR") + " litros"; /// AGREGA PUNTO DE LOS MILES EN TOOLTIP
-                    }
-                    if (name === "Promedio individual") {
-                      return value.toFixed(2) + " litros"; /// DEJA 2 DECIMALES 
-                    }
-                    return value;
-                  }}
-                />
 
-                <Bar dataKey="total" name="Total mensual" fill="#28a745" />
-                <Bar dataKey="promedio" name="Promedio individual" fill="#007bff" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ width: "100%", height: 360 }}>
+              <ResponsiveContainer>
+                <ComposedChart
+                  data={datosAnualesScaled}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" />
+
+                  <YAxis
+                    yAxisId="left"
+                    tickFormatter={(v) => v.toLocaleString("es-AR")}
+                    label={{ value: "Total mensual (lts)", angle: -90, position: "insideLeft" }}
+                  />
+
+                  {/* Tooltip que muestra total y promedio real */}
+                  <Tooltip
+                    formatter={(value, name, props) => {
+                      const data = props?.payload ?? {};
+
+                      const realPromedio = data.promedio !== undefined ? data.promedio : null;
+
+                      if (name === "Total mensual") {
+                        return `${Number(value).toLocaleString("es-AR")} lts`;
+                      }
+
+                      if (name === "Promedio individual") {
+                        return realPromedio !== null
+                          ? `${Number(realPromedio).toFixed(2)} lts/vaca`
+                          : `${Number(value).toFixed(2)} lts/vaca`;
+                      }
+
+                      return value;
+                    }}
+                    contentStyle={{ borderRadius: 6 }}
+                  />
+
+
+                  <Legend verticalAlign="top" height={36} />
+
+                  {/* BARRAS: total */}
+                  <Bar
+                    dataKey="total"
+                    yAxisId="left"
+                    barSize={30}
+                    fill="#28a745"
+                    name="Total mensual"
+                  />
+
+                  {/* LINE: graficamos promedioScaled en la misma escala Y que las barras */}
+                  <Line
+                    type="linear"
+                    dataKey="promedioScaled"
+                    yAxisId="left"                  // misma escala que las barras
+                    stroke="#287fb8"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: "#287fb8", stroke: "#fff", strokeWidth: 2 }}
+                    name="Promedio individual"
+                    isFront={true}
+                  >
+                    {/* La etiqueta mostrará el promedio real (sin escalar) */}
+                    <LabelList
+                      dataKey="promedio"            // muestra el valor real (no escalado)
+                      position="top"
+                      formatter={(v) => Number(v).toFixed(2)}
+                      style={{ fill: "#287fb8", fontSize: 12, fontWeight: "bold" }}
+                    />
+                  </Line>
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
           </Contenedor>
+
         )}
       </div>
     </Layout>
