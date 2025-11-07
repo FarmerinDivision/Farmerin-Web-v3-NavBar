@@ -19,6 +19,8 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
    const [showSuccessModal, setShowSuccessModal] = useState(false);
    const [showErrorModal, setShowErrorModal] = useState(false);
    const [errorMessage, setErrorMessage] = useState("");
+   const [manual, setManual] = useState(!!animal.racionManual);
+
 
    useEffect(() => {
       guardarSug(sugerido);
@@ -103,6 +105,27 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
       }
    };
 
+   const toggleRacionManual = async () => {
+      try {
+         const nuevoValor = !manual;
+
+         await firebase.db.collection("animal").doc(id).update({
+            racionManual: nuevoValor
+         });
+
+         setManual(nuevoValor);
+
+         // También actualizar el estado general de animales
+         const animalesAct = animales.map(a =>
+            a.id === id ? { ...a, racionManual: nuevoValor } : a
+         );
+         guardarAnimales(animalesAct);
+
+      } catch (error) {
+         setErrorMessage("Error al actualizar estado manual");
+         setShowErrorModal(true);
+      }
+   };
 
 
    return (
@@ -139,6 +162,17 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
                   <RiReplyLine size={20} />
                </OverlayTrigger>
             </Button>
+            <OverlayTrigger placement="top" overlay={<Tooltip>Ración Manual</Tooltip>}>
+               <Button
+                  variant={manual ? "success" : "secondary"}
+                  size="sm"
+                  onClick={toggleRacionManual}
+                  style={{ marginRight: 6 }}
+               >
+                  {manual ? "✔" : "―"}
+               </Button>
+            </OverlayTrigger>
+
          </td>
          <td>
             <Form.Control
