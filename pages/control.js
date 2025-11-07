@@ -46,6 +46,9 @@ const Control = () => {
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(true);
+    const [animalesManual, setAnimalesManual] = useState([]);
+    const [showManualAlert, setShowManualAlert] = useState(false);
+
 
     const { firebase, tamboSel } = useContext(FirebaseContext);
     const dispatch = useDispatch(); // Ensure dispatch is defined
@@ -184,13 +187,12 @@ const Control = () => {
 
     function snapshotAnimal(snapshot) {
         const an = snapshot.docs.map(doc => {
-            const data = doc.data(); // 🔹 Ahora data está correctamente definida
+            const data = doc.data();
 
             let diasLact = 0;
             let diasPre = 0;
 
             try {
-                // Calcula los días de lactancia
                 const fechaParto = parseFecha(data.fparto);
                 diasLact = fechaParto ? differenceInDays(Date.now(), fechaParto) : 0;
             } catch {
@@ -198,14 +200,8 @@ const Control = () => {
             }
 
             try {
-                // Calcula los días de preñez
-                if (data.estrep !== "vacia") {
-                    const fechaServicio = parseFecha(data.fservicio);
-                    diasPre = fechaServicio ? differenceInDays(Date.now(), fechaServicio) : 0;
-                } else {
-                    const fechaServicio = parseFecha(data.fservicio);
-                    diasPre = fechaServicio ? differenceInDays(Date.now(), fechaServicio) : 0;
-                }
+                const fechaServicio = parseFecha(data.fservicio);
+                diasPre = fechaServicio ? differenceInDays(Date.now(), fechaServicio) : 0;
             } catch {
                 diasPre = 0;
             }
@@ -216,20 +212,28 @@ const Control = () => {
                 diasPre,
                 actu: false,
                 racionModificada: calcularRacionModificada(data),
+                racionManual: data.racionManual || false, // ✅ IMPORTANTE: si no existe, es false
                 ...data
             };
         });
 
-        // 🔹 Ordena los animales según la diferencia entre ración actual y sugerida (de mayor a menor)
+        // Ordena por diferencia entre ración actual y sugerida
         an.sort((a, b) => {
             const difa = Math.abs(parseInt(a.racion) - parseInt(a.sugerido));
             const difb = Math.abs(parseInt(b.racion) - parseInt(b.sugerido));
             return difb - difa;
         });
 
-        // 🔹 Guarda el resultado en el estado
+        // ✅ Detecta animales con ración manual
+        const manuales = an.filter(a => a.racionManual === true);
+        setAnimalesManual(manuales);
+        if (manuales.length > 0) {
+            setShowManualAlert(true);
+        }
+
         guardarAnimales(an);
     }
+
 
     const handleClickRP = e => {
         e.preventDefault();
@@ -553,6 +557,26 @@ const Control = () => {
                     <>
                         <Botonera>
                             <h6 className={styles.resumenNutricion}>
+
+                                {/* 🟦 BOTÓN INFO */}
+                                <OverlayTrigger
+                                    placement="bottom"
+                                    overlay={
+                                        <Tooltip style={{ maxWidth: 320 }}>
+                                            <b>Información del control:</b><br />
+                                            • ✔ = Ración establecida manualmente por el usuario<br />
+                                            • ― = Ración automática basada en sugerencia<br />
+                                            • El botón 🚀 aplica la ración sugerida a <b>todos excepto</b> los manuales.<br />
+                                            • Si un animal está en modo manual, no será afectado por cambios masivos.<br />
+                                        </Tooltip>
+                                    }
+                                >
+                                    <Button variant="info" size="sm" style={{ marginRight: 8 }}>
+                                        Info
+                                    </Button>
+                                </OverlayTrigger>
+
+                                {/* TU RESUMEN ORIGINAL */}
                                 <strong className={styles.nombreControl}>Control de alimentación:</strong>{" "}
                                 <strong>{animales.length}</strong> animales -{" "}
                                 <strong className={styles.nombreControl}>Promedio actual:</strong>{" "}
@@ -561,15 +585,24 @@ const Control = () => {
                                 <strong>{promSug}</strong> Kgs.-{" "}
                                 <strong className={styles.nombreControl}>Promedio Días Lact.:</strong>{" "}
                                 <strong>{promLac}</strong> Días.
+
                                 <div className={styles.tooltipExcel}>
                                     <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
                                         <RiFileExcel2Fill size={22} /> Exportar Excel
                                     </button>
                                     <span className={styles.tooltipExcelText}>Descargar planilla de Excel</span>
                                 </div>
+
                             </h6>
 
                         </Botonera>
+                        {showManualAlert && (
+                            <Alert variant="warning" onClose={() => setShowManualAlert(false)} dismissible>
+                                <strong>⚠ Atención:</strong> Hay animales con ración configurada manualmente.
+                                <br />
+                                <strong>RP afectados:</strong> {animalesManual.map(a => a.rp).join(", ")}
+                            </Alert>
+                        )}
 
 
                         {tamboSel ? (
