@@ -51,6 +51,8 @@ const Control = () => {
     const [showManualModal, setShowManualModal] = useState(false);
     const [manualModalMessages, setManualModalMessages] = useState([]);
     const [showInfoModal, setShowInfoModal] = useState(false);
+    const [showRodeoModal, setShowRodeoModal] = useState(false);
+
 
 
 
@@ -610,9 +612,15 @@ const Control = () => {
                                             </Tooltip>
                                         }
                                     >
-                                        <Button variant="secondary" size="sm" style={{ marginRight: 8 }}>
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            style={{ marginRight: 8 }}
+                                            onClick={() => setShowRodeoModal(true)}
+                                        >
                                             Rodeos ({Object.keys(rodeos).length})
                                         </Button>
+
                                     </OverlayTrigger>
 
                                     <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
@@ -985,6 +993,27 @@ const Control = () => {
 
                             <Modal.Footer>
                                 <Button variant="secondary" onClick={() => setShowInfoModal(false)}>
+                                    Cerrar
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+                        <Modal show={showRodeoModal} onHide={() => setShowRodeoModal(false)} centered>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Animales por Rodeo</Modal.Title>
+                            </Modal.Header>
+
+                            <Modal.Body>
+                                <ul>
+                                    {Object.entries(rodeos).map(([rodeo, cant]) => (
+                                        <li key={rodeo}>
+                                            <strong>Rodeo {rodeo}:</strong> {cant} animales
+                                        </li>
+                                    ))}
+                                </ul>
+                            </Modal.Body>
+
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={() => setShowRodeoModal(false)}>
                                     Cerrar
                                 </Button>
                             </Modal.Footer>
