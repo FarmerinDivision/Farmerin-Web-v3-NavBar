@@ -12,6 +12,11 @@ import { RiSendPlaneLine } from 'react-icons/ri';
 import { useDispatch } from 'react-redux'; // Import useDispatch
 import { addNotification } from '../redux/notificacionSlice';
 import styles from '../styles/Control.module.scss'
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { RiFileExcel2Fill } from "react-icons/ri";
+
+
 // Control
 
 const Control = () => {
@@ -472,6 +477,44 @@ const Control = () => {
         setShowConfirmModal(false); // Cierra el modal de confirmación
     };
 
+
+    const descargarExcel = () => {
+        const fecha = new Date();
+        const d = String(fecha.getDate()).padStart(2, "0");
+        const m = String(fecha.getMonth() + 1).padStart(2, "0");
+        const a = fecha.getFullYear();
+
+        const nombreTambo = tamboSel?.nombre || "Tambo";
+        const nombreArchivo = `Control-${d}-${m}-${a}-${nombreTambo}.xlsx`;
+
+        const data = animales.map(a => ({
+            RP: a.rp,
+            Grupo: a.grupo,
+            Categoría: a.categoria,
+            Rodeo: a.rodeo,
+            "Días Lactancia": a.diasLact,
+            Lactancia: a.lactancia,
+            "Litros CA": a.ca,
+            "Litros UC": a.uc,
+            "Fecha UC": a.fuc,
+            "Estado Reproductivo": a.estrep,
+            "Días Preñez": a.diasPre,
+            "Fecha Ración": a.fracion,
+            "Ración (Kg)": a.racion,
+            "Ración Sugerida (Kg)": a.sugerido,
+        }));
+
+        const hoja = XLSX.utils.json_to_sheet(data);
+        const libro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(libro, hoja, "Control");
+
+        const excelBuffer = XLSX.write(libro, { bookType: "xlsx", type: "array" });
+        const file = new Blob([excelBuffer], { type: "application/octet-stream" });
+
+        saveAs(file, nombreArchivo);
+    };
+
+
     return (
         <Layout titulo="Nutricion">
             <>
@@ -502,8 +545,16 @@ const Control = () => {
                                 <strong>{promSug}</strong> Kgs.-{" "}
                                 <strong className={styles.nombreControl}>Promedio Días Lact.:</strong>{" "}
                                 <strong>{promLac}</strong> Días.
+                                    <div className={styles.tooltipExcel}>
+                                        <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
+                                            <RiFileExcel2Fill size={22} /> Exportar Excel
+                                        </button>
+                                        <span className={styles.tooltipExcelText}>Descargar planilla de Excel</span>
+                                    </div>
                             </h6>
+
                         </Botonera>
+
 
                         {tamboSel ? (
                             animales.length === 0 ? (
