@@ -566,7 +566,7 @@ const Control = () => {
             const rodeo = a.rodeo || "Sin rodeo";
             const grupo = a.grupo || "Sin grupo";
 
-            if (!estructura[categoria]) return; // por si hay otra categoría rara
+            if (!estructura[categoria]) return;
 
             if (!estructura[categoria][rodeo]) {
                 estructura[categoria][rodeo] = {};
@@ -1028,42 +1028,66 @@ const Control = () => {
                         </Modal>
                         <Modal.Body>
 
-                            {/* Vacas */}
+                            {/* ===== VACAS ===== */}
                             {Object.keys(rodeosAgrupados.Vaca).length > 0 && (
                                 <>
                                     <h5 className="mb-2">🐄 Vacas</h5>
-                                    {Object.entries(rodeosAgrupados.Vaca).map(([rodeo, grupos]) => (
-                                        <div key={"vaca-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
-                                            <strong>Rodeo {rodeo}</strong>
-                                            <ul>
-                                                {Object.entries(grupos).map(([grupo, cant]) => (
-                                                    <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    ))}
+
+                                    {Object.entries(rodeosAgrupados.Vaca).map(([rodeo, grupos]) => {
+                                        const totalRodeo = Object.values(grupos).reduce((a, b) => a + b, 0);
+                                        return (
+                                            <div key={"vaca-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
+                                                <strong>Rodeo {rodeo} (Total: {totalRodeo})</strong>
+                                                <ul>
+                                                    {Object.entries(grupos).map(([grupo, cant]) => (
+                                                        <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        );
+                                    })}
+
+                                    <strong>
+                                        Total Vacas:{" "}
+                                        {Object.values(rodeosAgrupados.Vaca)
+                                            .flatMap(g => Object.values(g))
+                                            .reduce((a, b) => a + b, 0)}
+                                    </strong>
+
                                     <hr />
                                 </>
                             )}
 
-                            {/* Vaquillonas */}
+                            {/* ===== VAQUILLONAS ===== */}
                             {Object.keys(rodeosAgrupados.Vaquillona).length > 0 && (
                                 <>
                                     <h5 className="mb-2">🐮 Vaquillonas</h5>
-                                    {Object.entries(rodeosAgrupados.Vaquillona).map(([rodeo, grupos]) => (
-                                        <div key={"vaq-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
-                                            <strong>Rodeo {rodeo}</strong>
-                                            <ul>
-                                                {Object.entries(grupos).map(([grupo, cant]) => (
-                                                    <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    ))}
+
+                                    {Object.entries(rodeosAgrupados.Vaquillona).map(([rodeo, grupos]) => {
+                                        const totalRodeo = Object.values(grupos).reduce((a, b) => a + b, 0);
+                                        return (
+                                            <div key={"vaq-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
+                                                <strong>Rodeo {rodeo} (Total: {totalRodeo})</strong>
+                                                <ul>
+                                                    {Object.entries(grupos).map(([grupo, cant]) => (
+                                                        <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        );
+                                    })}
+
+                                    <strong>
+                                        Total Vaquillonas:{" "}
+                                        {Object.values(rodeosAgrupados.Vaquillona)
+                                            .flatMap(g => Object.values(g))
+                                            .reduce((a, b) => a + b, 0)}
+                                    </strong>
                                 </>
                             )}
 
                         </Modal.Body>
+
 
                     </>
                 )}
