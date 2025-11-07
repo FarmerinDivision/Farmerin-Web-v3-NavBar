@@ -605,7 +605,7 @@ const Control = () => {
                             <h6 className={styles.resumenNutricion}>
 
 
-                                <Button variant="info" size="sm" style={{ marginRight: 8 }} onClick={() => setShowInfoModal(true)}>
+                                <Button variant="info" size="sm" className={styles.btnExcel} onClick={() => setShowInfoModal(true)}>
                                     Info
                                 </Button>
 
@@ -637,8 +637,8 @@ const Control = () => {
                                         <Button
                                             variant="secondary"
                                             size="sm"
-                                            style={{ marginRight: 8 }}
                                             onClick={() => setShowRodeoModal(true)}
+                                           className={styles.btnExcel}
                                         >
                                             Rodeos ({Object.keys(rodeos).length})
                                         </Button>
