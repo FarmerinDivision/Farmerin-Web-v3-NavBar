@@ -6,7 +6,7 @@ import DetalleControl from '../components/layout/detalleControl';
 import SelectTambo from '../components/layout/selectTambo';
 import StickyTable from "react-sticky-table-thead";
 import differenceInDays from 'date-fns/differenceInDays';
-import { Alert, Table, Modal, Button } from 'react-bootstrap';
+import { Alert, Table, Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { FaSort } from 'react-icons/fa';
 import { RiSendPlaneLine } from 'react-icons/ri';
 import { useDispatch } from 'react-redux'; // Import useDispatch
@@ -48,6 +48,10 @@ const Control = () => {
     const [loading, setLoading] = useState(true);
     const [animalesManual, setAnimalesManual] = useState([]);
     const [showManualAlert, setShowManualAlert] = useState(false);
+    const [showManualModal, setShowManualModal] = useState(false);
+    const [manualModalMessages, setManualModalMessages] = useState([]);
+    const [showInfoModal, setShowInfoModal] = useState(false);
+
 
 
     const { firebase, tamboSel } = useContext(FirebaseContext);
@@ -226,9 +230,16 @@ const Control = () => {
 
         // ✅ Detecta animales con ración manual
         const manuales = an.filter(a => a.racionManual === true);
-        setAnimalesManual(manuales);
+
         if (manuales.length > 0) {
-            setShowManualAlert(true);
+            const mensajes = [
+                "⚠ ATENCIÓN: Existen animales con ración en modo manual.",
+                "Estos animales no serán modificados al aplicar ración sugerida.",
+                `RP afectados: ${manuales.map(a => a.rp).join(", ")}`
+            ];
+
+            setManualModalMessages(mensajes);
+            setShowManualModal(true);
         }
 
         guardarAnimales(an);
@@ -534,6 +545,17 @@ const Control = () => {
         saveAs(file, nombreArchivo);
     };
 
+    const calcularRodeos = () => {
+        const conteo = {};
+        animales.forEach(a => {
+            const rodeo = a.rodeo || "Sin rodeo";
+            conteo[rodeo] = (conteo[rodeo] || 0) + 1;
+        });
+        return conteo;
+    };
+
+    const rodeos = calcularRodeos();
+
 
     return (
         <Layout titulo="Nutricion">
@@ -558,23 +580,11 @@ const Control = () => {
                         <Botonera>
                             <h6 className={styles.resumenNutricion}>
 
-                                {/* 🟦 BOTÓN INFO */}
-                                <OverlayTrigger
-                                    placement="bottom"
-                                    overlay={
-                                        <Tooltip style={{ maxWidth: 320 }}>
-                                            <b>Información del control:</b><br />
-                                            • ✔ = Ración establecida manualmente por el usuario<br />
-                                            • ― = Ración automática basada en sugerencia<br />
-                                            • El botón 🚀 aplica la ración sugerida a <b>todos excepto</b> los manuales.<br />
-                                            • Si un animal está en modo manual, no será afectado por cambios masivos.<br />
-                                        </Tooltip>
-                                    }
-                                >
-                                    <Button variant="info" size="sm" style={{ marginRight: 8 }}>
-                                        Info
-                                    </Button>
-                                </OverlayTrigger>
+
+                                <Button variant="info" size="sm" style={{ marginRight: 8 }} onClick={() => setShowInfoModal(true)}>
+                                    Info
+                                </Button>
+
 
                                 {/* TU RESUMEN ORIGINAL */}
                                 <strong className={styles.nombreControl}>Control de alimentación:</strong>{" "}
@@ -585,8 +595,26 @@ const Control = () => {
                                 <strong>{promSug}</strong> Kgs.-{" "}
                                 <strong className={styles.nombreControl}>Promedio Días Lact.:</strong>{" "}
                                 <strong>{promLac}</strong> Días.
-
                                 <div className={styles.tooltipExcel}>
+
+                                    {/* ✅ Botón que muestra cantidad por rodeo */}
+                                    <OverlayTrigger
+                                        placement="bottom"
+                                        overlay={
+                                            <Tooltip style={{ fontSize: 13 }}>
+                                                {Object.entries(rodeos).map(([rodeo, cant]) => (
+                                                    <div key={rodeo}>
+                                                        <strong>Rodeo {rodeo}:</strong> {cant} animales
+                                                    </div>
+                                                ))}
+                                            </Tooltip>
+                                        }
+                                    >
+                                        <Button variant="secondary" size="sm" style={{ marginRight: 8 }}>
+                                            Rodeos ({Object.keys(rodeos).length})
+                                        </Button>
+                                    </OverlayTrigger>
+
                                     <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
                                         <RiFileExcel2Fill size={22} /> Exportar Excel
                                     </button>
@@ -813,6 +841,23 @@ const Control = () => {
                                 </Button>
                             </Modal.Footer>
                         </Modal>
+                        <Modal show={showManualModal} onHide={() => setShowManualModal(false)}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Ración Manual Detectada</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <ul>
+                                    {manualModalMessages.map((msg, i) => (
+                                        <li key={i}>{msg}</li>
+                                    ))}
+                                </ul>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={() => setShowManualModal(false)}>
+                                    Cerrar
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
 
                         {/* 🔹 Modal de confirmación */}
                         <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
@@ -923,6 +968,28 @@ const Control = () => {
                                 </Button>
                             </Modal.Footer>
                         </Modal>
+                        <Modal show={showInfoModal} onHide={() => setShowInfoModal(false)}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Información del Control</Modal.Title>
+                            </Modal.Header>
+
+                            <Modal.Body>
+                                <ul>
+                                    <li><strong>✔</strong> = Ración cargada manualmente por el usuario</li>
+                                    <li><strong>―</strong> = Ración automática basada en sugerencia</li>
+                                    <li><strong>🚀</strong> = Aplica ración sugerida a todos, excepto los manuales</li>
+                                    <li>Los animales en modo manual <b>no se modifican</b> con cambios masivos</li>
+                                    <li>Podés ver cuántos animales hay en cada rodeo con el botón "Rodeos"</li>
+                                </ul>
+                            </Modal.Body>
+
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={() => setShowInfoModal(false)}>
+                                    Cerrar
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+
                     </>
                 )}
             </>
