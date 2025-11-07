@@ -487,6 +487,17 @@ const Control = () => {
         const nombreTambo = tamboSel?.nombre || "Tambo";
         const nombreArchivo = `Control-${d}-${m}-${a}-${nombreTambo}.xlsx`;
 
+        // ✅ CABECERA con los valores del resumen
+        const headerData = [
+            ["CONTROL DE ALIMENTACIÓN"],
+            [`Total animales: ${animales.length}`],
+            [`Promedio actual de ración: ${promRacMod} Kgs.`],
+            [`Promedio sugerido: ${promSug} Kgs.`],
+            [`Promedio días lactancia: ${promLac} días.`],
+            [], // línea vacía de separación antes de la tabla
+        ];
+
+        // ✅ Datos de la tabla (animales)
         const data = animales.map(a => ({
             RP: a.rp,
             Grupo: a.grupo,
@@ -504,7 +515,12 @@ const Control = () => {
             "Ración Sugerida (Kg)": a.sugerido,
         }));
 
-        const hoja = XLSX.utils.json_to_sheet(data);
+        // ✅ Convertimos la tabla a hoja
+        const hoja = XLSX.utils.json_to_sheet(data, { origin: "A7" });
+
+        // ✅ Insertamos la cabecera manualmente arriba
+        XLSX.utils.sheet_add_aoa(hoja, headerData, { origin: "A1" });
+
         const libro = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(libro, hoja, "Control");
 
@@ -545,12 +561,12 @@ const Control = () => {
                                 <strong>{promSug}</strong> Kgs.-{" "}
                                 <strong className={styles.nombreControl}>Promedio Días Lact.:</strong>{" "}
                                 <strong>{promLac}</strong> Días.
-                                    <div className={styles.tooltipExcel}>
-                                        <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
-                                            <RiFileExcel2Fill size={22} /> Exportar Excel
-                                        </button>
-                                        <span className={styles.tooltipExcelText}>Descargar planilla de Excel</span>
-                                    </div>
+                                <div className={styles.tooltipExcel}>
+                                    <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
+                                        <RiFileExcel2Fill size={22} /> Exportar Excel
+                                    </button>
+                                    <span className={styles.tooltipExcelText}>Descargar planilla de Excel</span>
+                                </div>
                             </h6>
 
                         </Botonera>
