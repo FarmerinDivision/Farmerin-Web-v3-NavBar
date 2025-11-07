@@ -558,6 +558,28 @@ const Control = () => {
 
     const rodeos = calcularRodeos();
 
+    const agruparRodeos = () => {
+        const estructura = { Vaca: {}, Vaquillona: {} };
+
+        animales.forEach(a => {
+            const categoria = a.categoria;
+            const rodeo = a.rodeo || "Sin rodeo";
+            const grupo = a.grupo || "Sin grupo";
+
+            if (!estructura[categoria]) return; // por si hay otra categoría rara
+
+            if (!estructura[categoria][rodeo]) {
+                estructura[categoria][rodeo] = {};
+            }
+
+            estructura[categoria][rodeo][grupo] = (estructura[categoria][rodeo][grupo] || 0) + 1;
+        });
+
+        return estructura;
+    };
+
+    const rodeosAgrupados = agruparRodeos();
+
 
     return (
         <Layout titulo="Nutricion">
@@ -807,6 +829,13 @@ const Control = () => {
                                                             <span className={styles.thTooltipText}>Ración Sugerida</span>
                                                         </div>
                                                     </th>
+                                                    <th>
+                                                        <div className={styles.thTooltipWrapper}>
+                                                            <span className={styles.thContent}>Rac. Manual</span>
+                                                            <span className={styles.thTooltipText}>Ración manual activada</span>
+                                                        </div>
+                                                    </th>
+
                                                 </tr>
                                             </thead>
 
@@ -997,27 +1026,44 @@ const Control = () => {
                                 </Button>
                             </Modal.Footer>
                         </Modal>
-                        <Modal show={showRodeoModal} onHide={() => setShowRodeoModal(false)} centered>
-                            <Modal.Header closeButton>
-                                <Modal.Title>Animales por Rodeo</Modal.Title>
-                            </Modal.Header>
+                        <Modal.Body>
 
-                            <Modal.Body>
-                                <ul>
-                                    {Object.entries(rodeos).map(([rodeo, cant]) => (
-                                        <li key={rodeo}>
-                                            <strong>Rodeo {rodeo}:</strong> {cant} animales
-                                        </li>
+                            {/* Vacas */}
+                            {Object.keys(rodeosAgrupados.Vaca).length > 0 && (
+                                <>
+                                    <h5 className="mb-2">🐄 Vacas</h5>
+                                    {Object.entries(rodeosAgrupados.Vaca).map(([rodeo, grupos]) => (
+                                        <div key={"vaca-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
+                                            <strong>Rodeo {rodeo}</strong>
+                                            <ul>
+                                                {Object.entries(grupos).map(([grupo, cant]) => (
+                                                    <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     ))}
-                                </ul>
-                            </Modal.Body>
+                                    <hr />
+                                </>
+                            )}
 
-                            <Modal.Footer>
-                                <Button variant="secondary" onClick={() => setShowRodeoModal(false)}>
-                                    Cerrar
-                                </Button>
-                            </Modal.Footer>
-                        </Modal>
+                            {/* Vaquillonas */}
+                            {Object.keys(rodeosAgrupados.Vaquillona).length > 0 && (
+                                <>
+                                    <h5 className="mb-2">🐮 Vaquillonas</h5>
+                                    {Object.entries(rodeosAgrupados.Vaquillona).map(([rodeo, grupos]) => (
+                                        <div key={"vaq-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
+                                            <strong>Rodeo {rodeo}</strong>
+                                            <ul>
+                                                {Object.entries(grupos).map(([grupo, cant]) => (
+                                                    <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+
+                        </Modal.Body>
 
                     </>
                 )}
