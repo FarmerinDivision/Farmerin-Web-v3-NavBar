@@ -604,11 +604,12 @@ const Control = () => {
                         <Botonera>
                             <h6 className={styles.resumenNutricion}>
 
-
-                                <Button variant="info" size="sm" className={styles.btnExcel} onClick={() => setShowInfoModal(true)}>
-                                    Info
-                                </Button>
-
+                                <div className={styles.tooltipInfo}>
+                                    <Button variant="info" size="sm" className={styles.btnInfo} onClick={() => setShowInfoModal(true)}>
+                                        Info
+                                    </Button>
+                                    <span className={styles.tooltipExcelText}>Informacion de botones</span>
+                                </div>
 
                                 {/* TU RESUMEN ORIGINAL */}
                                 <strong className={styles.nombreControl}>Control de alimentación:</strong>{" "}
@@ -638,7 +639,7 @@ const Control = () => {
                                             variant="secondary"
                                             size="sm"
                                             onClick={() => setShowRodeoModal(true)}
-                                           className={styles.btnExcel}
+                                            className={styles.btnExcel}
                                         >
                                             Rodeos ({Object.keys(rodeos).length})
                                         </Button>
@@ -1013,9 +1014,9 @@ const Control = () => {
                             <Modal.Body>
                                 <ul>
                                     <li><strong>✔</strong> = Ración cargada manualmente por el usuario</li>
-                                    <li><strong>―</strong> = Ración automática basada en sugerencia</li>
+                                    <li><strong>―</strong> = Ración automática basada en parametros</li>
                                     <li><strong>🚀</strong> = Aplica ración sugerida a todos, excepto los manuales</li>
-                                    <li>Los animales en modo manual <b>no se modifican</b> con cambios masivos</li>
+                                    <li>Los animales en modo manual <b>no se modifican</b> con cambios segun parametros de alimentación</li>
                                     <li>Podés ver cuántos animales hay en cada rodeo con el botón "Rodeos"</li>
                                 </ul>
                             </Modal.Body>
@@ -1026,68 +1027,79 @@ const Control = () => {
                                 </Button>
                             </Modal.Footer>
                         </Modal>
-                        <Modal.Body>
+                        <Modal show={showRodeoModal} onHide={() => setShowRodeoModal(false)} centered>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Resumen de Rodeos</Modal.Title>
+                            </Modal.Header>
 
-                            {/* ===== VACAS ===== */}
-                            {Object.keys(rodeosAgrupados.Vaca).length > 0 && (
-                                <>
-                                    <h5 className="mb-2">🐄 Vacas</h5>
+                            <Modal.Body>
 
-                                    {Object.entries(rodeosAgrupados.Vaca).map(([rodeo, grupos]) => {
-                                        const totalRodeo = Object.values(grupos).reduce((a, b) => a + b, 0);
-                                        return (
-                                            <div key={"vaca-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
-                                                <strong>Rodeo {rodeo} (Total: {totalRodeo})</strong>
-                                                <ul>
-                                                    {Object.entries(grupos).map(([grupo, cant]) => (
-                                                        <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        );
-                                    })}
+                                {/* ===== VACAS ===== */}
+                                {Object.keys(rodeosAgrupados.Vaca).length > 0 && (
+                                    <>
+                                        <h5 className="mb-2">🐄 Vacas</h5>
 
-                                    <strong>
-                                        Total Vacas:{" "}
-                                        {Object.values(rodeosAgrupados.Vaca)
-                                            .flatMap(g => Object.values(g))
-                                            .reduce((a, b) => a + b, 0)}
-                                    </strong>
+                                        {Object.entries(rodeosAgrupados.Vaca).map(([rodeo, grupos]) => {
+                                            const totalRodeo = Object.values(grupos).reduce((a, b) => a + b, 0);
+                                            return (
+                                                <div key={"vaca-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
+                                                    <strong>Rodeo {rodeo} (Total: {totalRodeo})</strong>
+                                                    <ul>
+                                                        {Object.entries(grupos).map(([grupo, cant]) => (
+                                                            <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            );
+                                        })}
 
-                                    <hr />
-                                </>
-                            )}
+                                        <strong>
+                                            Total Vacas:{" "}
+                                            {Object.values(rodeosAgrupados.Vaca)
+                                                .flatMap(g => Object.values(g))
+                                                .reduce((a, b) => a + b, 0)}
+                                        </strong>
 
-                            {/* ===== VAQUILLONAS ===== */}
-                            {Object.keys(rodeosAgrupados.Vaquillona).length > 0 && (
-                                <>
-                                    <h5 className="mb-2">🐮 Vaquillonas</h5>
+                                        <hr />
+                                    </>
+                                )}
 
-                                    {Object.entries(rodeosAgrupados.Vaquillona).map(([rodeo, grupos]) => {
-                                        const totalRodeo = Object.values(grupos).reduce((a, b) => a + b, 0);
-                                        return (
-                                            <div key={"vaq-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
-                                                <strong>Rodeo {rodeo} (Total: {totalRodeo})</strong>
-                                                <ul>
-                                                    {Object.entries(grupos).map(([grupo, cant]) => (
-                                                        <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        );
-                                    })}
+                                {/* ===== VAQUILLONAS ===== */}
+                                {Object.keys(rodeosAgrupados.Vaquillona).length > 0 && (
+                                    <>
+                                        <h5 className="mb-2">🐮 Vaquillonas</h5>
 
-                                    <strong>
-                                        Total Vaquillonas:{" "}
-                                        {Object.values(rodeosAgrupados.Vaquillona)
-                                            .flatMap(g => Object.values(g))
-                                            .reduce((a, b) => a + b, 0)}
-                                    </strong>
-                                </>
-                            )}
+                                        {Object.entries(rodeosAgrupados.Vaquillona).map(([rodeo, grupos]) => {
+                                            const totalRodeo = Object.values(grupos).reduce((a, b) => a + b, 0);
+                                            return (
+                                                <div key={"vaq-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
+                                                    <strong>Rodeo {rodeo} (Total: {totalRodeo})</strong>
+                                                    <ul>
+                                                        {Object.entries(grupos).map(([grupo, cant]) => (
+                                                            <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            );
+                                        })}
 
-                        </Modal.Body>
+                                        <strong>
+                                            Total Vaquillonas:{" "}
+                                            {Object.values(rodeosAgrupados.Vaquillona)
+                                                .flatMap(g => Object.values(g))
+                                                .reduce((a, b) => a + b, 0)}
+                                        </strong>
+                                    </>
+                                )}
 
+                            </Modal.Body>
+
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={() => setShowRodeoModal(false)}>
+                                    Cerrar
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
 
                     </>
                 )}

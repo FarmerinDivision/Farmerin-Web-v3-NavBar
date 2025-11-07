@@ -162,16 +162,6 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
                   <RiReplyLine size={20} />
                </OverlayTrigger>
             </Button>
-            <OverlayTrigger placement="top" overlay={<Tooltip>Ración Manual</Tooltip>}>
-               <Button
-                  variant={manual ? "success" : "secondary"}
-                  size="sm"
-                  onClick={toggleRacionManual}
-                  style={{ marginRight: 6 }}
-               >
-                  {manual ? "✔" : "―"}
-               </Button>
-            </OverlayTrigger>
 
          </td>
          <td>
