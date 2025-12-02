@@ -11,7 +11,7 @@ import styles from '../../styles/Parametro.module.scss'
 import ParametroEdit from '../../pages/parametros/[id]';
 
 
-const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreateEmpty = false }) => {
+const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreateEmpty = false, onParametroChange }) => {
 
 
    const { firebase, usuario } = useContext(FirebaseContext);
@@ -70,6 +70,11 @@ const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreate
       }
    };
 
+   const handleUpdate = () => {
+      obtenerParam();
+      if (onParametroChange) onParametroChange();
+   };
+
 
    function snapshotParametros(snapshot) {
       const param = snapshot.docs.map(doc => {
@@ -110,7 +115,6 @@ const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreate
          } else {
             p = {
                fracion: firebase.nowTimeStamp(),
-
                porcentaje: Number(porcentaje)
             }
          }
@@ -182,7 +186,7 @@ const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreate
                                  parametros={parametros}
                                  guardarParametros={guardarParametros}
                                  porcentaje={porcentaje}
-                                 onUpdate={obtenerParam}
+                                 onUpdate={handleUpdate}
                                  groupId={groupId}
                                  categoria={categoria}
                               />
@@ -215,7 +219,8 @@ const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreate
                      setShowSuccess(true);
                   }}
                   onAddParam={(nuevoParam) => {
-                     guardarParametros(prev => [...prev, nuevoParam].sort((a, b) => a.orden - b.orden));
+                     // guardarParametros(prev => [...prev, nuevoParam].sort((a, b) => a.orden - b.orden));
+                     handleUpdate();
                   }}
                />
             </Modal.Body>

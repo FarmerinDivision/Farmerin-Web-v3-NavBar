@@ -52,7 +52,20 @@ const Control = () => {
     const [manualModalMessages, setManualModalMessages] = useState([]);
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [showRodeoModal, setShowRodeoModal] = useState(false);
+    const [orderRacManual, setOrderRacManual] = useState('asc');
 
+
+
+    const thStyle = {
+        padding: "10px",
+        textAlign: "left",
+        fontWeight: "600",
+        background: "#f1f1f1"
+    };
+
+    const tdStyle = {
+        padding: "8px 10px"
+    };
 
 
 
@@ -126,14 +139,19 @@ const Control = () => {
     //const calcular promedio de racion
     const promedioActual = () => {
         let totalRacMod = 0;
+        let totalRacReal = 0;   // 🔹 Nuevo: acumula la ración REAL del animal
 
         animales.every(a => {
             promL = promL + parseInt(a.diasLact);
             prom = prom + parseInt(a.racion);
             promS = promS + parseInt(a.sugerido);
-            totalRacMod += parseFloat(a.racionModificada);
+
+            totalRacMod += parseFloat(a.racionModificada); // ya estaba
+            totalRacReal += parseFloat(a.racion);          // 🔹 Nuevo: suma la ración real
+
             return true;
         });
+
 
         if (animales.length != 0) {
             prom = prom / animales.length;
@@ -143,6 +161,8 @@ const Control = () => {
             promL = promL / animales.length;
             promL = promL.toFixed(2);
             const promRacModificado = (totalRacMod / animales.length).toFixed(2);
+            const promRacReal = (totalRacReal / animales.length).toFixed(2);
+            console.log("PROMEDIO RACIÓN REAL (sin modificar):", promRacReal);
 
             guardarPromAct(prom);
             guardarPromSug(promS);
@@ -240,9 +260,11 @@ const Control = () => {
                 `RP afectados: ${manuales.map(a => a.rp).join(", ")}`
             ];
 
+            setAnimalesManual(manuales); // ✅ AGREGAR
             setManualModalMessages(mensajes);
             setShowManualModal(true);
         }
+
 
         guardarAnimales(an);
     }
@@ -439,6 +461,20 @@ const Control = () => {
         }
     }
 
+    const handleClickRacManual = e => {
+        e.preventDefault();
+
+        const ordenados = [...animales].sort((a, b) => {
+            const valA = a.racionManual ? 1 : 0;
+            const valB = b.racionManual ? 1 : 0;
+            return orderRacManual === 'asc' ? valA - valB : valB - valA;
+        });
+
+        setOrderRacManual(orderRacManual === 'asc' ? 'desc' : 'asc');
+        guardarAnimales(ordenados);
+    };
+
+
     // CALCULA RACION MODIFICADA CON DECIMALES
     /*  const calcularRacionModificada = (animalData) => {
          // Lógica para calcular la ración modificada
@@ -558,27 +594,29 @@ const Control = () => {
 
     const rodeos = calcularRodeos();
 
-    const agruparRodeos = () => {
-        const estructura = { Vaca: {}, Vaquillona: {} };
+    const agruparPorGrupo = () => {
+        const estructura = {};
 
         animales.forEach(a => {
+            const grupo = a.grupo ?? "Sin grupo";
             const categoria = a.categoria;
-            const rodeo = a.rodeo || "Sin rodeo";
-            const grupo = a.grupo || "Sin grupo";
+            const rodeo = a.rodeo ?? "Sin rodeo";
 
-            if (!estructura[categoria]) return;
-
-            if (!estructura[categoria][rodeo]) {
-                estructura[categoria][rodeo] = {};
+            if (!estructura[grupo]) {
+                estructura[grupo] = { Vaca: {}, Vaquillona: {} };
+            }
+            if (!estructura[grupo][categoria][rodeo]) {
+                estructura[grupo][categoria][rodeo] = 0;
             }
 
-            estructura[categoria][rodeo][grupo] = (estructura[categoria][rodeo][grupo] || 0) + 1;
+            estructura[grupo][categoria][rodeo]++;
         });
 
         return estructura;
     };
 
-    const rodeosAgrupados = agruparRodeos();
+    const datosPorGrupo = agruparPorGrupo();
+
 
 
     return (
@@ -831,11 +869,15 @@ const Control = () => {
                                                         </div>
                                                     </th>
                                                     <th>
-                                                        <div className={styles.thTooltipWrapper}>
-                                                            <span className={styles.thContent}>Rac. Manual</span>
-                                                            <span className={styles.thTooltipText}>Ración manual activada</span>
+                                                        <div className={styles.thTooltipWrapper} onClick={handleClickRacManual}>
+                                                            <span className={styles.thContent}>
+                                                                Rac. Manual
+                                                                <FaSort size={15} className={styles.sortIcon} />
+                                                            </span>
+                                                            <span className={styles.thTooltipText}>Estado ración manual</span>
                                                         </div>
                                                     </th>
+
 
                                                 </tr>
                                             </thead>
@@ -860,42 +902,106 @@ const Control = () => {
                             <SelectTambo />
                         )}
 
-                        {/* Modales existentes */}
-                        {/* 🔹 Modal de notificaciones */}
-                        <Modal show={showModal} onHide={() => setShowModal(false)}>
-                            <Modal.Header closeButton>
-                                <Modal.Title>Notificaciones</Modal.Title>
-                            </Modal.Header>
-                            <Modal.Body>
-                                <ul>
-                                    {modalMessages.map((message, index) => (
-                                        <li key={index}>{message}</li>
-                                    ))}
-                                </ul>
-                            </Modal.Body>
-                            <Modal.Footer>
-                                <Button variant="secondary" onClick={() => setShowModal(false)}>
-                                    Cerrar
-                                </Button>
-                            </Modal.Footer>
-                        </Modal>
-                        <Modal show={showManualModal} onHide={() => setShowManualModal(false)}>
-                            <Modal.Header closeButton>
-                                <Modal.Title>Ración Manual Detectada</Modal.Title>
-                            </Modal.Header>
-                            <Modal.Body>
-                                <ul>
-                                    {manualModalMessages.map((msg, i) => (
-                                        <li key={i}>{msg}</li>
-                                    ))}
-                                </ul>
-                            </Modal.Body>
-                            <Modal.Footer>
-                                <Button variant="secondary" onClick={() => setShowManualModal(false)}>
-                                    Cerrar
-                                </Button>
-                            </Modal.Footer>
-                        </Modal>
+                        {/* ✅ CONTENEDOR FLEX PARA MOSTRAR LOS DOS MODALES UNO AL LADO DEL OTRO */}
+                        {(showModal || showManualModal) && (
+                            <div
+                                style={{
+                                    position: "fixed",
+                                    top: "50%",
+                                    left: "50%",
+                                    transform: "translate(-50%, -50%)",
+                                    display: "flex",
+                                    flexDirection: "row",          // 🟢 PONE LOS MODALES LADO A LADO
+                                    gap: "35px",                    // espacio entre los modales
+                                    zIndex: 99999,
+                                    pointerEvents: "none",          // permite que los modales sigan siendo clickeables
+                                }}
+                            >
+
+                                {/* 🔹 Modal: Notificaciones */}
+                                <div style={{ pointerEvents: "auto", minWidth: "400px" }}>
+                                    <Modal show={showModal} onHide={() => setShowModal(false)}>
+                                        <Modal.Header closeButton>
+                                            <Modal.Title>Notificaciones</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body>
+                                            <ul>
+                                                {modalMessages.map((message, index) => (
+                                                    <li key={index}>{message}</li>
+                                                ))}
+                                            </ul>
+                                        </Modal.Body>
+                                        <Modal.Footer>
+                                            <Button variant="secondary" onClick={() => setShowModal(false)}>
+                                                Cerrar
+                                            </Button>
+                                        </Modal.Footer>
+                                    </Modal>
+                                </div>
+
+
+                                {/* 🔹 Modal: Animales con Ración Manual */}
+                                <div style={{ pointerEvents: "auto", minWidth: "550px" }}>
+                                    <Modal show={showManualModal} onHide={() => setShowManualModal(false)} centered size="lg">
+                                        <Modal.Header closeButton>
+                                            <Modal.Title>⚠️ Animales con Ración Manual</Modal.Title>
+                                        </Modal.Header>
+
+                                        <Modal.Body>
+
+                                            {/* Resumen */}
+                                            <div
+                                                style={{
+                                                    background: "#f8f9fa",
+                                                    padding: "10px 15px",
+                                                    borderRadius: 6,
+                                                    marginBottom: 15,
+                                                    borderLeft: "4px solid #dc3545"
+                                                }}
+                                            >
+                                                <strong>Total de animales en modo manual:</strong> {animalesManual.length}
+                                                <br />
+                                                Estos animales <b>no serán modificados</b> con la ración sugerida por los parámetros de alimentación.
+                                            </div>
+
+                                            {/* Tabla con scroll */}
+                                            <div style={{ maxHeight: 350, overflowY: "auto", borderRadius: 6, border: "1px solid #ddd" }}>
+                                                <table style={{ width: "100%", fontSize: 14 }}>
+                                                    <thead style={{ background: "#f1f1f1", position: "sticky", top: 0 }}>
+                                                        <tr>
+                                                            <th style={{ padding: 8 }}>RP</th>
+                                                            <th style={{ padding: 8 }}>Grupo</th>
+                                                            <th style={{ padding: 8 }}>Rodeo</th>
+                                                            <th style={{ padding: 8 }}>Categoría</th>
+                                                            <th style={{ padding: 8 }}>Ración Actual</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {animalesManual.map((a) => (
+                                                            <tr key={a.id} style={{ borderBottom: "1px solid #eee" }}>
+                                                                <td style={{ padding: 8 }}><b>{a.rp}</b></td>
+                                                                <td style={{ padding: 8 }}>{a.grupo ?? "-"}</td>
+                                                                <td style={{ padding: 8 }}>{a.rodeo ?? "-"}</td>
+                                                                <td style={{ padding: 8 }}>{a.categoria}</td>
+                                                                <td style={{ padding: 8 }}>{a.racion} kg</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                        </Modal.Body>
+
+                                        <Modal.Footer>
+                                            <Button variant="secondary" onClick={() => setShowManualModal(false)}>
+                                                Cerrar
+                                            </Button>
+                                        </Modal.Footer>
+                                    </Modal>
+                                </div>
+
+                            </div>
+                        )}
 
                         {/* 🔹 Modal de confirmación */}
                         <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
@@ -1013,9 +1119,9 @@ const Control = () => {
 
                             <Modal.Body>
                                 <ul>
-                                    <li><strong>✔</strong> = Ración cargada manualmente por el usuario</li>
-                                    <li><strong>―</strong> = Ración automática basada en parametros</li>
-                                    <li><strong>🚀</strong> = Aplica ración sugerida a todos, excepto los manuales</li>
+                                    <li><strong>M (Manual)</strong> = Ración editada manualmente por el usuario dentro de control</li>
+                                    <li><strong>A (Automatica)</strong> = Ración automática basada en los parametros de alimentación</li>
+                                    <li><strong>↗️​</strong> = Aplica ración sugerida a todos, excepto los manuales</li>
                                     <li>Los animales en modo manual <b>no se modifican</b> con cambios segun parametros de alimentación</li>
                                     <li>Podés ver cuántos animales hay en cada rodeo con el botón "Rodeos"</li>
                                 </ul>
@@ -1034,65 +1140,55 @@ const Control = () => {
 
                             <Modal.Body>
 
-                                {/* ===== VACAS ===== */}
-                                {Object.keys(rodeosAgrupados.Vaca).length > 0 && (
-                                    <>
-                                        <h5 className="mb-2">🐄 Vacas</h5>
+                                {Object.entries(datosPorGrupo).map(([grupo, categorias]) => {
 
-                                        {Object.entries(rodeosAgrupados.Vaca).map(([rodeo, grupos]) => {
-                                            const totalRodeo = Object.values(grupos).reduce((a, b) => a + b, 0);
-                                            return (
-                                                <div key={"vaca-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
-                                                    <strong>Rodeo {rodeo} (Total: {totalRodeo})</strong>
-                                                    <ul>
-                                                        {Object.entries(grupos).map(([grupo, cant]) => (
-                                                            <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
-                                                        ))}
-                                                    </ul>
+                                    const totalVacas = Object.values(categorias.Vaca).reduce((a, b) => a + b, 0);
+                                    const totalVaquillonas = Object.values(categorias.Vaquillona).reduce((a, b) => a + b, 0);
+
+                                    return (
+                                        <div key={grupo} style={{ marginBottom: 25 }}>
+
+                                            {/* TITULO DEL GRUPO */}
+                                            <h5 className="mb-2">📌 Grupo {grupo}</h5>
+                                            <hr />
+
+                                            {/* CONTENEDOR DOS COLUMNAS */}
+                                            <div style={{ display: "flex", gap: 40 }}>
+
+                                                {/* VACAS */}
+                                                <div style={{ flex: 1 }}>
+                                                    <h6>🐄 Vacas</h6>
+                                                    {Object.entries(categorias.Vaca).length > 0 ? (
+                                                        Object.entries(categorias.Vaca).map(([rodeo, cant]) => (
+                                                            <div key={rodeo}>Rodeo {rodeo}: <strong>{cant}</strong></div>
+                                                        ))
+                                                    ) : (
+                                                        <div style={{ opacity: 0.6 }}>Sin datos</div>
+                                                    )}
+                                                    <strong>Total: {totalVacas}</strong>
                                                 </div>
-                                            );
-                                        })}
 
-                                        <strong>
-                                            Total Vacas:{" "}
-                                            {Object.values(rodeosAgrupados.Vaca)
-                                                .flatMap(g => Object.values(g))
-                                                .reduce((a, b) => a + b, 0)}
-                                        </strong>
-
-                                        <hr />
-                                    </>
-                                )}
-
-                                {/* ===== VAQUILLONAS ===== */}
-                                {Object.keys(rodeosAgrupados.Vaquillona).length > 0 && (
-                                    <>
-                                        <h5 className="mb-2">🐮 Vaquillonas</h5>
-
-                                        {Object.entries(rodeosAgrupados.Vaquillona).map(([rodeo, grupos]) => {
-                                            const totalRodeo = Object.values(grupos).reduce((a, b) => a + b, 0);
-                                            return (
-                                                <div key={"vaq-" + rodeo} style={{ marginBottom: 10, paddingLeft: 10 }}>
-                                                    <strong>Rodeo {rodeo} (Total: {totalRodeo})</strong>
-                                                    <ul>
-                                                        {Object.entries(grupos).map(([grupo, cant]) => (
-                                                            <li key={grupo}>Grupo {grupo}: <strong>{cant}</strong></li>
-                                                        ))}
-                                                    </ul>
+                                                {/* VAQUILLONAS */}
+                                                <div style={{ flex: 1 }}>
+                                                    <h6>🐮 Vaquillonas</h6>
+                                                    {Object.entries(categorias.Vaquillona).length > 0 ? (
+                                                        Object.entries(categorias.Vaquillona).map(([rodeo, cant]) => (
+                                                            <div key={rodeo}>Rodeo {rodeo}: <strong>{cant}</strong></div>
+                                                        ))
+                                                    ) : (
+                                                        <div style={{ opacity: 0.6 }}>Sin datos</div>
+                                                    )}
+                                                    <strong>Total: {totalVaquillonas}</strong>
                                                 </div>
-                                            );
-                                        })}
 
-                                        <strong>
-                                            Total Vaquillonas:{" "}
-                                            {Object.values(rodeosAgrupados.Vaquillona)
-                                                .flatMap(g => Object.values(g))
-                                                .reduce((a, b) => a + b, 0)}
-                                        </strong>
-                                    </>
-                                )}
+                                            </div>
+
+                                        </div>
+                                    );
+                                })}
 
                             </Modal.Body>
+
 
                             <Modal.Footer>
                                 <Button variant="secondary" onClick={() => setShowRodeoModal(false)}>

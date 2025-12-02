@@ -1,0 +1,75 @@
+.tooltipWrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  z-index: 50;
+}
+
+.tooltipLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #1a73e8;
+}
+
+/* 🔹 Tooltip fijo, centrado y más ancho */
+.tooltipBox {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px); /* 🔸 Siempre justo arriba */
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  background: #0f172a;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  width: 320px; /* 🔸 más ancho */
+  max-width: 90vw;
+  text-align: center;
+  z-index: 9999;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  font-size: 1.05rem;
+  line-height: 1.5rem;
+
+  /* 🔸 No mueve el layout */
+  position: absolute;
+  white-space: normal;
+}
+
+/* 🔹 Flecha inferior centrada */
+.tooltipBox::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+/* 🔹 Al hacer hover, aparece suavemente */
+.tooltipWrapper:hover .tooltipBox {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-4px); /* 🔸 pequeño efecto de aparición */
+  pointer-events: auto;
+}
+
+.tooltipTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+.tooltipDesc {
+  font-size: 1rem;
+  color: #e2e8f0;
+  line-height: 1.4rem;
+  font-weight: 400;
+}

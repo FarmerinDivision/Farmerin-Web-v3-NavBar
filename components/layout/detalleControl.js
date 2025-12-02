@@ -177,15 +177,6 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
                value={sug}
                onChange={changeSugerido}
             />
-            <td>
-               <Button
-                  variant={manual ? "success" : "secondary"}
-                  size="sm"
-                  onClick={toggleRacionManual}
-               >
-                  {manual ? "✔" : "―"}
-               </Button>
-            </td>
 
             {/* Modal de error */}
             <Modal
@@ -271,7 +262,15 @@ const DetalleControl = ({ animal, animales, guardarAnimales, racionModificada })
             </Modal.Footer>
          </Modal>
 
-
+         <td>
+            <Button
+               variant={manual ? "success" : "secondary"}
+               size="sm"
+               onClick={toggleRacionManual}
+            >
+               {manual ? "M" : "A"}
+            </Button>
+         </td>
       </tr>
 
 

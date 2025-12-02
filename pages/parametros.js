@@ -27,7 +27,15 @@ const Parametros = () => {
   const [successMsgGroup, setSuccessMsgGroup] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState(false);
-  const [showSubtitleModal, setShowSubtitleModal] = useState(false);
+  const [animales, setAnimales] = useState([]);
+  const [promediosGrupo, setPromediosGrupo] = useState({});
+  const [calculandoGrupo, setCalculandoGrupo] = useState(null);
+  const [cantidadAnimalesPorGrupo, setCantidadAnimalesPorGrupo] = useState({});
+  const [promedioTotalGrupos, setPromedioTotalGrupos] = useState(null);
+  const [promediosIndividuales, setPromediosIndividuales] = useState({});
+  const [showInfo, setShowInfo] = useState(false);
+  const [parametrosModificados, setParametrosModificados] = useState(false);
+
 
 
 
@@ -37,10 +45,10 @@ const Parametros = () => {
     if (tamboSel) {
       obtenerPorcentaje();
       cargarGrupos();
-    } else {
-      setGrupos([]);
+      cargarAnimales();
     }
   }, [tamboSel]);
+
 
   const obtenerPorcentaje = async () => {
     try {
@@ -55,35 +63,40 @@ const Parametros = () => {
     setEditGroup({ id: g.id, value: String(g.grupo ?? ''), subtitle: g.subtitulo || '' });
   };
 
-const guardarEdicionGrupo = async () => {
-  if (!editGroup.id) return;
-  try {
-    const num = Number(editGroup.value);
-    if (!Number.isFinite(num)) return;
+  const cargarAnimales = async () => {
+    if (!tamboSel) return;
+    try {
+      const snap = await firebase.db
+        .collection("animal")
+        .where("idtambo", "==", tamboSel.id)
+        .where("estpro", "==", "En Ordeñe")
+        .where("fbaja", "==", "")
+        .get();
 
-    const update = {
-      grupo: num,
-      subtitulo: (editGroup.subtitle || '').trim(),
-    };
+      const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAnimales(lista);
+      console.log("Animales cargados para promedio:", lista);
+    } catch (e) {
+      console.error("Error cargando animales", e);
+    }
+  };
 
-    await firebase.db.collection('parametro').doc(editGroup.id).update(update);
 
-    // 🔹 Cierra el modal de edición inmediatamente
-    setEditGroup({ id: null, value: '', subtitle: '' });
-
-    // 🔹 Espera un instante para permitir que se cierre el modal anterior
-    setTimeout(async () => {
+  const guardarEdicionGrupo = async () => {
+    if (!editGroup.id) return;
+    try {
+      const num = Number(editGroup.value);
+      if (!Number.isFinite(num)) return;
+      const update = { grupo: num, subtitulo: (editGroup.subtitle || '').trim() };
+      await firebase.db.collection('parametro').doc(editGroup.id).update(update);
+      setEditGroup({ id: null, value: '', subtitle: '' });
       await cargarGrupos();
-      setShowSubtitleModal(true); // 🔹 Muestra el modal de confirmación
-    }, 250);
-  } catch (e) {
-    console.error('Error renombrando grupo', e);
-    setSuccessMsgGroup('No se pudo actualizar el subtítulo. Intente nuevamente.');
-    setShowSuccessGroup(true);
-  }
-};
-
-
+      setSuccessMsgGroup('Grupo actualizado correctamente.');
+      setShowSuccessGroup(true);
+    } catch (e) {
+      console.error('Error renombrando grupo', e);
+    }
+  };
 
   const confirmarEliminarGrupo = (id) => setDeleteGroupId(id);
 
@@ -312,10 +325,475 @@ const guardarEdicionGrupo = async () => {
     porcentaje = 1 + valor / 100;
   }
 
+
+
+  /***********************************************
+ * 🔵 FUNCIONES PARA REDONDEO INDIVIDUAL
+ ***********************************************/
+
+  // 🔹 Animales filtrados por grupo
+  const obtenerAnimalesDelGrupo = (nroGrupo) => {
+    return animales.filter(a => Number(a.grupo) === Number(nroGrupo));
+  };
+
+  // 🔹 Redondeo individual EXACTO igual a control.js
+  const calcularRedondeoIndividual = (animalesDelGrupo) => {
+    return animalesDelGrupo.map(a => {
+      const racionMod = Math.round(a.racion * a.porcentaje);
+      return {
+        rp: a.rp,
+        racion: a.racion,
+        porcentaje: a.porcentaje,
+        racionModificada: racionMod
+      };
+    });
+  };
+
+  // 🔹 Mostrar redondeos en consola
+  const mostrarRedondeoIndividual = (nroGrupo) => {
+    const animalesDelGrupo = obtenerAnimalesDelGrupo(nroGrupo);
+    const datos = calcularRedondeoIndividual(animalesDelGrupo);
+
+    console.log("===========================================");
+    console.log("🔵 REDONDEO INDIVIDUAL DEL GRUPO", nroGrupo);
+    console.log("===========================================");
+
+    datos.forEach(d => {
+      console.log(
+        `RP: ${d.rp} | Ración: ${d.racion} | %: ${d.porcentaje} | Modificada: ${d.racionModificada}`
+      );
+    });
+
+    alert("Redondeos individuales listos en la consola.");
+  };
+
+
+  /***********************************************
+  * 🔥 PROMEDIO INDIVIDUAL (FLUJO IGUAL A CONTROL)
+  * Usando ración del PARÁMETRO según rodeo
+  ***********************************************/
+  const calcularPromedioIndividual = (nroGrupo, gruposData = grupos) => {
+    console.log("===============================================");
+    console.log("🔥 CALCULANDO PROMEDIO INDIVIDUAL (MODO CONTROL)");
+    console.log("Grupo:", nroGrupo);
+    console.log("===============================================");
+
+    // 1️⃣ Filtrar animales que realmente pertenecen al grupo
+    const animalesDelGrupo = animales.filter(a => Number(a.grupo) === Number(nroGrupo));
+
+    if (animalesDelGrupo.length === 0) {
+      alert("No hay animales en este grupo.");
+      return;
+    }
+
+    // 2️⃣ Conseguir parámetros del grupo correcto
+    const grupoEncontrado = gruposData.find(g => g.grupo === nroGrupo);
+    if (!grupoEncontrado) {
+      alert("No se encontró el grupo en parámetros.");
+      return;
+    }
+
+    // Crear estructura de ración por categoria/rodeo
+    const racionesPorCategoria = { Vaca: {}, Vaquillona: {} };
+
+    grupoEncontrado.parametros.forEach(param => {
+      const categoria = param.categoria;
+
+      param.rodeos.forEach(rod => {
+        const rodeoKey = String(rod.orden);
+        const base = Number(rod.racion);
+
+        racionesPorCategoria[categoria][rodeoKey] = base;
+      });
+    });
+
+    // 3️⃣ Calcular ración modificada por animal (igual que control)
+    let total = 0;
+    let usados = 0;
+
+    animalesDelGrupo.forEach(a => {
+      const categoria = a.categoria;
+      const rodeoKey = String(a.rodeo);
+
+      // Si rodeo no existe en parámetros → descartar
+      if (!(categoria in racionesPorCategoria) ||
+        !(rodeoKey in racionesPorCategoria[categoria])) {
+        console.log(`⚠️ Animal RP ${a.rp} ignorado — Rodeo ${rodeoKey} no existe en parámetros`);
+        return;
+      }
+
+      const racionBase = racionesPorCategoria[categoria][rodeoKey];
+
+      // 🔥 MATCH EXACTO DEL CONTROL:
+      // 1) multiplicar
+      let calculo = racionBase * porcentaje;
+
+      // 2) redondear por animal
+      let racionModificada = Math.round(calculo);
+
+      total += racionModificada;
+      usados++;
+
+      console.log(
+        `RP ${a.rp} | Cat ${categoria} | Rodeo ${rodeoKey} | Base ${racionBase} | % ${porcentaje} |` +
+        ` calc=${calculo} | redondeado=${racionModificada}`
+      );
+    });
+
+
+    if (usados === 0) {
+      alert("No hay animales válidos para este cálculo.");
+      return;
+    }
+
+    // 4️⃣ Promedio final (redondeo solo acá)
+    const promedio = (total / usados).toFixed(2);
+
+    console.log("🔥 PROMEDIO INDIVIDUAL FINAL (MODO CONTROL) =", promedio);
+
+    // 5️⃣ Guardarlo en pantalla
+    setPromediosIndividuales(prev => ({
+      ...prev,
+      [nroGrupo]: promedio
+    }));
+
+  };
+
+
+
+
+
+  // ======================================
+  // AGRUPACIÓN EXACTA A LA DE CONTROL.JS
+  /*
+  const agruparAnimalesPorGrupo = () => {
+    const estructura = {};
+  
+    animales.forEach(a => {
+      const grupo = a.grupo ?? "Sin grupo";
+      const categoria = a.categoria;
+      const rodeo = a.rodeo ?? "Sin rodeo";
+  
+      if (!estructura[grupo]) {
+        estructura[grupo] = { Vaca: {}, Vaquillona: {} };
+      }
+      if (!estructura[grupo][categoria][rodeo]) {
+        estructura[grupo][categoria][rodeo] = 0;
+      }
+  
+      estructura[grupo][categoria][rodeo]++;
+    });
+  
+    return estructura;
+  };
+  */
+
+  /****************************************************
+   *   🔹 1) CALCULAR RACIÓN PROMEDIO (Σ(N×R) / ΣN)
+   ****************************************************/
+  const calcularRacionPromedio = (estructuraAgrupada, parametros) => {
+    console.log("=========== CALCULO RACIÓN PROMEDIO ===========");
+    console.log("Estructura agrupada (N de animales por categoría y rodeo):", estructuraAgrupada);
+    console.log("Parámetros de ración (R por categoría y rodeo):", parametros);
+
+    let totalKg = 0;        // Σ(N×R)
+    let totalAnimales = 0;  // ΣN
+
+    Object.keys(estructuraAgrupada).forEach(categoria => {
+      console.log(`\n>>> Categoría: ${categoria}`);
+
+      Object.keys(estructuraAgrupada[categoria]).forEach(rodeo => {
+        const N = Number(estructuraAgrupada[categoria][rodeo] || 0);
+        const R = Number(parametros[categoria]?.[rodeo] ?? 0);
+
+        console.log(`   Rodeo ${rodeo}:`);
+        console.log(`      N (animales): ${N}`);
+        console.log(`      R (ración): ${R} kg/animal`);
+        console.log(`      N × R = ${N * R}`);
+
+        totalKg += N * R;
+        totalAnimales += N;
+      });
+    });
+
+    console.log("\n---------------------------------------------");
+    console.log("Σ(N × R) totalKg =", totalKg);
+    console.log("ΣN totalAnimales =", totalAnimales);
+
+    if (totalAnimales === 0) {
+      console.log("⚠ No hay animales. Resultado = 0.");
+      return 0;
+    }
+
+    const promedio = totalKg / totalAnimales;
+
+    console.log("RACIÓN PROMEDIO FINAL =", promedio, "kg/animal");
+    console.log("===============================================\n");
+
+    return promedio;
+  };
+
+
+  /************************************************************
+  *   CALCULAR PROMEDIO DE RACIÓN POR GRUPO  (COMPLETO)
+  ************************************************************/
+  const calcularPromedioPorGrupo = async (nroGrupo) => {
+    try {
+      console.log("===============================================");
+      console.log(`🟦 CALCULANDO PROMEDIO PARA EL GRUPO: ${nroGrupo}`);
+      console.log("===============================================");
+
+      /********************************************************
+       * 1) Buscar grupo en Firebase
+       ********************************************************/
+      const grupoEncontrado = grupos.find(g => g.grupo === nroGrupo);
+      if (!grupoEncontrado) {
+        console.log(`❌ No se encontró el grupo ${nroGrupo}`);
+        return 0;
+      }
+
+      console.log("✔ Grupo encontrado:", grupoEncontrado);
+
+      /********************************************************
+       * 2) Agrupar animales por categoría y rodeo
+       ********************************************************/
+      const estructuraAgrupada = { Vaca: {}, Vaquillona: {} };
+      let contadorAnimalesValidos = 0;
+      let contadorAnimalesInvalidos = 0;
+
+      animales.forEach(a => {
+        if (Number(a.grupo) !== Number(nroGrupo)) return;
+
+        const categoria = a.categoria ?? "Vaca";
+        const rodeoRaw = a.rodeo;
+
+        const rodeoInvalido =
+          rodeoRaw === null ||
+          rodeoRaw === undefined ||
+          rodeoRaw === "" ||
+          rodeoRaw === "null" ||
+          rodeoRaw === "undefined" ||
+          Number.isNaN(Number(rodeoRaw));
+
+        if (rodeoInvalido) {
+          console.log(`⚠️ ANIMAL DESCARTADO (rodeos inválidos) → ID: ${a.id}, Rodeo: ${rodeoRaw}`);
+          contadorAnimalesInvalidos++;
+          return;
+        }
+
+        const rodeo = String(rodeoRaw);
+
+        console.log(`✔️ Animal válido → ID: ${a.id}, Categoria: ${categoria}, Rodeo: ${rodeo}`);
+        contadorAnimalesValidos++;
+
+        if (!estructuraAgrupada[categoria][rodeo]) {
+          estructuraAgrupada[categoria][rodeo] = 0;
+        }
+
+        estructuraAgrupada[categoria][rodeo]++;
+      });
+
+      console.log("📌 Animales válidos:", contadorAnimalesValidos);
+      console.log("📌 Animales descartados:", contadorAnimalesInvalidos);
+      console.log("📌 Estructura agrupada final:", estructuraAgrupada);
+
+      /********************************************************
+       * 3) Obtener raciones por categoría/rodeo desde parámetros
+       ********************************************************/
+      const racionesPorCategoria = { Vaca: {}, Vaquillona: {} };
+
+      grupoEncontrado.parametros.forEach(param => {
+        const categoria = param.categoria;
+        param.rodeos.forEach(rod => {
+          const key = String(rod.orden);
+          racionesPorCategoria[categoria][key] = Number(rod.racion);
+        });
+      });
+
+      console.log("📌 Parámetros de ración por categoría:", racionesPorCategoria);
+
+      /********************************************************
+       * 4) Calcular total con RACIÓN MODIFICADA (igual que Control.js)
+       ********************************************************/
+      let totalKg = 0;
+      let totalAnimales = 0;
+
+      ["Vaca", "Vaquillona"].forEach(cat => {
+        Object.entries(estructuraAgrupada[cat]).forEach(([rodeo, cantidad]) => {
+          const racion = racionesPorCategoria[cat][rodeo] ?? 0;
+
+          console.log(
+            `➡️ ${cat} | Rodeo ${rodeo} | Cant: ${cantidad} | Ración base: ${racion}`
+          );
+
+          /*********************************************
+           * 🔥 APLICAR LA MISMA LÓGICA QUE CONTROL.JS
+           * racionModificada = Math.round(racion * porcentaje)
+           *********************************************/
+          const racionModificada = Math.round(racion * porcentaje);
+
+          console.log(`      Ración modificada: ${racionModificada}`);
+
+          totalKg += cantidad * racionModificada;
+          totalAnimales += cantidad;
+        });
+      });
+
+      console.log("📦 TOTAL KG calculados:", totalKg);
+      console.log("👥 TOTAL animales usados:", totalAnimales);
+
+      if (totalAnimales === 0) return 0;
+
+      /********************************************************
+       * 5) Promedio final con ración modificada
+       ********************************************************/
+      const promedioFinal = (totalKg / totalAnimales).toFixed(2);
+
+      console.log("🎯 Promedio FINAL con porcentaje:", promedioFinal);
+
+      /********************************************************
+       * 6) Guardar promedio para la UI
+       ********************************************************/
+      setPromediosGrupo(prev => ({
+        ...prev,
+        [nroGrupo]: promedioFinal
+      }));
+
+      return promedioFinal;
+
+    } catch (error) {
+      console.log("❌ Error calculando promedio del grupo:", error);
+      return 0;
+    }
+  };
+
+
+  /************************************************************
+   *   🔹 3) USEEFFECT DE LOG (NO CALCULAR AUTOMÁTICO SIN GRUPO)
+   ************************************************************/
+  useEffect(() => {
+    console.log("Animales y grupos cargados. Listo para calcular.");
+  }, [animales, grupos]);
+
+  /************************************************************
+  *   🔹 CALCULAR PROMEDIO TOTAL SI HAY 2 GRUPOS 
+  ************************************************************/
+
+  const calcularPromedioTotal = () => {
+    try {
+      const gruposKeys = Object.keys(promediosGrupo);
+
+      if (gruposKeys.length === 0) {
+        console.log("⚠ No hay promedios para calcular el total.");
+        return;
+      }
+
+      const suma = gruposKeys.reduce((acc, g) => acc + Number(promediosGrupo[g] || 0), 0);
+      const promedioFinal = (suma / gruposKeys.length).toFixed(2);
+
+      console.log("🎯 PROMEDIO TOTAL DE TODOS LOS GRUPOS =", promedioFinal);
+
+      setPromedioTotalGrupos(promedioFinal);
+    } catch (error) {
+      console.error("❌ Error en calcularPromedioTotal:", error);
+    }
+  };
+
+  useEffect(() => {
+    const conteo = {};
+
+    animales.forEach(a => {
+      const g = a.grupo ?? "Sin grupo";
+      if (!conteo[g]) conteo[g] = 0;
+      conteo[g]++;
+    });
+
+    setCantidadAnimalesPorGrupo(conteo);
+  }, [animales]);
+
+
+
+  const calcularPromedioGlobal = (gruposData = grupos) => {
+    try {
+      console.log("===============================================");
+      console.log("🟣 CALCULANDO PROMEDIO GLOBAL (NUEVA LÓGICA)");
+      console.log("===============================================");
+
+      let totalRacionBase = 0;
+      let totalAnimales = 0;
+
+      animales.forEach(a => {
+        const nroGrupo = Number(a.grupo);
+
+        // 1) Buscar grupo
+        const grupoEncontrado = gruposData.find(g => Number(g.grupo) === nroGrupo);
+        if (!grupoEncontrado) return;
+
+        const categoria = a.categoria;
+        const rodeo = String(a.rodeo);
+
+        // 2) Buscar en parámetros de ese grupo
+        const paramCat = grupoEncontrado.parametros.find(p => p.categoria === categoria);
+        if (!paramCat) return;
+
+        const paramRodeo = paramCat.rodeos.find(r => String(r.orden) === rodeo);
+        if (!paramRodeo) return;
+
+        // 3) Obtener ración base (sin modificar)
+        const racionBase = Number(paramRodeo.racion);
+
+        totalRacionBase += racionBase;
+        totalAnimales++;
+      });
+
+      if (totalAnimales === 0) {
+        alert("No hay animales válidos para calcular el promedio global.");
+        return;
+      }
+
+      // 4) Calcular promedio base
+      const promedioBase = totalRacionBase / totalAnimales;
+
+      // 5) Aplicar porcentaje general (sin redondeo individual)
+      const promedioFinal = (promedioBase * porcentaje).toFixed(2);
+
+      console.log("🟣 PROMEDIO GLOBAL CALCULADO =", promedioFinal, "kg");
+
+      setPromedioTotalGrupos(promedioFinal);
+
+    } catch (error) {
+      console.error("❌ Error en calcularPromedioGlobal:", error);
+    }
+  };
+
+
+  const recalcularTodosLosPromedios = async () => {
+
+    const gruposActualizados = await leerGruposDesdeFirebase();
+
+    setGrupos(gruposActualizados);
+
+    // individual
+    for (const g of gruposActualizados) {
+      await calcularPromedioIndividual(g.grupo, gruposActualizados);
+    }
+
+    // global
+    if (gruposActualizados.length > 1) {
+      calcularPromedioGlobal(gruposActualizados);
+    }
+
+    setParametrosModificados(false);
+  }
+
+
+
+
+
   return (
     <Layout titulo="Parámetros Nutricionales">
       <div className={styles.container}>
-        <h1 className={styles.titulo}>🥩 Parametros de Alimentación</h1>
+        <h1 className={styles.titulo}> Parametros de Alimentación</h1>
 
         <div className={styles.estadoActual}>
           <span className={styles.estadoLabel}>Estado actual:</span>
@@ -391,6 +869,133 @@ const guardarEdicionGrupo = async () => {
           </div>
         )}
 
+        {/* 🆕 🔵 NUEVO DIV EN EL MEDIO – RESUMEN GENERAL */}
+        <div className={styles.resumenHeader}>
+          <div className={styles.resumenHeaderTop}>
+            <h3 className={styles.resumenTitulo}>Resumen del Tambo</h3>
+
+            {/* Botón de info alineado */}
+            <div className={styles.infoWrapper}>
+              <button className={styles.infoButton} onClick={() => setShowInfo(true)}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="8"></line>
+                </svg>
+                <span className={styles.tooltip}>Información importante</span>
+              </button>
+            </div>
+          </div>
+
+
+          <div className={styles.resumenContenido}>
+            <div className={styles.item}>
+              <span className={styles.itemTitulo}>Total animales obtenidos</span>
+              <span className={styles.itemValor}>{animales.length}</span>
+            </div>
+
+            {Object.keys(cantidadAnimalesPorGrupo).map(g => (
+              <div className={styles.item} key={g}>
+                <span className={styles.itemTitulo}>Grupo {g}</span>
+                <span className={styles.itemValor}>
+                  {cantidadAnimalesPorGrupo[g]} animales
+                </span>
+              </div>
+            ))}
+          </div>
+          {grupos.length > 1 && (
+            <div className={styles.promedioGlobalContainer}>
+              <div className={styles.tooltipWrapper}>
+                <button
+                  className={styles.cta}
+                  onClick={async () => {
+
+                    // 1️⃣ Cargar parámetros nuevos DESDE FIREBASE
+                    const snap = await firebase.db
+                      .collection("parametro")
+                      .where("idtambo", "==", tamboSel.id)
+                      .orderBy("grupo")
+                      .get();
+
+                    const gruposActualizados = snap.docs
+                      .map(d => ({ id: d.id, ...d.data() }))
+                      .filter(d => Array.isArray(d.parametros));
+
+                    // 2️⃣ Calcular promedio global con los valores nuevos
+                    await calcularPromedioGlobal(gruposActualizados);
+
+                    // 3️⃣ Actualizar el estado de grupos (para la UI)
+                    setGrupos(gruposActualizados);
+
+                    // 4️⃣ Recién ahora cambiar el texto del botón
+                    setParametrosModificados(false);
+                  }}
+                >
+                  <span className={styles.hoverUnderline}>
+                    {parametrosModificados ? "Recalcular Promedio Global" : "Promedio Global"}
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="30"
+                    height="10"
+                    viewBox="0 0 46 16"
+                  >
+                    <path
+                      d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z"
+                      transform="translate(30)"
+                    ></path>
+                    <g
+                      id="arrow"
+                      stroke="none"
+                      strokeWidth="1"
+                      fill="none"
+                      fillRule="evenodd"
+                    >
+                      <path
+                        className={styles.one}
+                        d="M40.1543933,3.89485454 L58.7849315,21.8256394"
+                      ></path>
+                      <path
+                        className={styles.two}
+                        d="M58.7849315,21.8256394 L40.1543933,39.7558593"
+                      ></path>
+                      <path
+                        className={styles.three}
+                        d="M0.424211384,21.8256394 L58.7849315,21.8256394"
+                      ></path>
+                    </g>
+                  </svg>
+                </button>
+
+                <span className={styles.tooltipText}>
+                  Presione para calcular promedio global
+                </span>
+              </div>
+
+              {promedioTotalGrupos && (
+                <div className={styles.promedioGrupo}>
+                  <div className={styles.hoverUnderlineText}>
+                    PROMEDIO GLOBAL: {promedioTotalGrupos} KG
+                  </div>
+                </div>
+              )}
+            </div>
+
+          )}
+
+        </div>
+
+
         {tamboSel ? (
           <>
             {/* Botón de nuevo grupo movido a la barra de acciones superior */}
@@ -410,17 +1015,67 @@ const guardarEdicionGrupo = async () => {
               </div>
             ) : grupos.length === 0 ? (
               <Mensaje>
-                <div className={styles.sinGruposCard}>
-                  <h3>📋 Sin grupos configurados</h3>
-                  <p>Comience creando un nuevo grupo para definir los parámetros de alimentación.</p>
-                </div>
+                <div className={styles.sinGrupos}>No hay grupos configurados. Cree uno nuevo.</div>
               </Mensaje>
-
             ) : (
               grupos.map((g) => (
                 <div key={g.id} className={styles.cardGrupo}>
                   <div className={styles.headerGrupo}>
                     <h2 className={styles.tituloGrupo}>Grupo {g.grupo}{g.subtitulo ? ` - ${g.subtitulo}` : ''}</h2>
+                    {/* ⭐ Agregá el promedio acá ADENTRO del map ⭐ */}
+                    <div className={styles.promedioWrapper} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+
+                      <div className={styles.tooltipWrapper}>
+                        <button
+                          className={styles.cta}
+                          onClick={async () => {
+
+                            // 1) Leer parámetros actualizados desde Firebase
+                            const snap = await firebase.db
+                              .collection("parametro")
+                              .where("idtambo", "==", tamboSel.id)
+                              .orderBy("grupo")
+                              .get();
+
+                            const gruposActualizados = snap.docs
+                              .map(d => ({ id: d.id, ...d.data() }))
+                              .filter(d => Array.isArray(d.parametros));
+
+                            // 2) Calcular usando parámetros nuevos
+                            await calcularPromedioIndividual(g.grupo, gruposActualizados);
+
+                            setParametrosModificados(false);
+                          }}
+                        >
+                          <span className={styles.hoverUnderline}>
+                            {parametrosModificados ? "Recalcular promedio" : "Calcular promedio"}
+                          </span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="30"
+                            height="10"
+                            viewBox="0 0 46 16"
+                          >
+                            <path
+                              d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z"
+                              transform="translate(30)"
+                            ></path>
+                          </svg>
+                        </button>
+
+                        {/* 👉 Tooltip nuevo */}
+                        <span className={styles.tooltipText}>Presione para calcular</span>
+                      </div>
+
+
+                      <div className={styles.promedioGrupo}>
+                        <span className={styles.hoverUnderlineText}>
+                          Promedio : <strong>{promediosIndividuales[g.grupo] ?? "0.00"} kg</strong>
+                        </span>
+                      </div>
+                    </div>
+
+
                     <div className={styles.accionesGrupo}>
                       <div className={styles.tooltipWrapper}>
                         <Button variant="outline-primary" size="sm" onClick={() => abrirEditarGrupo(g)}>
@@ -437,6 +1092,7 @@ const guardarEdicionGrupo = async () => {
                     </div>
                   </div>
                   <Row className="gx-4 gy-4 mt-2">
+                    {/* PARAMETROS DEL TAMBO */}
                     {(g.parametros || []).map((cat) => (
                       <Col md={6} key={cat.categoria}>
                         <DetalleParametro
@@ -444,6 +1100,7 @@ const guardarEdicionGrupo = async () => {
                           groupId={g.id}
                           categoria={cat.categoria}
                           porcentaje={porcentaje}
+                          onParametroChange={() => setParametrosModificados(true)}
                         />
                       </Col>
                     ))}
@@ -456,7 +1113,7 @@ const guardarEdicionGrupo = async () => {
           <SelectTambo />
         )}
       </div>
-
+      {/* PARAMETRO DE NUEVO TAMBO SIN VALORES */}
       {showNuevoGrupo && (
         <div className={styles.overlayCard}>
           <div className={styles.paramCardContainer}>
@@ -477,21 +1134,31 @@ const guardarEdicionGrupo = async () => {
               <Row className="gx-4 gy-4">
                 <Col md={6} className={styles.modalParamCol}>
                   <h5 className={styles.modalParamColTitulo}>Parametros para Vaca</h5>
-                  <DetalleParametro
-                    idTambo={tamboSel?.id}
-                    groupId={nuevoGrupoId}
-                    categoria="Vaca"
-                    porcentaje={porcentaje}
-                  />
+                  {(g.parametros || []).map((cat) => (
+                    <Col md={6} key={cat.categoria}>
+                      <DetalleParametro
+                        idTambo={tamboSel?.id}
+                        groupId={nuevoGrupoId}
+                        categoria="Vaca"
+                        porcentaje={porcentaje}
+                      />
+                    </Col>
+                  ))}
+
                 </Col>
                 <Col md={6} className={styles.modalParamCol}>
                   <h5 className={styles.modalParamColTitulo}>Parametros para Vaquillona</h5>
-                  <DetalleParametro
-                    idTambo={tamboSel?.id}
-                    groupId={nuevoGrupoId}
-                    categoria="Vaquillona"
-                    porcentaje={porcentaje}
-                  />
+                  {(g.parametros || []).map((cat) => (
+                    <Col md={6} key={cat.categoria}>
+                      <DetalleParametro
+                        idTambo={tamboSel?.id}
+                        groupId={nuevoGrupoId}
+                        categoria="Vaquillona"
+                        porcentaje={porcentaje}
+                      />
+                    </Col>
+                  ))}
+
                 </Col>
               </Row>
             </div>
@@ -568,49 +1235,78 @@ const guardarEdicionGrupo = async () => {
           <Button variant="danger" onClick={eliminarGrupo}>Eliminar</Button>
         </Modal.Footer>
       </Modal>
-      {/* 🔹 Modal específico para cambio de subtítulo */}
-      <Modal
-        show={showSubtitleModal}
-        onHide={() => setShowSubtitleModal(false)}
-        centered
-        size="sm"
-        backdrop={true}
-        dialogClassName="modal-alert-success"
-      >
+      <Modal show={showInfo} onHide={() => setShowInfo(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title></Modal.Title>
+          <Modal.Title>Información sobre los promedios</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="text-center p-4">
-          <div className="mb-3">
-            <span
-              style={{
-                display: 'inline-block',
-                backgroundColor: '#28a745',
-                borderRadius: '50%',
-                width: '70px',
-                height: '70px',
-                lineHeight: '70px',
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="40"
-                height="40"
-                fill="white"
-                viewBox="0 0 16 16"
-              >
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.97 11.03a.75.75 0 0 0 1.07 0l3.992-3.992a.75.75 0 1 0-1.06-1.06L7.5 9.439 5.53 7.47a.75.75 0 0 0-1.06 1.06l2.5 2.5z" />
-              </svg>
-            </span>
-          </div>
-          <h5 className="fw-bold text-success">Subtítulo cambiado correctamente</h5>
-          <p className="text-muted mb-0">
-            Si no ve el cambio reflejado, salga y vuelva a entrar en la sección Parámetros.
+
+        <Modal.Body>
+          <p>
+            Es normal que veas una <strong>pequeña diferencia</strong> entre el promedio que aparece en
+            <strong> Parámetros</strong> y el promedio que aparece en <strong> Control</strong>.
           </p>
+
+          <p>
+            Esto ocurre porque cada sección calcula ese promedio de una forma distinta:
+          </p>
+
+          <ul>
+            <li>
+              <strong>En Parámetros:</strong> se usa la ración base configurada para cada categoría y rodeo.
+            </li>
+            <li>
+              <strong>En Control:</strong> se calcula la ración real que recibe cada animal de manera individual.
+            </li>
+          </ul>
+
+          <p>
+            Por este motivo, el valor puede variar levemente entre ambas pantallas.
+          </p>
+
+          <p>
+            Además, el promedio puede cambiar si se modifica el
+            <strong> porcentaje de alimentación</strong>, ya que afecta directamente la ración que recibe cada animal.
+          </p>
+
+          <p className="text-muted">
+            En resumen: la diferencia es totalmente normal y depende de los parámetros actuales de alimentación.
+          </p>
+          <hr />
+
+
+          {grupos.length > 1 && (
+            <>
+              <h5>Promedio Global</h5>
+
+              <p>
+                Con esta nueva actualización, el <strong>Promedio Global</strong> se calcula
+                exclusivamente a partir de las <strong>raciones base configuradas en los parámetros</strong>
+                de cada grupo. Es decir, se toma la ración definida para el rodeo y categoría
+                de cada animal, se suman todas esas raciones y se divide por el total de animales.
+              </p>
+
+              <p>
+                Una vez obtenido ese promedio base, se aplica el
+                <strong> porcentaje general de alimentación</strong> del tambo para obtener el
+                valor final.
+              </p>
+
+              <p>
+                A diferencia del cálculo individual del control,
+                <strong>no se usa la ración real que recibe cada animal</strong> ni se hace
+                redondeo por animal. El resultado es un promedio global más limpio y basado
+                únicamente en los parámetros configurados.
+              </p>
+            </>
+          )}
+
+
         </Modal.Body>
-        <Modal.Footer className="justify-content-center">
-          <Button variant="success" onClick={() => setShowSubtitleModal(false)}>
-            Cerrar
+
+
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowInfo(false)}>
+            Entendido
           </Button>
         </Modal.Footer>
       </Modal>

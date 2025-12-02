@@ -11,7 +11,7 @@ import {
 import ParametroEdit from '../../pages/parametros/[id]';
 import styles from '../../styles/Parametro.module.scss';
 
-const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpdate, groupId, categoria }) => {
+const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpdate, groupId, categoria, onParametroChange }) => {
   const { id, orden, condicion, min, max, um, racion } = parametro;
   const { firebase } = useContext(FirebaseContext);
 
@@ -82,6 +82,7 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
       return p;
     }).sort((a, b) => a.orden - b.orden);
     guardarParametros(parOrd);
+    onParametroChange && onParametroChange(); 
   };
 
   const handleUp = async () => {
@@ -108,6 +109,7 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
       return p;
     }).sort((a, b) => a.orden - b.orden);
     guardarParametros(parOrd);
+    onParametroChange && onParametroChange(); 
   };
 
   return (
@@ -182,6 +184,7 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
             onUpdate={onUpdate}
             groupId={groupId}
             categoriaFija={categoria}
+            onParametroChange={onParametroChange}
           />
         </Modal.Body>
       </Modal>
@@ -214,7 +217,8 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
               // 🔁 Usamos un pequeño delay para permitir que el cierre del modal se procese
               setTimeout(async () => {
                 await eliminarParam(); // 🔥 Elimina
-                if (onUpdate) onUpdate(); // 🔁 Refresca tabla
+                if (onUpdate) onUpdate();
+                onParametroChange && onParametroChange(); // 🔁 Refresca tabla
 
                 setSuccessMsg('Parámetro eliminado correctamente.');
                 setShowSuccess(true); // ✅ Mostramos el cartel
