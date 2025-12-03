@@ -679,23 +679,52 @@ const Parametros = () => {
   *   🔹 CALCULAR PROMEDIO TOTAL SI HAY 2 GRUPOS 
   ************************************************************/
 
-  const calcularPromedioTotal = () => {
+  const calcularPromedioGlobal = async (gruposData) => {
     try {
-      const gruposKeys = Object.keys(promediosGrupo);
+      console.log("===============================================");
+      console.log("🔥 CALCULANDO PROMEDIO GLOBAL (Nueva fórmula)");
+      console.log("===============================================");
 
-      if (gruposKeys.length === 0) {
-        console.log("⚠ No hay promedios para calcular el total.");
-        return;
+      let sumaPonderada = 0;
+      let totalAnimales = 0;
+
+      for (const g of gruposData) {
+        const nroGrupo = g.grupo;
+
+        const cantidadGrupo = animales.filter(
+          a => Number(a.grupo) === Number(nroGrupo)
+        ).length;
+
+        const promedioGrupo = Number(promediosIndividuales[nroGrupo] || 0);
+
+        console.log(
+          `Grupo ${nroGrupo} → promedio ${promedioGrupo} × ${cantidadGrupo} animales`
+        );
+
+        sumaPonderada += promedioGrupo * cantidadGrupo;
+        totalAnimales += cantidadGrupo;
       }
 
-      const suma = gruposKeys.reduce((acc, g) => acc + Number(promediosGrupo[g] || 0), 0);
-      const promedioFinal = (suma / gruposKeys.length).toFixed(2);
+      if (totalAnimales === 0) {
+        console.log("❌ No hay animales para global.");
+        return 0;
+      }
 
-      console.log("🎯 PROMEDIO TOTAL DE TODOS LOS GRUPOS =", promedioFinal);
+      // 🟦 Promedio ponderado
+      let promedio = sumaPonderada / totalAnimales;
 
-      setPromedioTotalGrupos(promedioFinal);
+      // 🟧 Aplicar porcentaje general (porcentaje ya existe en tu código)
+      const promedioConPorcentaje = (promedio * porcentaje).toFixed(2);
+
+      console.log("🔥 Promedio GLOBAL final =", promedioConPorcentaje);
+
+      setPromedioTotalGrupos(promedioConPorcentaje);
+
+      return promedioConPorcentaje;
+
     } catch (error) {
-      console.error("❌ Error en calcularPromedioTotal:", error);
+      console.error("❌ Error en calcularPromedioGlobal:", error);
+      return 0;
     }
   };
 
@@ -713,58 +742,6 @@ const Parametros = () => {
 
 
 
-  const calcularPromedioGlobal = (gruposData = grupos) => {
-    try {
-      console.log("===============================================");
-      console.log("🟣 CALCULANDO PROMEDIO GLOBAL (NUEVA LÓGICA)");
-      console.log("===============================================");
-
-      let totalRacionBase = 0;
-      let totalAnimales = 0;
-
-      animales.forEach(a => {
-        const nroGrupo = Number(a.grupo);
-
-        // 1) Buscar grupo
-        const grupoEncontrado = gruposData.find(g => Number(g.grupo) === nroGrupo);
-        if (!grupoEncontrado) return;
-
-        const categoria = a.categoria;
-        const rodeo = String(a.rodeo);
-
-        // 2) Buscar en parámetros de ese grupo
-        const paramCat = grupoEncontrado.parametros.find(p => p.categoria === categoria);
-        if (!paramCat) return;
-
-        const paramRodeo = paramCat.rodeos.find(r => String(r.orden) === rodeo);
-        if (!paramRodeo) return;
-
-        // 3) Obtener ración base (sin modificar)
-        const racionBase = Number(paramRodeo.racion);
-
-        totalRacionBase += racionBase;
-        totalAnimales++;
-      });
-
-      if (totalAnimales === 0) {
-        alert("No hay animales válidos para calcular el promedio global.");
-        return;
-      }
-
-      // 4) Calcular promedio base
-      const promedioBase = totalRacionBase / totalAnimales;
-
-      // 5) Aplicar porcentaje general (sin redondeo individual)
-      const promedioFinal = (promedioBase * porcentaje).toFixed(2);
-
-      console.log("🟣 PROMEDIO GLOBAL CALCULADO =", promedioFinal, "kg");
-
-      setPromedioTotalGrupos(promedioFinal);
-
-    } catch (error) {
-      console.error("❌ Error en calcularPromedioGlobal:", error);
-    }
-  };
 
 
   const recalcularTodosLosPromedios = async () => {
@@ -920,7 +897,7 @@ const Parametros = () => {
                   className={styles.cta}
                   onClick={async () => {
 
-                    // 1️⃣ Cargar parámetros nuevos DESDE FIREBASE
+                    // 1️⃣ Leer parámetros actualizados desde Firebase
                     const snap = await firebase.db
                       .collection("parametro")
                       .where("idtambo", "==", tamboSel.id)
@@ -931,15 +908,21 @@ const Parametros = () => {
                       .map(d => ({ id: d.id, ...d.data() }))
                       .filter(d => Array.isArray(d.parametros));
 
-                    // 2️⃣ Calcular promedio global con los valores nuevos
+                    // 2️⃣ Calcular promedios individuales por grupo ANTES del global
+                    for (const g of gruposActualizados) {
+                      await calcularPromedioIndividual(g.grupo, gruposActualizados);
+                    }
+
+                    // 3️⃣ Calcular promedio global con la NUEVA FÓRMULA
                     await calcularPromedioGlobal(gruposActualizados);
 
-                    // 3️⃣ Actualizar el estado de grupos (para la UI)
+                    // 4️⃣ Actualizar el estado de grupos
                     setGrupos(gruposActualizados);
 
-                    // 4️⃣ Recién ahora cambiar el texto del botón
+                    // 5️⃣ Resetear indicador visual
                     setParametrosModificados(false);
                   }}
+
                 >
                   <span className={styles.hoverUnderline}>
                     {parametrosModificados ? "Recalcular Promedio Global" : "Promedio Global"}
@@ -1279,23 +1262,13 @@ const Parametros = () => {
               <h5>Promedio Global</h5>
 
               <p>
-                Con esta nueva actualización, el <strong>Promedio Global</strong> se calcula
-                exclusivamente a partir de las <strong>raciones base configuradas en los parámetros</strong>
-                de cada grupo. Es decir, se toma la ración definida para el rodeo y categoría
-                de cada animal, se suman todas esas raciones y se divide por el total de animales.
-              </p>
+                se calcula usando las raciones que vos configuraste en Parámetros para cada grupo.
+                Es decir, se basa en <strong>lo que debería comer cada animal según tus parámetros</strong>, no en la ración real del día.
 
-              <p>
-                Una vez obtenido ese promedio base, se aplica el
-                <strong> porcentaje general de alimentación</strong> del tambo para obtener el
-                valor final.
-              </p>
+                Por ese motivo, en algunos casos el resultado puede ser <strong>distinto al promedio que aparece en Control</strong>, ya que en Control se usa la ración real que está recibiendo cada animal.
 
-              <p>
-                A diferencia del cálculo individual del control,
-                <strong>no se usa la ración real que recibe cada animal</strong> ni se hace
-                redondeo por animal. El resultado es un promedio global más limpio y basado
-                únicamente en los parámetros configurados.
+                Para obtener este valor, el sistema calcula el <strong>promedio de cada grupo</strong> según sus raciones configuradas, y luego combina esos promedios teniendo en cuenta cuántos animales hay en cada grupo.
+                El resultado es una <strong>vista general</strong> de cómo quedaría la alimentación del tambo según los parámetros definidos.
               </p>
             </>
           )}
