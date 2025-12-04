@@ -50,16 +50,15 @@ export const useActualizarAnimales = (tamboSel) => {
     guardarProcesando(false);
   };
 
-  // --- Actualiza todos los campos del animal ---
+  // --- Actualiza todos los campos del animal ---  
   const updateAnimal = async (a) => {
     let id;
     let erroresFlag = false;
     let e = '';
     let erp = '';
-    let categoria, estpro, estrep;
-    let fparto = '', fservicio = '', grupo = 0;
+    let categoria;
 
-    // Validaciones principales
+    // === Validación del eRP ===
     if (a.erp && a.erp.length !== 0) {
       erp = a.erp.toString();
       let existeeRP = false;
@@ -90,11 +89,13 @@ export const useActualizarAnimales = (tamboSel) => {
       erroresFlag = true;
     }
 
-    // 🧠 Validaciones y formato de campos (simplificado)
+    // === Validación categoría ===
     if (a.categoria) {
       categoria = a.categoria.trim().toLowerCase();
-      categoria = categoria === 'vaca' ? 'Vaca' :
-                  categoria === 'vaquillona' ? 'Vaquillona' : null;
+      categoria =
+        categoria === 'vaca' ? 'Vaca' :
+          categoria === 'vaquillona' ? 'Vaquillona' : null;
+
       if (!categoria) {
         e = `Fila N°: ${a.fila} / Categoria incorrecta`;
         guardarErrores(prev => [...prev, e]);
@@ -102,44 +103,53 @@ export const useActualizarAnimales = (tamboSel) => {
       }
     }
 
-    // 🗓️ Conversión de fechas Excel a string
+    // === Conversión de fechas Excel SOLO si hay valor ===
     const convertirFecha = (valor) => {
-      if (isNaN(valor) || !valor) return '';
+      if (!valor || isNaN(valor)) return null;
       const f = new Date("1899-12-31");
       f.setDate(f.getDate() + valor);
       return format(f, 'yyyy-MM-dd');
     };
 
-    fparto = convertirFecha(a.fparto);
-    fservicio = convertirFecha(a.fservicio);
+    const fparto = a.fparto ? convertirFecha(a.fparto) : null;
+    const fservicio = a.fservicio ? convertirFecha(a.fservicio) : null;
 
-    // Grupo
-    if (a.grupo) {
+    // === Grupo solo si trae valor ===
+    let grupo = null;
+    if (a.grupo !== undefined && a.grupo !== "" && a.grupo !== null) {
       const parsed = parseInt(a.grupo, 10);
-      grupo = isNaN(parsed) ? 0 : parsed;
+      grupo = isNaN(parsed) ? null : parsed;
     }
 
-    // Si todo bien, actualiza en Firebase
-    if (!erroresFlag && id) {
-      try {
-        await firebase.db.collection('animal').doc(id).update({
-          lactancia: a.lactancia,
-          estpro: a.estpro,
-          estrep: a.estrep,
-          fparto,
-          fservicio,
-          categoria,
-          erp,
-          grupo,
-          observaciones: a.observaciones || "",
-        });
+    // Si hubo errores, no continuamos
+    if (erroresFlag || !id) return;
 
-        const act = `Fila ${a.fila}: eRP ${erp} actualizado`;
-        guardarActualizados(prev => [...prev, act]);
-      } catch (error) {
-        e = `Fila ${a.fila} / Error al actualizar: ${error}`;
-        guardarErrores(prev => [...prev, e]);
-      }
+    // ===============================
+    // 🔥 Construcción dinámica del update
+    // ===============================
+    const updateData = {};
+
+    if (a.lactancia !== undefined && a.lactancia !== null && a.lactancia !== "" && !isNaN(a.lactancia)) {
+      updateData.lactancia = a.lactancia;
+    }
+
+    if (a.estpro) updateData.estpro = a.estpro;
+    if (a.estrep) updateData.estrep = a.estrep;
+    if (categoria) updateData.categoria = categoria;
+    if (fparto) updateData.fparto = fparto;
+    if (fservicio) updateData.fservicio = fservicio;
+    if (grupo !== null) updateData.grupo = grupo;
+    if (a.observaciones) updateData.observaciones = a.observaciones;
+    updateData.erp = erp; // eRP siempre se mantiene
+
+    try {
+      await firebase.db.collection('animal').doc(id).update(updateData);
+
+      const act = `Fila ${a.fila}: eRP ${erp} actualizado`;
+      guardarActualizados(prev => [...prev, act]);
+    } catch (error) {
+      e = `Fila ${a.fila} / Error al actualizar: ${error}`;
+      guardarErrores(prev => [...prev, e]);
     }
   };
 
