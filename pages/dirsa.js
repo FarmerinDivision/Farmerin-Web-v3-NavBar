@@ -45,6 +45,47 @@ const Dirsa = () => {
     };
 
 
+    // ------------------ INICIO: Reparador de Excel ------------------
+    /**
+     * Intentos de lectura para archivos Excel viejos/mal formados.
+     * Recibe un Uint8Array (buffer) y devuelve un workbook de XLSX.
+     */
+    const repararArchivoExcel = (buffer) => {
+        // 1) Si parece ZIP (xlsx moderno)
+        if (buffer && buffer[0] === 0x50 && buffer[1] === 0x4B) {
+            return XLSX.read(buffer, { type: "array" });
+        }
+
+        // 2) Intentar leer como binary string (xls antiguo)
+        try {
+            const binaryStr = new TextDecoder("latin1").decode(buffer);
+            return XLSX.read(binaryStr, { type: 'binary' });
+        } catch (errBinary) {
+            console.warn("Intento binary falló:", errBinary);
+        }
+
+        // 3) Intentar como 'buffer' (sheetjs puede manejar algunos buffers)
+        try {
+            return XLSX.read(buffer, { type: 'buffer' });
+        } catch (errBuffer) {
+            console.warn("Intento buffer falló:", errBuffer);
+        }
+
+        // 4) Reconstruir cadena char por char (fallback)
+        try {
+            let s = "";
+            for (let i = 0; i < buffer.length; i++) s += String.fromCharCode(buffer[i]);
+            return XLSX.read(s, { type: 'binary' });
+        } catch (errFallback) {
+            console.warn("Intento fallback falló:", errFallback);
+        }
+
+        // Si llegamos acá, no se pudo parsear
+        throw new Error("Formato de archivo Excel no reconocido o demasiado viejo.");
+    };
+    // ------------------ FIN: Reparador de Excel ------------------
+
+
     ///// EVENTOS 
     const convertirFechaSoloDDMMYYYY = (valor) => {
         if (!valor) {
@@ -216,7 +257,7 @@ const Dirsa = () => {
         reader.onload = async (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: "array" });
+                const workbook = repararArchivoExcel(data);
 
                 // Suponiendo que querés la primera hoja
                 const sheetName = workbook.SheetNames[0];
@@ -358,25 +399,18 @@ const Dirsa = () => {
         reader.onload = async (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
-
-                // 🧱 Verificar encabezado ZIP (PK)
-                const isZip = data[0] === 0x50 && data[1] === 0x4B;
                 let workbook;
 
                 try {
-                    if (isZip) {
-                        // XLSX moderno
-                        workbook = XLSX.read(data, { type: 'array' });
-                    } else {
-                        // XLS antiguo o binario
-                        console.warn("⚠️ El archivo no parece ZIP, intentando leer como formato XLS (binario)...");
-                        const binaryStr = new TextDecoder("latin1").decode(data);
-                        workbook = XLSX.read(binaryStr, { type: 'binary' });
-                    }
+                    // Usar el reparador: intenta varios métodos internamente
+                    workbook = repararArchivoExcel(data);
                 } catch (err) {
-                    console.error("❌ Error leyendo archivo Excel:", err);
-                    throw new Error("El archivo Excel no es válido o está dañado.");
+                    console.error("❌ No se pudo leer/ reparar el archivo Excel:", err);
+                    setErrores([`Error al procesar archivo Excel: ${err.message}`]);
+                    setIsLoading(false);
+                    return; // salimos del proceso de carga
                 }
+
 
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const fullData = XLSX.utils.sheet_to_json(sheet, {
@@ -467,7 +501,7 @@ const Dirsa = () => {
 
                             <input
                                 type="file"
-                                accept=".xlsx,.xls,.csv"
+                                accept=".csv,.xlsx,.xls,.xlsm,.xlx"
                                 ref={inputFileRefEvento}
                                 style={{ display: 'none' }}
                                 onChange={handleFileChangeEventos}
@@ -514,7 +548,7 @@ const Dirsa = () => {
 
                             <input
                                 type="file"
-                                accept=".xlsx,.xls,.csv"
+                                accept=".csv,.xlsx,.xls,.xlsm,.xlx"
                                 ref={inputFileRefLechero}
                                 style={{ display: 'none' }}
                                 onChange={handleFileChangeLechero}

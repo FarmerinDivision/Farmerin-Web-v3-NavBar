@@ -78,7 +78,7 @@ function IngresosFiltrados() {
               const [fechaStr, horaStr] = item.ingresos[0].ts.split(' ');
               return {
                 turno,
-                rp: item.rfid,
+                rp: String(item.rfid).padStart(4, '0'),
                 visible: item.visible,
                 fecha: fechaStr,
                 hora: horaStr,

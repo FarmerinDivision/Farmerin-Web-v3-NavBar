@@ -201,12 +201,26 @@ const NavBar = () => {
 
           <div className={styles.dropdown}>
             <button className={styles.dropbtn}>Nutrición</button>
+
             <div className={styles.dropdownContent}>
+
               <Link href="/parametros"><span>Parámetros</span></Link>
               <Link href="/control"><span>Control</span></Link>
-              <Link href="/controlLechero"><span>Control Lechero</span></Link>
+
+              {/* SUBMENÚ LATERAL Control Lechero */}
+              <div className={styles.subDropdown}>
+                <span className={styles.subDropbtn}>Control Lechero</span>
+
+                <div className={styles.subDropdownContent}>
+                  <Link href="/controlLechero"><span>Cargar Control Lechero</span></Link>
+                  <Link href="/ControlLecheroMensual"><span>Reporte Control Lechero</span></Link>
+                </div>
+              </div>
+
             </div>
           </div>
+
+
 
           <div className={styles.dropdown}>
             <button className={styles.dropbtn}>Reportes</button>

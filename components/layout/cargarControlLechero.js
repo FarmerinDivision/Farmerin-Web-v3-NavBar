@@ -34,9 +34,39 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
                 // Ej: "37,4" → "37.4"
                 litros = parseFloat(litrosStr.replace(",", "."));
             } else if (!isNaN(Number(litrosStr))) {
-                // Ej: vino como 374 en vez de 37.4
-                litros = parseFloat(litrosStr) / 10;
+
+                // 🧪 Si tiene coma → normalizar
+                if (litrosStr.includes(",")) {
+                    litros = parseFloat(litrosStr.replace(",", "."));
+                }
+
+                // 🧪 Si tiene punto → normalizar directamente
+                else if (litrosStr.includes(".")) {
+                    litros = parseFloat(litrosStr);
+                }
+
+                // 🧪 Si es número entero de 3 dígitos → insertar coma antes del último dígito
+                else if (/^\d{3}$/.test(litrosStr)) {
+                    const convertido = litrosStr.slice(0, 2) + "." + litrosStr.slice(2);
+                    litros = parseFloat(convertido);
+                }
+
+                // 🧪 Si es número entero de 2 dígitos → queda igual
+                else if (/^\d{2}$/.test(litrosStr)) {
+                    litros = parseFloat(litrosStr);
+                }
+
+                // 🧪 Si es un solo dígito → queda igual
+                else if (/^\d$/.test(litrosStr)) {
+                    litros = parseFloat(litrosStr);
+                }
+
+                // 🧪 Cualquier otro caso → intentar parsear normal
+                else {
+                    litros = parseFloat(litrosStr);
+                }
             }
+
         }
 
         if (isNaN(litros) && !esValorEspecial) {
@@ -135,7 +165,7 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
                     // 🧩 Obtener datos del animal (para incluir ERP)
                     const animalData = doc.data();
                     const erp = animalData?.erp || null;
-                    
+
                     await firebase.db.collection('animal').doc(doc.id).collection('eventos').add({
                         fecha: fechaEvento,
                         tipo: 'Control Lechero mediante planilla Dirsa',

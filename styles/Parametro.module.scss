@@ -833,7 +833,7 @@
   align-items: center;
   gap: 0.6rem;
   font-size: 1.15rem;
-  min-width: 120px;   
+  min-width: 120px;
   /* 🔸 Letras un poco más grandes */
   text-align: center;
   transition: all 0.25s ease;
@@ -1056,14 +1056,26 @@
 /* === BOTÓN PROMEDIO (Uiverse Adaptado) === */
 
 .cta {
-  border: none;
-  background: none;
-  cursor: pointer;
+  /* Tamaño del botón */
+  padding: 6px 14px !important;
+
+  /* Texto más chico y centrado */
+  font-size: 13px !important;
+  text-align: center;
+  letter-spacing: 0.5px;
+
+  /* Borde negro más grueso */
+  border: 3.5px solid #000 !important;
+  border-radius: 8px;
+
+  /* Centrado del contenido interno */
   display: flex;
   align-items: center;
-  justify-content: flex-start; // 👉 Alineado a la izquierda
-  padding: 5px 0;
+  justify-content: center;
+  gap: 3px;
+  /* Espacio entre texto y flecha */
 }
+
 
 .cta span {
   padding-bottom: 7px;
@@ -1088,9 +1100,9 @@
 
 /* Hover underline animation */
 .hoverUnderline {
-  position: relative;
-  color: #000;
-  padding-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hoverUnderline::after {
@@ -1120,8 +1132,9 @@
 
 /* Subrayado + misma tipografía y estilo que el botón */
 .hoverUnderlineText {
-  position: relative;
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   /* --- Mismo estilo del botón --- */
   font-size: 14px;
@@ -1159,8 +1172,8 @@
   display: flex;
   align-items: center;
   /* ⭐ Centra verticalmente botón + título */
-   gap: 10px;   
-   padding: 5px;
+  gap: 10px;
+  padding: 5px;
 }
 
 .resumenHeader {
@@ -1379,7 +1392,10 @@
   padding: 8px 12px;
   background: rgba(0, 0, 0, 0.85);
   color: #fff;
-  font-size: 0.82rem;
+  font-size: 14px !important;
+  /* antes aprox 10–12px */
+  font-weight: 500;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   border-radius: 6px;
   opacity: 0;

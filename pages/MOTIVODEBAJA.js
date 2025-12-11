@@ -241,52 +241,73 @@ const MiComponente = () => {
      "SrkWyL9Uoa6uBFkf3WaH",
      "b720kztM2SLhXHXPMCJb",
      */
-  // 🔹 Actualizar eventos Control Lechero para muchos tambos (evitando re-actualizar)
+  // 🔥 Ultra Optimizado: BulkWriter + Lecturas Paralelas + Skip de Eventos ya Actualizados
+  // ⚡ Optimizado SIN bulkWriter — compatible con Firebase client
   const actualizarEventosControlLechero = async () => {
-    // 👉 DEFINÍ TUS TAMBO IDs ACÁ
     const TAMBO_IDS = [
-      "cyXDv2ydRIbXEmFRaUND",
-
-      // agregar todos los que quieras
+      "gTzakuM6yFSNZgjJopZG",
+      "e4ZnILyD3WBb5tuamAiq",
+      "cictlHfUlNkH0KnQtXJS",
+      "nkVublhzhK1pwFEjx9DW",
+      "7uZStkH1TDzgkhkgzUtH",
+      "PgIQZisE8chKEODVk72E",
+      "SrkWyL9Uoa6uBFkf3WaH",
+      "b720kztM2SLhXHXPMCJb",
     ];
 
-    console.log("🔄 Iniciando actualización para múltiples tambos...");
+    console.log("🚀 Iniciando actualización optimizada sin bulkWriter...");
     setUpdating(true);
     setError(null);
 
     let totalActualizados = 0;
-    let totalErrores = 0;
     let totalSaltados = 0;
+    let totalErrores = 0;
+
+    // ⭐ Pool de concurrencia
+    const ejecutarPool = async (tareas, limite = 15) => {
+      const resultados = [];
+      const cola = [...tareas];
+
+      const workers = new Array(limite).fill(null).map(async () => {
+        while (cola.length) {
+          const tarea = cola.shift();
+          try {
+            resultados.push(await tarea());
+          } catch (e) {
+            console.error("❌ Error en pool:", e);
+          }
+        }
+      });
+
+      await Promise.all(workers);
+      return resultados;
+    };
 
     try {
       for (const idTambo of TAMBO_IDS) {
-        console.log("---------------------------------------------------");
-        console.log("🏷 Procesando tambo:", idTambo);
+        console.log("--------------------------------------------------");
+        console.log("🏷 TAMBO:", idTambo);
 
-        // 1️⃣ Obtener animales del tambo
         const snapAnimales = await firebase.db
           .collection("animal")
           .where("idtambo", "==", idTambo)
           .get();
 
-        console.log(`📋 Animales encontrados en ${idTambo}: ${snapAnimales.size}`);
+        console.log(`🐄 Animales encontrados: ${snapAnimales.size}`);
 
         if (snapAnimales.empty) {
-          console.warn(`⚠ No hay animales en el tambo ${idTambo}, se continúa con el siguiente.`);
+          console.warn("⚠ Tambo sin animales, se saltea.");
           continue;
         }
 
-        // 2️⃣ Procesar animales
-        for (const docAnimal of snapAnimales.docs) {
+        // Creamos las tareas de procesamiento de animales
+        const tareasAnimales = snapAnimales.docs.map((docAnimal) => async () => {
           const animal = docAnimal.data();
           const animalId = docAnimal.id;
 
           const rp = animal.rp ?? null;
           const erp = animal.erp ?? null;
 
-          console.log("🐄 Animal:", animalId, "RP:", rp, "ERP:", erp);
-
-          // 3️⃣ Buscar eventos Control Lechero
           const snapEventos = await firebase.db
             .collection("animal")
             .doc(animalId)
@@ -294,62 +315,65 @@ const MiComponente = () => {
             .where("tipo", "==", "Control Lechero")
             .get();
 
-          console.log(`🔍 Eventos Control Lechero encontrados: ${snapEventos.size}`);
+          if (snapEventos.empty) return;
 
-          if (snapEventos.empty) {
-            console.warn(`⚠ El animal ${animalId} NO tiene eventos Control Lechero. Se continúa.`);
-            continue;
-          }
+          // Procesamos eventos
+          const batch = firebase.db.batch();
+          let batchCount = 0;
 
-          // 4️⃣ Actualizar eventos
           for (const evDoc of snapEventos.docs) {
             const evento = evDoc.data();
 
-            // 🔥 NUEVA LÓGICA: si ya tiene los 3 campos, SE SALTA
-            const yaTiene =
+            const yaTieneCampos =
               evento.rp !== undefined &&
               evento.erp !== undefined &&
               evento.idtambo !== undefined;
 
-            if (yaTiene) {
-              console.log(`⏭ Evento ${evDoc.id} ya tenía los campos. SALTADO.`);
+            if (yaTieneCampos) {
               totalSaltados++;
               continue;
             }
 
-            // 👉 SI NO LOS TIENE, se actualiza
-            try {
-              await evDoc.ref.update({
-                rp,
-                erp,
-                idtambo: idTambo
-              });
+            batch.update(evDoc.ref, {
+              rp,
+              erp,
+              idtambo: idTambo
+            });
 
-              console.log(`✔ Evento ${evDoc.id} actualizado.`);
-              totalActualizados++;
+            totalActualizados++;
+            batchCount++;
 
-            } catch (err) {
-              console.error(`❌ Error actualizando evento ${evDoc.id}:`, err);
-              totalErrores++;
+            if (batchCount === 400) {
+              await batch.commit();
+              batchCount = 0;
             }
           }
-        }
+
+          if (batchCount > 0) {
+            await batch.commit();
+          }
+        });
+
+        // Procesamos animales en paralelo (15 por vez)
+        await ejecutarPool(tareasAnimales, 15);
       }
 
       alert(
-        `✔ Proceso completado.\n` +
+        `✔ Proceso terminado\n` +
         `Eventos actualizados: ${totalActualizados}\n` +
-        `Eventos saltados (ya estaban OK): ${totalSaltados}\n` +
+        `Eventos saltados: ${totalSaltados}\n` +
         `Errores: ${totalErrores}`
       );
 
-    } catch (err) {
-      console.error("🔥 ERROR GENERAL:", err);
-      setError("Error general procesando la actualización.");
+    } catch (e) {
+      console.error("🔥 ERROR FATAL:", e);
+      setError("Error general durante la actualización.");
     }
 
     setUpdating(false);
+    console.log("🏁 Finalizó la actualización");
   };
+
 
 
   return (

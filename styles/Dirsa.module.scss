@@ -1,63 +1,133 @@
 /* Dirsa.module.scss */
-
-.result-container {
-  margin-top: 2rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+/* === CONTENEDOR GENERAL === */
+.resultContainer {
+  width: 100%;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.result-header {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+/* === HEADER TITULO === */
+.resultHeader {
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
 }
 
-.mensaje-global-Rcargas {
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  font-weight: 500;
-  text-align: center;
+/* === LOADER GLOBAL PROFESIONAL === */
+.loaderGlobal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 25px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  gap: 10px;
+
+  p {
+    font-size: 16px;
+    font-weight: 600;
+    color: #444;
+    margin: 0;
+  }
 }
 
-.mensaje-exito-Rcargas {
-  background-color: #d4edda;
-  color: #155724;
+.spinner {
+  width: 45px !important;
+  height: 45px !important;
 }
 
-.mensaje-error-Rcargas {
-  background-color: #f8d7da;
-  color: #721c24;
+/* === MENSAJES GLOBALES === */
+.mensajeGlobal {
+  padding: 15px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  border-left: 5px solid;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
-.result-box {
-  padding: 1rem;
-  border-radius: 6px;
-  margin-top: 1rem;
+.mensajeLoading {
+  background: #e8f0ff;
+  border-color: #3b73ff;
+  color: #2a4cb8;
 }
 
-.success-box {
-  background-color: #e9f7ef;
-  border: 1px solid #c3e6cb;
+.mensajeExito {
+  background: #e7f8ee;
+  border-color: #35a66f;
+  color: #18794e;
 }
 
-.error-box {
-  background-color: #f8e9ec;
-  border: 1px solid #f5c6cb;
+.mensajeError {
+  background: #fde7e7;
+  border-color: #d9534f;
+  color: #b12c2a;
 }
 
-.result-title {
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
+/* === CONTENEDOR HORIZONTAL DE LISTAS === */
+.resultRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 }
 
-.result-list {
+/* === CAJAS DE LISTAS === */
+.resultBox {
+  background: #ffffff;
+  padding: 20px 22px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.successBox {
+  border-top: 5px solid #28a745;
+}
+
+.errorBox {
+  border-top: 5px solid #dc3545;
+}
+
+/* === TITULOS === */
+.resultTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 6px;
+}
+
+/* === LISTAS === */
+.resultList {
   list-style: none;
-  padding-left: 1rem;
+  padding: 0;
+  margin: 0;
 }
 
-.result-item {
-  margin-bottom: 0.25rem;
+.resultItem {
+  padding: 10px 12px;
+  background: #f7f7f7;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #444;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 

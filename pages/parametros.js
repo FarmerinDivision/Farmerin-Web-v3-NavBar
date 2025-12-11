@@ -36,9 +36,6 @@ const Parametros = () => {
   const [showInfo, setShowInfo] = useState(false);
   const [parametrosModificados, setParametrosModificados] = useState(false);
 
-
-
-
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -49,6 +46,37 @@ const Parametros = () => {
     }
   }, [tamboSel]);
 
+  useEffect(() => {
+    if (grupos.length > 0 && animales.length > 0) {
+
+      const calcularInicial = async () => {
+        for (const g of grupos) {
+          await calcularPromedioIndividual(g.grupo, grupos);
+        }
+
+        if (grupos.length > 1) {
+          await calcularPromedioGlobal(grupos);
+        }
+      };
+
+      calcularInicial();
+    }
+  }, [grupos, animales]);
+
+
+  useEffect(() => {
+    if (grupos.length <= 1) return;
+    if (animales.length === 0) return;
+
+    // Verifica si falta algún promedio individual
+    const faltan = grupos.some(g => !promediosIndividuales[g.grupo]);
+
+    if (faltan) return;
+
+    // Cuando TODOS los grupos tienen promedio → calcular el global
+    calcularPromedioGlobal(grupos);
+
+  }, [promediosIndividuales, grupos, animales]);
 
   const obtenerPorcentaje = async () => {
     try {

@@ -132,3 +132,48 @@
     display: block;
   }
 }
+
+/* Contenedor del submenú lateral */
+.subDropdown {
+  position: relative;
+}
+
+/* Botón estilo texto */
+.subDropbtn {
+  padding: 10px 16px;
+  display: block;
+  cursor: pointer;
+  color: #080808;
+  white-space: nowrap;
+}
+
+/* Submenú lateral */
+.subDropdownContent {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  /* abre hacia la derecha */
+  background-color: #fffffe;
+  min-width: 200px;
+  border-left: 2px solid #fffffe;
+  border-radius: 3px;
+  padding-left: 1.5px;
+  z-index: 999;
+}
+
+/* Mostrar submenu al hover */
+.subDropdown:hover .subDropdownContent {
+  display: block;
+}
+
+/* Estilo de cada opción dentro del submenu */
+.subDropdownContent a span {
+  padding: 10px 14px;
+  display: block;
+  color: #fffffe;
+}
+
+.subDropdownContent a span:hover {
+  background-color: #fffffe;
+}
