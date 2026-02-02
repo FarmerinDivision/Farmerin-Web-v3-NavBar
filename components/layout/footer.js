@@ -22,7 +22,7 @@ const Footer = () => {
           rel="noopener noreferrer"
           className={styles.link}
         >
-          Ultra I+D
+          Ultra I+D+I
         </a>
         <span className={styles.separator}>&</span>
         <a className={`${styles.link} ${styles.devSignature}`}>

@@ -68,17 +68,19 @@ function IngresosFiltrados() {
           (items || [])
             .filter(
               item =>
-                String(item.rfid) !== 'N/A' &&
-                String(item.rfid) !== '0' &&
+                item.rfid !== null &&
+                item.rfid !== undefined &&
+                String(item.rfid).toUpperCase() !== 'N/A' &&
                 String(item.rfid).trim() !== '' &&
                 Array.isArray(item.ingresos) &&
                 item.ingresos.length > 0
             )
+
             .map(item => {
               const [fechaStr, horaStr] = item.ingresos[0].ts.split(' ');
               return {
                 turno,
-                rp: String(item.rfid).padStart(4, '0'),
+                rp: String(item.rfid).padStart(15, '0'),
                 visible: item.visible,
                 fecha: fechaStr,
                 hora: horaStr,

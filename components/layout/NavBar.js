@@ -229,6 +229,7 @@ const NavBar = () => {
               <Link href="/produccion"><span>Producción</span></Link>
               <Link href="/parteDiario"><span>Parte Diario</span></Link>
               <Link href="/recepciones"><span>Recepciones</span></Link>
+              <Link href="/ConsumoRacion"><span>Consumo</span></Link>
             </div>
           </div>
 

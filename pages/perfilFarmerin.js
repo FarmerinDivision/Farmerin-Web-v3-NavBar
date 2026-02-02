@@ -11,6 +11,7 @@ import { ObtenerAnimalesPerfilForm } from '../components/utils/obtenerAnimalesPe
 import { NotificacionesContext } from '../components/utils/NotificationsProvider';
 import { ContenedorAlertas } from '../components/ui/Elementos';
 import styles from '../styles/perfilFarmerin.module.scss';
+import PerfilFarmerinConsumo from "../components/layout/PerfilFarmerinConsumo";
 
 const UserProfile = () => {
   const { usuario, tamboSel, guardarTamboSel, firebase } = useContext(FirebaseContext);
@@ -171,6 +172,7 @@ const UserProfile = () => {
           {/* Columna derecha: Botones de acción */}
           <div className={styles.perfilColDerecha}>
             <div className={styles.farmerinCardActions}>
+              <PerfilFarmerinConsumo />
               <InformacionTambo tambo={tamboSel} fetch={fetch} />
               <ObtenerAnimalesPerfilForm />
             </div>
