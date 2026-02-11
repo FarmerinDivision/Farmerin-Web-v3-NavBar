@@ -3,6 +3,9 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 import * as XLSX from 'xlsx';
 import Layout from '../components/layout/layout';
+import AdminTamboSelector from '../components/utils/AdminTamboSelector';
+import styles from '../styles/Administrador.module.scss';
+import { Card } from 'react-bootstrap';
 
 const EncontrarERPRepetidos = () => {
   const [datosFiltrados, setDatosFiltrados] = useState([]);
@@ -68,11 +71,11 @@ const EncontrarERPRepetidos = () => {
           );
           return otrosTambos.length === 1
             ? {
-                erpPrincipal: dato.erp,
-                idTamboPrincipal: dato.idtambo,
-                idTamboOtrosTambos: otrosTambos[0].idtambo,
-                erpOtrosTambos: otrosTambos[0].erp,
-              }
+              erpPrincipal: dato.erp,
+              idTamboPrincipal: dato.idtambo,
+              idTamboOtrosTambos: otrosTambos[0].idtambo,
+              erpOtrosTambos: otrosTambos[0].erp,
+            }
             : null;
         })
         .filter((dato) => dato !== null);
@@ -143,64 +146,81 @@ const EncontrarERPRepetidos = () => {
   if (loading) {
     return (
       <Layout titulo="Herramientas">
-        <>
-        <div className="spinnerContainer-Grafico">
-          <div className="spinner-Grafico"></div>
-          <div className="loader-Grafico">
-            <p>CARGANDO</p>
-            <div className="words-Grafico">
-              <span className="word-Grafico">DATOS DEL TAMBO</span>
-              <span className="word-Grafico">BUSCANDO ERP</span>
-              <span className="word-Grafico">BUSCANDO DUPLICADOS</span>
-              <span className="word-Grafico">ANALIZANDO IDTAMBOS</span>
-            </div>
-          </div>
+        <div className={styles.loading}>
+          <p>Cargando análisis de ERP repetidos...</p>
         </div>
-        </>
       </Layout>
     );
   }
 
   return (
     <Layout titulo="ERP Repetidos">
-      <>
-      <div className="EncontrarERP-container">
-        <div className="erp-repetidos-header">
-          <h1>ERP Repetidos</h1>
-          <button className="btn-descargar-excel" onClick={descargarExcel}>
-            Descargar Excel
-          </button>
+      <div className={styles.encontrarErpContainer}>
+
+        <div className={styles.header}>
+          <h1 className={styles.title}>ERP Repetidos</h1>
+          <p className={styles.subtitle}>Detección de identidades duplicadas entre tambos.</p>
         </div>
-        {datosFiltrados.length > 0 ? (
-          <table className="EncontrarERP-table">
-            <thead>
-              <tr>
-                <th>ERP obtenido</th>
-                <th>Id tambo de busqueda</th>
-                <th>Nombre tambo de busqueda</th>
-                <th>ERP duplicados</th>
-                <th>Id tambo de ERP duplicados</th>
-                <th>Nombre tambo de ERP duplicados</th>
-              </tr>
-            </thead>
-            <tbody>
-              {datosFiltrados.map((dato, index) => (
-                <tr key={index}>
-                  <td>{dato.erpPrincipal}</td>
-                  <td>{dato.idTamboPrincipal}</td>
-                  <td>{dato.nombreTamboPrincipal}</td>
-                  <td>{dato.erpOtrosTambos}</td>
-                  <td>{dato.idTamboOtrosTambos}</td>
-                  <td>{dato.nombreTamboOtrosTambos}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No se encontraron resultados</p>
-        )}
+
+        <div className={styles.cardInfo}>
+          <ul>
+            <p><strong>¿Qué podés hacer acá?</strong></p>
+            <p>En esta pantalla podés detectar animales con ERP repetidos entre distintos tambos.</p>
+            <p>El sistema toma como referencia un tambo principal y busca si existen animales con el mismo ERP registrados en otros tambos.</p>
+            <p><strong>El resultado muestra:</strong></p>
+            <li>El ERP encontrado.</li>
+            <li>El tambo donde se encontró originalmente.</li>
+            <li>Los otros tambos donde ese ERP aparece duplicado.</li>
+            <p><strong>Esta herramienta es útil para:</strong></p>
+            <li>Controlar inconsistencias de datos.</li>
+            <li>Detectar posibles errores de carga.</li>
+            <li>Verificar duplicaciones entre tambos.</li>
+            <p><strong>Una vez obtenido el listado, podés descargar la información en un archivo Excel para su análisis o respaldo.</strong></p>
+            <p><strong>ℹ️ Esta herramienta no modifica datos, solo analiza y exporta información.</strong></p>
+          </ul>
+        </div>
+
+        <AdminTamboSelector />
+        <div className={styles.card}>
+          <div className={styles.erpHeader}>
+            <h2 className={styles.title} style={{ fontSize: '1.25rem' }}>Resultados del análisis</h2>
+            <button className={styles.btnSuccess} onClick={descargarExcel}>
+              Descargar Excel
+            </button>
+          </div>
+
+          {datosFiltrados.length > 0 ? (
+            <div className={styles.tableContainer}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>ERP obtenido</th>
+                    <th>Id tambo búsqueda</th>
+                    <th>Nombre tambo búsqueda</th>
+                    <th>ERP duplicados</th>
+                    <th>Id tambo duplicado</th>
+                    <th>Nombre tambo duplicado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {datosFiltrados.map((dato, index) => (
+                    <tr key={index}>
+                      <td>{dato.erpPrincipal}</td>
+                      <td>{dato.idTamboPrincipal}</td>
+                      <td>{dato.nombreTamboPrincipal}</td>
+                      <td>{dato.erpOtrosTambos}</td>
+                      <td>{dato.idTamboOtrosTambos}</td>
+                      <td>{dato.nombreTamboOtrosTambos}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className={styles.successMessage}>No se encontraron resultados duplicados.</div>
+          )}
+        </div>
       </div>
-      </>
     </Layout>
   );
 };

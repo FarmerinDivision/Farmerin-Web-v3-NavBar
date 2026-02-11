@@ -7,6 +7,7 @@ import { Button, Modal, Badge, Alert } from 'react-bootstrap';
 import { ContenedorAlertas } from '../ui/Elementos';
 import { useDispatch, useSelector } from "react-redux";
 import { updateValor } from '../../redux/valorSlice';
+import { useAdmin } from '../utils/AdminContext';
 
 const NavBar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -21,6 +22,7 @@ const NavBar = () => {
   const [error, setError] = useState(false);
   const dispatch = useDispatch();
   const valor = useSelector((state) => state.valor);
+  const { isAdminMode } = useAdmin();
 
   useEffect(() => {
     if (porc !== undefined) {
@@ -199,6 +201,22 @@ const NavBar = () => {
           <Link href="/"><span>Tambos</span></Link>
           <Link href="/animales"><span>Animales</span></Link>
 
+          {isAdminMode && (
+            <div className={styles.dropdown}>
+              <button className={styles.dropbtn}>Administrador</button>
+              <div className={styles.dropdownContent}>
+                <Link href="/MOTIVODEBAJA"><span>Herramientas Administrativas</span></Link>
+                <Link href="/migrarEvento"><span>Migrar Evento</span></Link>
+                <Link href="/EncontrarERP"><span>Encontrar ERP</span></Link>
+                <Link href="/CambioRodeo"><span>Cambio Rodeo</span></Link>
+                <Link href="/CambioAseca"><span>Cambio a Seca</span></Link>
+                <Link href="/CambioEvento"><span>Cambio Evento</span></Link>
+                <Link href="/busquedaNuevaFuncion"><span>Cambio de Fracion a TimeStamp</span></Link>
+                <Link href="/BotonAgregar"><span>Boton Agregar Campo</span></Link>
+              </div>
+            </div>
+          )}
+
           <div className={styles.dropdown}>
             <button className={styles.dropbtn}>Nutrición</button>
 
@@ -259,7 +277,6 @@ const NavBar = () => {
             </div>
           </div>
           <Link href="/ayuda"><span>Ayuda</span></Link>
-          <Link href="/busquedaNuevaFuncion"><span>Check Fraccion</span></Link>
           <Link href="/perfilFarmerin">
             <span style={{ position: "relative", display: "inline-block" }}>
               Mi Farmerin - {tamboSel.nombre}

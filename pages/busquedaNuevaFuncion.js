@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
-import { Form, Button, Table, Alert, Spinner, Container, Row, Col, Card } from 'react-bootstrap';
-import { useRouter } from 'next/router';
 import { RiSearchLine } from 'react-icons/ri';
+import AdminTamboSelector from '../components/utils/AdminTamboSelector';
+import styles from '../styles/Administrador.module.scss';
+import { Card } from 'react-bootstrap';
 
 const BusquedaNuevaFuncion = () => {
     const { firebase, usuario } = useContext(FirebaseContext);
@@ -13,7 +14,6 @@ const BusquedaNuevaFuncion = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [mensaje, setMensaje] = useState('');
-    const router = useRouter();
 
     // 1. Cargar tambos del usuario al iniciar
     useEffect(() => {
@@ -205,90 +205,103 @@ const BusquedaNuevaFuncion = () => {
 
     return (
         <Layout titulo="Búsqueda por Tambo">
-            <Container className="mt-4">
-                <Card className="shadow-sm mb-4">
-                    <Card.Body>
-                        <h2 className="mb-4">Búsqueda de Animales por Fracción</h2>
+            <div className={styles.busquedaContainer}>
 
-                        <Form onSubmit={handleBuscar}>
-                            <Row className="align-items-end">
-                                <Col md={6}>
-                                    <Form.Group controlId="selectTambo">
-                                        <Form.Label>Selecciona un Tambo</Form.Label>
-                                        <Form.Control
-                                            as="select"
-                                            value={idTamboSeleccionado}
-                                            onChange={handleChangeTambo}
-                                            disabled={loading}
-                                        >
-                                            <option value="">-- Seleccionar --</option>
-                                            {tambos.map(t => (
-                                                <option key={t.id} value={t.id}>
-                                                    {t.nombre}
-                                                </option>
-                                            ))}
-                                        </Form.Control>
-                                    </Form.Group>
-                                </Col>
-                                <Col md={2}>
-                                    <Button
-                                        variant="primary"
-                                        type="submit"
-                                        block
-                                        disabled={loading || !idTamboSeleccionado}
-                                    >
-                                        {loading ? <Spinner as="span" animation="border" size="sm" /> : <><RiSearchLine /> Buscar</>}
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </Form>
+                <div className={styles.header}>
+                    <h1 className={styles.title}>Búsqueda y Corrección de Fechas</h1>
+                    <p className={styles.subtitle}>Herramienta para estandarizar fechas de fracción.</p>
+                </div>
 
-                        {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
-                        {mensaje && <Alert variant="info" className="mt-3">{mensaje}</Alert>}
-                    </Card.Body>
-                </Card>
+                <div className={styles.cardInfo}>
+                    <ul>
+                        <p><strong>¿Qué podés hacer acá?</strong></p>
+                        <p>En esta pantalla podés buscar animales por tambo que tengan el campo “fracción” cargado como texto y corregir ese dato si es necesario.</p>
+                        <p><strong>La herramienta permite:</strong></p>
+                        <li>Seleccionar un tambo asociado a tu usuario.</li>
+                        <li>Buscar animales activos que tengan el campo fracción definido como texto.</li>
+                        <p><strong>Además, si los animales cumplen las condiciones necesarias, podés convertir la fracción a formato de fecha (Timestamp) para normalizar la información en la base de datos.</strong></p>
+                        <p><strong>⚠️ La conversión modifica los datos y solo se aplica a animales En Ordeñe. Se recomienda revisar la lista antes de ejecutar el proceso.</strong></p>
+                    </ul>
+                </div>
 
-                {animales.length > 0 && (
-                    <Card className="shadow-sm">
-                        <Card.Body>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                <h4 className="mb-0">Resultados ({animales.length} animales)</h4>
-                                <Button
-                                    variant="warning"
-                                    onClick={handleMigrarFechas}
+                <AdminTamboSelector />
+
+                <div className={styles.card}>
+                    <h2 className={styles.title} style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Búsqueda de Animales por Fracción</h2>
+
+                    <form onSubmit={handleBuscar} className={styles.formGroup}>
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                            <div style={{ flex: 1, minWidth: '250px' }}>
+                                <label htmlFor="selectTambo">Selecciona un Tambo</label>
+                                <select
+                                    id="selectTambo"
+                                    value={idTamboSeleccionado}
+                                    onChange={handleChangeTambo}
                                     disabled={loading}
                                 >
-                                    Convertir Fracción a Timestamp
-                                </Button>
+                                    <option value="">-- Seleccionar --</option>
+                                    {tambos.map(t => (
+                                        <option key={t.id} value={t.id}>
+                                            {t.nombre}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                            <div className="table-responsive">
-                                <Table striped hover bordered size="sm">
-                                    <thead className="thead-dark">
-                                        <tr>
-                                            <th>RP</th>
-                                            <th>Fracción</th>
-                                            <th>eRP (RFID)</th>
-                                            <th>Categoría</th>
-                                            <th>Estado Prod.</th>
+                            <div>
+                                <button
+                                    className={styles.btnPrimary}
+                                    type="submit"
+                                    disabled={loading || !idTamboSeleccionado}
+                                >
+                                    {loading ? "Buscando..." : <><RiSearchLine style={{ marginRight: '5px' }} /> Buscar</>}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    {error && <div className={styles.errorMessage}>{error}</div>}
+                    {mensaje && <div className={styles.successMessage}>{mensaje}</div>}
+                </div>
+
+                {animales.length > 0 && (
+                    <div className={styles.card}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                            <h4 className={styles.title} style={{ fontSize: '1.25rem', margin: 0 }}>Resultados ({animales.length} animales)</h4>
+                            <button
+                                className={styles.btnWarning}
+                                onClick={handleMigrarFechas}
+                                disabled={loading}
+                            >
+                                Convertir Fracción a Timestamp
+                            </button>
+                        </div>
+                        <div className={styles.tableContainer}>
+                            <table className={styles.table}>
+                                <thead>
+                                    <tr>
+                                        <th>RP</th>
+                                        <th>Fracción Actual</th>
+                                        <th>eRP (RFID)</th>
+                                        <th>Categoría</th>
+                                        <th>Estado Prod.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {animales.map(animal => (
+                                        <tr key={animal.id}>
+                                            <td><strong>{animal.rp || '-'}</strong></td>
+                                            <td style={{ color: '#4f46e5', fontWeight: 'bold' }}>{animal.fracion}</td>
+                                            <td>{animal.erp || '-'}</td>
+                                            <td>{animal.categoria || '-'}</td>
+                                            <td>{animal.estpro || '-'}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {animales.map(animal => (
-                                            <tr key={animal.id}>
-                                                <td><strong>{animal.rp || '-'}</strong></td>
-                                                <td className="text-primary font-weight-bold">{animal.fracion}</td>
-                                                <td>{animal.erp || '-'}</td>
-                                                <td>{animal.categoria || '-'}</td>
-                                                <td>{animal.estpro || '-'}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </Table>
-                            </div>
-                        </Card.Body>
-                    </Card>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 )}
-            </Container>
+            </div>
         </Layout>
     );
 };

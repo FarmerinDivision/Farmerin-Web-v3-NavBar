@@ -1,7 +1,9 @@
 import { useContext, useState } from 'react';
 import { FirebaseContext } from '../firebase2';
-import { Button, Spinner } from 'react-bootstrap';
 import Layout from '../components/layout/layout';
+import AdminTamboSelector from '../components/utils/AdminTamboSelector';
+import styles from '../styles/Administrador.module.scss';
+import { Card } from 'react-bootstrap';
 
 export default function CompletarCamposEventosBtn() {
   const { firebase, tamboSel } = useContext(FirebaseContext);
@@ -77,15 +79,45 @@ export default function CompletarCamposEventosBtn() {
 
   return (
     <Layout>
-      <div style={{ marginTop: 20 }}>
-        <Button
-          onClick={completarCamposEventos}
-          disabled={procesando}
-          variant="success"
-        >
-          {procesando ? <Spinner animation="border" size="sm" /> : 'Completar eventos Dirsa'}
-        </Button>
-        {mensaje && <p>{mensaje}</p>}
+      <div className={styles.cambiarEventoContainer}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Completar Eventos DIRSA</h1>
+          <p className={styles.subtitle}>Normalización de datos faltantes en eventos de control lechero.</p>
+        </div>
+
+        <div className={styles.cardInfo}>
+          <ul>
+            <p><strong>¿Qué podés hacer acá?</strong></p>
+            <p>En esta pantalla podés completar automáticamente datos faltantes en eventos de Control Lechero del tambo seleccionado.</p>
+            <p><strong>La herramienta:</strong></p>
+            <li>Recorre los animales del tambo.</li>
+            <li>Busca eventos del tipo “Control Lechero mediante planilla Dirsa”.</li>
+            <li>Completa en cada evento los campos RP, ERP e idtambo usando la información del animal correspondiente.</li>
+            <li>Omite los eventos que ya tienen estos datos cargados.</li>
+            <p><strong>Este proceso no crea ni elimina eventos, solo completa información faltante para mantener los datos consistentes.</strong></p>
+            <p><strong>ℹ️ Solo se actualizan eventos que tengan datos incompletos.</strong></p>
+          </ul>
+        </div>
+
+        <AdminTamboSelector />
+
+        <div className={styles.card}>
+          <div style={{ marginTop: 20 }}>
+            <button
+              onClick={completarCamposEventos}
+              disabled={procesando}
+              className={styles.btnSuccess}
+            >
+              {procesando ? 'Procesando...' : 'Completar eventos Dirsa'}
+            </button>
+
+            {mensaje && (
+              <div className={mensaje.includes('Error') || mensaje.includes('⚠') ? styles.errorMessage : styles.successMessage} style={{ marginTop: '1rem' }}>
+                {mensaje}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </Layout>
   );

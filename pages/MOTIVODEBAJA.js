@@ -1,7 +1,9 @@
 import React, { useState, useContext } from "react";
 import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
-import styles from '../styles/Herramientas.module.scss';
+import AdminTamboSelector from '../components/utils/AdminTamboSelector';
+import styles from '../styles/Administrador.module.scss';
+import { Card } from 'react-bootstrap';
 
 const MiComponente = () => {
   const [animales, setAnimales] = useState([]);
@@ -82,10 +84,6 @@ const MiComponente = () => {
       setLoading(false);
     }
   };
-
-
-
-
 
 
   // 🔹 Obtener animales de un tambo fijo
@@ -378,57 +376,105 @@ const MiComponente = () => {
 
   return (
     <Layout titulo="Herramientas">
-      <div className={styles.miComponente}>
-        {/* 🔹 Botones */}
-        <div className={styles.acciones}>
-          <button onClick={obtenerAnimales} disabled={loading}>
-            {loading ? "Cargando..." : "Obtener Animales"}
-          </button>
-          <button onClick={actualizarEventosControlLechero} disabled={updating}>
-            {updating ? "Actualizando..." : "Actualizar Eventos Control Lechero"}
-          </button>
-
-          {/* Este botón aparece solo si hay animales */}
-          {animales.length > 0 && (
-            <button onClick={asignarGrupoAnimales} disabled={updating}>
-              {updating ? "Asignando..." : "Asignar Grupo=0"}
-            </button>
-          )}
-
-          <button onClick={obtenerAnimalesConGrupo} disabled={loading}>
-            {loading ? "Cargando..." : "Obtener Animales + Grupo=0"}
-          </button>
+      <div className={styles.motivoBajaContainer}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Herramientas Administrativas</h1>
+          <p className={styles.subtitle}>Gestión masiva de animales y eventos.</p>
         </div>
 
-        {/* 🔹 Mensajes de error */}
-        {error && <p className={styles.error}>{error}</p>}
+        <div className={styles.cardInfo}>
+          <ul>
+            <p><strong>¿Qué podés hacer acá?</strong></p>
+            <p>En esta pantalla podés realizar acciones administrativas sobre los animales del tambo seleccionado.</p>
+            <p><strong>Desde acá vas a poder:</strong></p>
+            <li>Obtener la lista de animales de un tambo.</li>
+            <li>Asignar grupos automáticamente a los animales.</li>
+            <li>Actualizar eventos de Control Lechero en forma masiva.</li>
+            <li>Ejecutar procesos especiales sobre tambos definidos previamente.</li>
+          </ul>
+        </div>
 
-        {/* 🔹 Lista animales del tambo seleccionado */}
-        <h3>Animales del tambo seleccionado</h3>
-        <ul>
-          {animales.length === 0 && !loading && <li>No se encontraron animales.</li>}
-          {animales.map((animal) => (
-            <li key={animal.id}>
-              <span>Nombre: {animal.rp}</span>
-              <span>ID: {animal.erp}</span>
-              <span>Ración: {animal.racion || "N/A"}</span>
-              <span>Grupo: {animal.grupo ?? "Sin grupo"}</span>
-            </li>
-          ))}
-        </ul>
+        <AdminTamboSelector />
 
-        {/* 🔹 Lista animales con grupo */}
-        <h3>Animales del tambo fijo con grupo=0</h3>
-        <ul>
-          {animalesGrupo.length === 0 && !loading && <li>No se encontraron animales.</li>}
-          {animalesGrupo.map((animal) => (
-            <li key={animal.id}>
-              <span>Nombre: {animal.rp}</span>
-              <span>ID: {animal.erp}</span>
-              <span>Grupo: {animal.grupo}</span>
-            </li>
-          ))}
-        </ul>
+        <div className={styles.card}>
+          {/* 🔹 Botones */}
+          <div className={styles.actions}>
+            <button className={`${styles.btnPrimary}`} onClick={obtenerAnimales} disabled={loading}>
+              {loading ? "Cargando..." : "Obtener Animales"}
+            </button>
+            <button className={`${styles.btnWarning}`} onClick={actualizarEventosControlLechero} disabled={updating}>
+              {updating ? "Actualizando..." : "Actualizar Eventos Control Lechero"}
+            </button>
+
+            {/* Este botón aparece solo si hay animales */}
+            {animales.length > 0 && (
+              <button className={`${styles.btnSuccess}`} onClick={asignarGrupoAnimales} disabled={updating}>
+                {updating ? "Asignando..." : "Asignar Grupo=0"}
+              </button>
+            )}
+
+            <button className={`${styles.btnSecondary}`} onClick={obtenerAnimalesConGrupo} disabled={loading}>
+              {loading ? "Cargando..." : "Obtener Animales + Grupo=0"}
+            </button>
+          </div>
+
+          {/* 🔹 Mensajes de error */}
+          {error && <div className={styles.errorMessage}>{error}</div>}
+
+          {/* 🔹 Lista animales del tambo seleccionado */}
+          <h3 className={styles.title} style={{ fontSize: '1.25rem', marginTop: '2rem' }}>Animales del tambo seleccionado</h3>
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>ID</th>
+                  <th>Ración</th>
+                  <th>Grupo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {animales.length === 0 && !loading && (
+                  <tr><td colSpan="4">No se encontraron animales.</td></tr>
+                )}
+                {animales.map((animal) => (
+                  <tr key={animal.id}>
+                    <td>{animal.rp}</td>
+                    <td>{animal.erp}</td>
+                    <td>{animal.racion || "N/A"}</td>
+                    <td>{animal.grupo ?? "Sin grupo"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 🔹 Lista animales con grupo */}
+          <h3 className={styles.title} style={{ fontSize: '1.25rem', marginTop: '2rem' }}>Animales del tambo fijo con grupo=0</h3>
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>ID</th>
+                  <th>Grupo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {animalesGrupo.length === 0 && !loading && (
+                  <tr><td colSpan="3">No se encontraron animales.</td></tr>
+                )}
+                {animalesGrupo.map((animal) => (
+                  <tr key={animal.id}>
+                    <td>{animal.rp}</td>
+                    <td>{animal.erp}</td>
+                    <td>{animal.grupo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </Layout>
   );

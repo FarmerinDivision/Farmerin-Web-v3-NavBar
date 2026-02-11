@@ -194,7 +194,7 @@ const Login = () => {
         <div>
           <div className={styles.divider}><span>O</span></div>
           <p className={styles.TextFaarmerin}> Farmerin Division S.A. - © 2020 </p>
-          
+
         </div>
       </div>
 

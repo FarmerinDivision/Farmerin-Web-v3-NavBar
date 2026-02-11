@@ -4,6 +4,9 @@ import { useContext } from 'react';
 import Layout from '../components/layout/layout';
 import firebase from 'firebase/app';
 import 'firebase/firestore';
+import AdminTamboSelector from '../components/utils/AdminTamboSelector';
+import styles from '../styles/Administrador.module.scss';
+import { Card } from 'react-bootstrap';
 
 function BotonAgregar() {
     const { firebase } = useContext(FirebaseContext);
@@ -33,9 +36,9 @@ function BotonAgregar() {
 
             docRef.docs.forEach(doc => {
                 const docRef = firebase.db.collection("animal").doc(doc.id);
-                batch.update(docRef, { 
-                    raumentada: firebase.firestore.FieldValue.delete(), 
-                    rdisminuida: firebase.firestore.FieldValue.delete() 
+                batch.update(docRef, {
+                    raumentada: firebase.firestore.FieldValue.delete(),
+                    rdisminuida: firebase.firestore.FieldValue.delete()
                 });
             });
 
@@ -48,17 +51,39 @@ function BotonAgregar() {
 
     return (
         <Layout>
-            <>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-                    <button onClick={agregarCampo}>
-                        Agregar Campo
-                </button>
-                <button onClick={eliminarCampos}>
-                    Eliminar Campos
-                </button>
-                {mensaje && <p>{mensaje}</p>}
+            <div className={styles.botonAgregarContainer}>
+
+                <div className={styles.header}>
+                    <h1 className={styles.title}>Modificación de Estructura</h1>
+                    <p className={styles.subtitle}>Herramienta avanzada para agregar o eliminar campos en animales.</p>
+                </div>
+
+                <div className={styles.cardInfo}>
+                    <ul>
+                        <p><strong>¿Qué podés hacer acá?</strong></p>
+                        <p>En esta pantalla podés agregar o eliminar campos en los registros de animales de un tambo específico.</p>
+                        <p><strong>La herramienta permite:</strong></p>
+                        <li>Agregar un campo nuevo a todos los animales del tambo seleccionado.</li>
+                        <li>Eliminar campos existentes de forma masiva cuando ya no son necesarios.</li>
+                        <p><strong>Estas acciones se aplican a todos los animales del tambo y modifican directamente la estructura de los datos.</strong></p>
+                        <p><strong>⚠️ Usá esta herramienta con precaución, ya que los cambios son masivos y no se pueden deshacer.</strong></p>
+                    </ul>
+                </div>
+
+                <AdminTamboSelector />
+
+                <div className={styles.centerContent}>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button className={styles.btnSuccess} onClick={agregarCampo}>
+                            Agregar Campo
+                        </button>
+                        <button className={styles.btnDanger} onClick={eliminarCampos}>
+                            Eliminar Campos
+                        </button>
+                    </div>
+                    {mensaje && <div className={mensaje.includes('Error') ? styles.errorMessage : styles.successMessage}>{mensaje}</div>}
+                </div>
             </div>
-            </>
         </Layout>
     );
 }

@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useContext } from "react";
 import { FirebaseContext } from "../firebase2";
 import Layout from "../components/layout/layout";
+import AdminTamboSelector from '../components/utils/AdminTamboSelector';
+import styles from '../styles/Administrador.module.scss';
+import { Card } from 'react-bootstrap';
 
 function EventoMigracion() {
   const { firebase, tamboSel } = useContext(FirebaseContext);
@@ -90,43 +93,70 @@ function EventoMigracion() {
 
   return (
     <Layout titulo="Migrar Evento">
-      <>
-      <div>
-        <h2>Migración de Eventos</h2>
-        {cargando ? (
-          <p>Cargando animales con subcolección "evento"...</p>
-        ) : animalesConEvento.length === 0 ? (
-          <p style={{color:"red", fontSize:"300PX"}}>No hay animales con la subcolección "evento".</p>
-        ) : (
-          <>
-            <ul>
-              {animalesConEvento.map((animal) => (
-                <li key={animal.id}>
-                  <strong>Animal ID:</strong> {animal.id} <br />
-                  <strong>RP:</strong> {animal.rp} <br />
-                  <strong>ERP:</strong> {animal.erp} <br />
-                  <strong>Eventos:</strong>
-                  <ul>
-                    {animal.eventos.map((evento) => (
-                      <li key={evento.id}>
-                        <strong>ID Evento:</strong> {evento.id} -{" "}
-                        <strong>Tipo:</strong> {evento.tipo || "Sin tipo"} -{" "}
-                        <strong>Fecha:</strong> {evento.fecha 
-                          ? new Date(evento.fecha.seconds * 1000).toLocaleDateString() 
-                          : "Sin fecha"}
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-            <button onClick={migrarEventos} disabled={migrando}>
-              {migrando ? "Migrando..." : "Migrar Eventos"}
-            </button>
-          </>
-        )}
+      <div className={styles.migrarEventoContainer}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Migración de Eventos</h1>
+          <p className={styles.subtitle}>Herramienta para normalizar la estructura de eventos antiguos.</p>
+        </div>
+
+        <div className={styles.cardInfo}>
+          <ul>
+            <p><strong>¿Qué podés hacer acá?</strong></p>
+            <p>En esta pantalla podés migrar eventos antiguos de los animales del tambo seleccionado.</p>
+            <p>Esta herramienta busca animales que todavía tengan la subcolección <code>evento</code> y migra esa información a la nueva subcolección <code>eventos</code>, manteniendo los datos existentes.</p>
+            <p><strong>Antes de ejecutar la migración:</strong></p>
+            <li>Los eventos se copian a la nueva estructura.</li>
+            <li>Los eventos antiguos se eliminan automáticamente.</li>
+            <li>Este proceso no se puede deshacer.</li>
+            <p><strong>Usá esta herramienta solo cuando sea necesario y preferentemente una sola vez por tambo.</strong></p>
+          </ul>
+        </div>
+
+        <AdminTamboSelector />
+
+        <div className={styles.card}>
+          {cargando ? (
+            <div className={styles.loading}>Cargando animales con subcolección "evento"...</div>
+          ) : animalesConEvento.length === 0 ? (
+            <div className={styles.successMessage}>
+              No hay animales con la subcolección "evento". El tambo está normalizado.
+            </div>
+          ) : (
+            <>
+              <div className={styles.migrarEventoList}>
+                <ul className={styles.list}>
+                  {animalesConEvento.map((animal) => (
+                    <li key={animal.id} className={styles.listItem}>
+                      <div>
+                        <strong>Animal ID:</strong> {animal.id} | <strong>RP:</strong> {animal.rp} | <strong>ERP:</strong> {animal.erp}
+                      </div>
+                      <ul style={{ paddingLeft: '1rem', marginTop: '0.5rem', color: '#64748b' }}>
+                        {animal.eventos.map((evento) => (
+                          <li key={evento.id}>
+                            ID Evento: {evento.id} - Tipo: {evento.tipo || "Sin tipo"} - Fecha: {evento.fecha
+                              ? new Date(evento.fecha.seconds * 1000).toLocaleDateString()
+                              : "Sin fecha"}
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div style={{ marginTop: '1.5rem' }}>
+                <button
+                  className={styles.btnDanger}
+                  onClick={migrarEventos}
+                  disabled={migrando}
+                >
+                  {migrando ? "Migrando..." : "Migrar Eventos Ahora"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-      </>
     </Layout>
   );
 }

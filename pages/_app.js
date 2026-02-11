@@ -13,6 +13,7 @@ import store from '../redux/store';
 
 // ✅ Importá tu nuevo contexto
 import { NotificacionesProvider } from '../components/utils/NotificationsProvider';
+import { AdminProvider } from '../components/utils/AdminContext';
 
 function MyApp(props) {
   const usuario = useAutenticacion();
@@ -50,7 +51,9 @@ function MyApp(props) {
         >
           {/* ✅ Envolvés todo con el proveedor de notificaciones */}
           <NotificacionesProvider>
-            <Component {...pageProps} />
+            <AdminProvider>
+              <Component {...pageProps} />
+            </AdminProvider>
           </NotificacionesProvider>
         </FirebaseContext.Provider>
       </Provider>

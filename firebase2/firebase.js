@@ -28,7 +28,7 @@ class Firebase {
             }
         );
     }
-    /*registra usuario
+    /*registra usuario             
     async getUsuario(id) {
         await this.auth.  .IdTokenResult(id).then((userRecord) => {
                 // See the UserRecord reference doc for the contents of userRecord.

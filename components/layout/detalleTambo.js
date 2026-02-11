@@ -6,6 +6,7 @@ import { ContenedorSpinner } from '../ui/Elementos';
 import MapContainer from './MapContainer';
 import DetalleHorario from './detalleHorario';
 import ModalTamboForm from '../../pages/tambos/ModalTamboForm'; // Nuevo
+import { useAdmin } from '../utils/AdminContext';
 
 import { format } from 'date-fns';
 import {
@@ -34,6 +35,7 @@ const DetalleTambos = ({ tambo }) => {
   const { id, nombre, ubicacion, bajadas, turnos, tolvas, link } = tambo;
   const { usuario, firebase, guardarTamboSel, tamboSel } = useContext(FirebaseContext);
   const router = useRouter();
+  const { activateAdminMode, deactivateAdminMode } = useAdmin();
 
   const [error, guardarError] = useState(false);
   const [descError, guardarDescError] = useState('');
@@ -56,6 +58,14 @@ const DetalleTambos = ({ tambo }) => {
     setCargando(true);
     try {
       await guardarTamboSel(tambo);
+
+      // Verificación de Admin
+      if (tambo.admin === true) {
+        activateAdminMode();
+      } else {
+        deactivateAdminMode();
+      }
+
       setTimeout(() => {
         router.push('/animales');
       }, 1000);

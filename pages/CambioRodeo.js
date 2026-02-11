@@ -1,6 +1,9 @@
 import React, { useContext, useState } from 'react';
-import { FirebaseContext } from '../firebase2'; 
+import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
+import AdminTamboSelector from '../components/utils/AdminTamboSelector';
+import styles from '../styles/Administrador.module.scss';
+import { Card } from 'react-bootstrap';
 
 // Función para actualizar el campo 'rodeo' basado en la ración para todos los animales con un idTambo específico
 async function actualizarRodeoPorTambo(firebase, racion) {
@@ -86,18 +89,38 @@ export default function CambioRodeo() {
 
     return (
         <Layout titulo="Cambio de Rodeo">
-            <>
-                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh'}}>
-                    <h1>Cambio de Rodeo</h1>
-                    <button onClick={actualizarRodeoRacion9}>Actualizar Rodeo para Ración 9</button>
-                    <button onClick={actualizarRodeoRacion1}>Actualizar Rodeo para Ración 1</button>
-                    <button onClick={actualizarRodeoRacion5}>Actualizar Rodeo para Ración 5</button>
-                    <button onClick={actualizarRodeoRacion2}>Actualizar Rodeo para Ración 2</button>
-                    {mensaje && <p>{mensaje}</p>}
+            <div className={styles.cambioRodeoContainer}>
+
+                <div className={styles.header}>
+                    <h1 className={styles.title}>Cambio de Rodeo</h1>
+                    <p className={styles.subtitle}>Actualización automática de rodeos según ración.</p>
                 </div>
-            </>
+
+                <div className={styles.cardInfo}>
+                    <ul>
+                        <p><strong>¿Qué podés hacer acá?</strong></p>
+                        <p>En esta pantalla podés actualizar automáticamente el rodeo de los animales según la ración asignada.</p>
+                        <p><strong>La herramienta trabaja sobre un tambo específico y:</strong></p>
+                        <li>Busca los animales que tengan una ración determinada.</li>
+                        <li>Actualiza el campo rodeo en función de esa ración.</li>
+                        <li>Aplica el cambio de forma masiva a todos los animales que cumplan la condición.</li>
+                        <p><strong>Cada botón ejecuta el cambio para una ración en particular.</strong></p>
+                        <p><strong>Esta acción modifica datos existentes y no se puede deshacer, por lo que se recomienda verificar la información antes de ejecutar los cambios.</strong></p>
+                    </ul>
+                </div>
+
+                <AdminTamboSelector />
+
+                <div className={styles.card}>
+                    <div className={styles.buttonGrid}>
+                        <button className={styles.btnPrimary} onClick={actualizarRodeoRacion9}>Actualizar Rodeo para Ración 9</button>
+                        <button className={styles.btnPrimary} onClick={actualizarRodeoRacion1}>Actualizar Rodeo para Ración 1</button>
+                        <button className={styles.btnPrimary} onClick={actualizarRodeoRacion5}>Actualizar Rodeo para Ración 5</button>
+                        <button className={styles.btnPrimary} onClick={actualizarRodeoRacion2}>Actualizar Rodeo para Ración 2</button>
+                    </div>
+                    {mensaje && <div className={styles.successMessage} style={{ marginTop: '1.5rem' }}>{mensaje}</div>}
+                </div>
+            </div>
         </Layout>
     );
 }
-
-
