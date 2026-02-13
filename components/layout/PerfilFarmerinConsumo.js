@@ -7,19 +7,18 @@ const PerfilFarmerinConsumo = () => {
   const { tamboSel } = useContext(FirebaseContext);
   const [showModal, setShowModal] = useState(false);
 
-  // 🔐 URL de tu Cloud Function
+  // 🔐 Cloud Function correcta
   const baseFunctionUrl =
-    "https://us-central1-farmerin-navarro.cloudfunctions.net/proxyMonitor";
+    "https://us-central1-farmerin-navarro.cloudfunctions.net/proxyConsumo";
 
-  // 🔹 URL protegida
+  // 🔹 URL protegida (con tamboId)
   const urlProtegida =
     tamboSel
-      ? `${baseFunctionUrl}/verConsumo?tamboId=${tamboSel.id}`
+      ? `${baseFunctionUrl}?tamboId=${tamboSel.id}`
       : null;
 
   return (
     <>
-      {/* 🔹 BOTÓN */}
       <div className="card-fondoBotones">
         <div className="button-containerInfoTambo">
           <button
@@ -43,7 +42,6 @@ const PerfilFarmerinConsumo = () => {
         </div>
       </div>
 
-      {/* 🔹 MODAL SOLO IFRAME */}
       <Modal
         show={showModal}
         onHide={() => setShowModal(false)}
