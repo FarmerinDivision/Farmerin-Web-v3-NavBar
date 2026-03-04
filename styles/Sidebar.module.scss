@@ -93,7 +93,7 @@
     border: none;
     font-size: 15px;
     font-weight: 500;
-    color: #fbfbfb;  // TEXTO DE NUTRICION - REPORTES - HERRAMIENTAS - CONFIGURACION
+    color: #fbfbfb; // TEXTO DE NUTRICION - REPORTES - HERRAMIENTAS - CONFIGURACION
     cursor: pointer;
     padding: 5px 0;
 
@@ -176,4 +176,115 @@
 
 .subDropdownContent a span:hover {
   background-color: #fffffe;
+}
+
+/* ===============================
+   RESPONSIVE QUERIES
+=============================== */
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 10px 15px;
+    /* Reduce padding on mobile */
+  }
+
+  .logo {
+    gap: 8px;
+    /* Reduce gap */
+
+    .logoIcon {
+      max-width: 30px;
+      /* Slightly smaller logo */
+    }
+
+    .logoText {
+      max-width: 100px;
+      /* Slightly smaller text */
+    }
+  }
+
+  .navLinks {
+    /* Existing mobile styles handled above, refining content */
+    background-color: #4cb151;
+    /* Match navbar background */
+    padding-bottom: 10px;
+  }
+
+  /* Make dropdowns expand vertically in mobile menu instead of floating */
+  .dropdown {
+    width: 100%;
+    text-align: left;
+
+    .dropbtn {
+      width: 100%;
+      text-align: left;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .dropdownContent {
+      position: static;
+      /* Stack vertically */
+      width: 100%;
+      box-shadow: none;
+      background-color: rgba(0, 0, 0, 0.05);
+      /* Slightly darker for contrast */
+      padding: 0;
+      border-radius: 4px;
+
+      span {
+        color: #fbfbfb;
+        /* Light text for dark bg in mobile */
+        padding: 10px 20px;
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.1);
+          color: #ffffff;
+        }
+      }
+    }
+
+    /* Show dropdown content on "hover" (tap) or always if simpler, 
+       but restriction says NO JS changes. 
+       Mobilizing hover interactions: in CSS mobile, :hover works sticky on first tap.
+       We'll keep the hover behavior but style it for stacking.
+    */
+    &:hover .dropdownContent {
+      display: block;
+    }
+  }
+
+  /* Subdropdowns flat for mobile */
+  .subDropdown {
+    width: 100%;
+
+    .subDropbtn {
+      color: #fbfbfb;
+      padding: 10px 20px;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .subDropdownContent {
+      position: static;
+      width: 100%;
+      border: none;
+      background-color: rgba(0, 0, 0, 0.1);
+      padding-left: 20px;
+      min-width: auto;
+
+      a span {
+        color: #fbfbfb;
+      }
+    }
+
+    &:hover .subDropdownContent {
+      display: block;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 8px 10px;
+  }
 }

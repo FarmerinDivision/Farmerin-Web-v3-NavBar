@@ -172,7 +172,7 @@ const UserProfile = () => {
           {/* Columna derecha: Botones de acción */}
           <div className={styles.perfilColDerecha}>
             <div className={styles.farmerinCardActions}>
-              <PerfilFarmerinConsumo />
+             {/* <PerfilFarmerinConsumo /> */}
               <InformacionTambo tambo={tamboSel} fetch={fetch} />
               <ObtenerAnimalesPerfilForm />
             </div>

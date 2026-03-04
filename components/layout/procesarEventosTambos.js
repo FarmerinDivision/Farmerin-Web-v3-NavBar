@@ -221,7 +221,7 @@ export async function procesarEventosTambo(data, tamboSel, setErrores, setActual
                             fecha: fechaEventoTimeStamp,
                             tipo: eventoTipo || "Sin tipo" - observacion || "Sin observacion",
                             detalle: eventoDetalle || "Sin detalle",
-
+                            tambo: tamboSel.id,
                             usuario: `${nombreUsuario} - Dirsa`
                         };
 

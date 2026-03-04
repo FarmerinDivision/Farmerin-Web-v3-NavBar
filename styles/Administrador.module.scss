@@ -37,7 +37,7 @@ $shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 
 .header {
   margin-bottom: 2rem;
-  
+
   .title {
     font-size: 1.875rem;
     font-weight: 700;
@@ -66,26 +66,26 @@ $shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .cardInfo {
-    @extend .card;
-    border-left: 4px solid $primary;
+  @extend .card;
+  border-left: 4px solid $primary;
 
-    ul {
-        margin: 0;
-        padding-left: 1.2rem;
-        
-        p {
-            margin-bottom: 0.5rem;
-            
-            strong {
-                color: $primary;
-            }
-        }
+  ul {
+    margin: 0;
+    padding-left: 1.2rem;
 
-        li {
-            margin-bottom: 0.25rem;
-            color: $text-secondary;
-        }
+    p {
+      margin-bottom: 0.5rem;
+
+      strong {
+        color: $primary;
+      }
     }
+
+    li {
+      margin-bottom: 0.25rem;
+      color: $text-secondary;
+    }
+  }
 }
 
 .actions {
@@ -109,7 +109,7 @@ $shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   cursor: pointer;
   transition: all 0.2s;
   text-decoration: none;
-  
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -120,50 +120,66 @@ $shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   @extend .btn;
   background-color: $primary;
   color: white;
-  &:not(:disabled):hover { background-color: $primary-hover; }
+
+  &:not(:disabled):hover {
+    background-color: $primary-hover;
+  }
 }
 
 .btnSecondary {
   @extend .btn;
   background-color: $secondary;
   color: white;
-  &:not(:disabled):hover { background-color: $secondary-hover; }
+
+  &:not(:disabled):hover {
+    background-color: $secondary-hover;
+  }
 }
 
 .btnSuccess {
   @extend .btn;
   background-color: $success;
   color: white;
-  &:not(:disabled):hover { background-color: $success-hover; }
+
+  &:not(:disabled):hover {
+    background-color: $success-hover;
+  }
 }
 
 .btnWarning {
   @extend .btn;
   background-color: $warning;
   color: white;
-  &:not(:disabled):hover { background-color: $warning-hover; }
+
+  &:not(:disabled):hover {
+    background-color: $warning-hover;
+  }
 }
 
 .btnDanger {
   @extend .btn;
   background-color: $danger;
   color: white;
-  &:not(:disabled):hover { background-color: $danger-hover; }
+
+  &:not(:disabled):hover {
+    background-color: $danger-hover;
+  }
 }
 
 /* TABLES */
 .tableContainer {
-    overflow-x: auto;
-    border-radius: $radius-md;
-    border: 1px solid $border-color;
+  overflow-x: auto;
+  border-radius: $radius-md;
+  border: 1px solid $border-color;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
-  
-  th, td {
+
+  th,
+  td {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid $border-color;
@@ -189,60 +205,61 @@ $shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 
 /* LISTS */
 .list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 
-    .listItem {
-        padding: 1rem;
-        border-bottom: 1px solid $border-color;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
+  .listItem {
+    padding: 1rem;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
 
-        &:last-child {
-            border-bottom: none;
-        }
-
-        .itemLabel {
-            font-weight: 600;
-            color: $text-secondary;
-            margin-right: 0.5rem;
-        }
-        
-        .itemValue {
-            color: $text-main;
-        }
+    &:last-child {
+      border-bottom: none;
     }
+
+    .itemLabel {
+      font-weight: 600;
+      color: $text-secondary;
+      margin-right: 0.5rem;
+    }
+
+    .itemValue {
+      color: $text-main;
+    }
+  }
 }
 
 /* FORMS */
 .formGroup {
-    margin-bottom: 1rem;
-    
-    label {
-        display: block;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-        color: $text-main;
-    }
+  margin-bottom: 1rem;
 
-    select, input {
-        width: 100%;
-        padding: 0.625rem;
-        border: 1px solid $border-color;
-        border-radius: $radius-md;
-        background-color: $bg-card;
-        font-size: 1rem;
-        
-        &:focus {
-            outline: none;
-            border-color: $primary;
-            box-shadow: 0 0 0 2px rgba($primary, 0.2);
-        }
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: $text-main;
+  }
+
+  select,
+  input {
+    width: 100%;
+    padding: 0.625rem;
+    border: 1px solid $border-color;
+    border-radius: $radius-md;
+    background-color: $bg-card;
+    font-size: 1rem;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.2);
     }
+  }
 }
 
 /* MESSAGES */
@@ -265,111 +282,253 @@ $shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    color: $text-secondary;
-    font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: $text-secondary;
+  font-weight: 500;
 }
 
 /* ===============================
    MOTIVODEBAJA
 =============================== */
 .motivoBajaContainer {
-    @extend .container;
+  @extend .container;
 }
 
 /* ===============================
    MIGRAREVENTO
 =============================== */
 .migrarEventoContainer {
-    @extend .container;
+  @extend .container;
 }
 
 .migrarEventoList {
-    @extend .list;
-    max-height: 500px;
-    overflow-y: auto;
-    border: 1px solid $border-color;
-    border-radius: $radius-md;
+  @extend .list;
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid $border-color;
+  border-radius: $radius-md;
 }
 
 /* ===============================
    ENCONTRARERP
 =============================== */
 .encontrarErpContainer {
-    @extend .container;
+  @extend .container;
 }
 
 .erpHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
 /* ===============================
    CAMBIORODEO
 =============================== */
 .cambioRodeoContainer {
-    @extend .container;
-    
-    .buttonGrid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-top: 2rem;
-    }
+  @extend .container;
+
+  .buttonGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
 }
 
 /* ===============================
    CAMBIOASECA
 =============================== */
 .cambioAsecaContainer {
-    @extend .container;
+  @extend .container;
 }
 
 .contadorAseca {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    color: $primary;
-    font-weight: bold;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: $primary;
+  font-weight: bold;
 }
 
 /* ===============================
    CAMBIAREVENTO
 =============================== */
 .cambiarEventoContainer {
-    @extend .container;
+  @extend .container;
 }
 
 /* ===============================
    BUSQUEDANUEVAFUNCION
 =============================== */
 .busquedaContainer {
-    @extend .container;
+  @extend .container;
 }
 
 .resultTable {
-    @extend .table;
-    margin-top: 1rem;
+  @extend .table;
+  margin-top: 1rem;
 }
 
 /* ===============================
    BOTONAGREGAR
 =============================== */
 .botonAgregarContainer {
-    @extend .container;
-    
-    .centerContent {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
-        padding: 2rem;
-        background: $bg-card;
-        border-radius: $radius-lg;
-        border: 1px solid $border-color;
+  @extend .container;
+
+  .centerContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: $bg-card;
+    border-radius: $radius-lg;
+    border: 1px solid $border-color;
+  }
+}
+
+/* ===============================
+   RESPONSIVE QUERIES
+=============================== */
+
+/* Tablet and below */
+@media (max-width: 768px) {
+
+  .container,
+  .motivoBajaContainer,
+  .migrarEventoContainer,
+  .encontrarErpContainer,
+  .cambioRodeoContainer,
+  .cambioAsecaContainer,
+  .cambiarEventoContainer,
+  .busquedaContainer,
+  .botonAgregarContainer {
+    padding: 1rem;
+    /* Reduce padding */
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+
+    .title {
+      font-size: 1.5rem;
     }
+
+    .subtitle {
+      font-size: 0.9rem;
+    }
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    /* Full width buttons */
+    gap: 0.75rem;
+
+    .btn,
+    button {
+      width: 100%;
+      margin: 0;
+    }
+  }
+
+  /* Cambio Rodeo Grid readjustment */
+  .cambioRodeoContainer .buttonGrid {
+    grid-template-columns: 1fr;
+    /* Single column */
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .cardInfo {
+    padding: 1rem 1rem 1rem 1.5rem;
+    /* Adjust padding, keep left border space */
+  }
+
+  /* List items vertical on mobile */
+  .list .listItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+
+    .itemLabel {
+      margin-bottom: 0.25rem;
+    }
+
+    .itemValue {
+      width: 100%;
+      word-break: break-all;
+      /* Prevent overflow of long values */
+    }
+
+    /* If list item has buttons on the right, make them full width */
+    button,
+    .btn {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+  }
+
+  /* Table adjustments */
+  .tableContainer {
+    margin-top: 1rem;
+    border-radius: $radius-md;
+    box-shadow: none;
+    /* Simplify on mobile */
+  }
+
+  .table {
+
+    th,
+    td {
+      padding: 10px;
+      font-size: 0.8rem;
+    }
+
+    /* Hide less important columns if necessary, 
+       but requirement says DO NOT remove structure. 
+       So we rely on overflow-x: auto of container. */
+  }
+
+  /* ERP Header specific */
+  .erpHeader {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+
+    /* Search inputs/buttons inside header */
+    input,
+    button {
+      width: 100%;
+    }
+  }
+
+  /* Boton Agregar specific */
+  .botonAgregarContainer .centerContent {
+    padding: 1.5rem;
+    width: 100%;
+  }
+}
+
+/* Mobile specific */
+@media (max-width: 480px) {
+  .header .title {
+    font-size: 1.25rem;
+  }
+
+  .container {
+    padding: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.75rem;
+    /* Larger touch target */
+    font-size: 0.95rem;
+  }
 }

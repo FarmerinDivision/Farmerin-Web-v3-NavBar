@@ -213,6 +213,7 @@ const NavBar = () => {
                 <Link href="/CambioEvento"><span>Cambio Evento</span></Link>
                 <Link href="/busquedaNuevaFuncion"><span>Cambio de Fracion a TimeStamp</span></Link>
                 <Link href="/BotonAgregar"><span>Boton Agregar Campo</span></Link>
+                <Link href="/agregarIDTAMBO"><span>Agregar ID Tambo a Eventos</span></Link>
               </div>
             </div>
           )}
@@ -247,7 +248,6 @@ const NavBar = () => {
               <Link href="/produccion"><span>Producción</span></Link>
               <Link href="/parteDiario"><span>Parte Diario</span></Link>
               <Link href="/recepciones"><span>Recepciones</span></Link>
-              <Link href="/ConsumoRacion"><span>Consumo</span></Link>
             </div>
           </div>
 

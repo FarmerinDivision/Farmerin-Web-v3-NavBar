@@ -124,6 +124,7 @@ const ControlLechero = () => {
                   tipo: 'Control Lechero',
                   detalle: detalle,
                   usuario: usuario.displayName,
+                  tambo: tamboSel.id,
                 })
                 let act = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - Lts: " + litros;
                 guardarActualizados(actualizados => [...actualizados, act]);

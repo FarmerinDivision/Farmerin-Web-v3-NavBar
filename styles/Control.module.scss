@@ -72,15 +72,33 @@
 }
 
 .resumenNutricion {
-  text-align: center;
+  display: flex !important; // Forzar flex
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; // Permite que baje si no hay espacio
+  gap: 15px;
+
+  text-align: left; // Cambiar a left
   font-size: 16px;
   font-weight: 600;
   color: #333;
-  padding: 15px 10px;
+  padding: 15px 15px; // Un poco más de padding lateral
   background-color: #f9fbfc;
   border-radius: 8px;
   margin-bottom: 15px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.headerTitle {
+  flex: 1 1 auto; // Ocupa el espacio disponible
+  min-width: 280px; // Evita que se aplaste demasiado
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0; // Evita que los botones se achiquen
 }
 
 // Botón flotante con tooltip
@@ -387,7 +405,7 @@
   padding: 8px 14px;
   border-radius: 6px;
   font-size: 14px;
-    margin-left: 20px;
+  margin-left: 20px;
   justify-content: flex-end;
   gap: 6px;
   cursor: pointer;
@@ -435,7 +453,7 @@
   padding: 8px 14px;
   border-radius: 6px;
   font-size: 14px;
-    margin-right: 20px;
+  margin-right: 20px;
   justify-content: flex-start;
   gap: 6px;
   cursor: pointer;
@@ -471,4 +489,89 @@
 .tooltipInfo:hover .tooltipInfoText {
   visibility: visible;
   opacity: 1;
+}
+
+/* RESPONSIVE STYLES ADDED */
+@media (max-width: 768px) {
+  .stickyTable {
+    width: 100% !important;
+    overflow-x: auto;
+    display: block; // Asegura que el contenedor permita scroll y no rompa el layout
+
+    table {
+      min-width: 100%;
+      width: 100%; // Forzar a ocupar ancho disponible
+      table-layout: auto; // Permitir que las columnas se ajusten al contenido restante
+    }
+
+    th,
+    td {
+      font-size: 12px !important; // Ajuste de fuente para mejor lectura
+      padding: 6px 4px !important;
+      white-space: normal; // Permitir wrapping de texto si es necesario
+    }
+
+    /* 
+       OCULTAR COLUMNAS EN MOBILE 
+       Indices basados en el orden de <th> en pages/control.js:
+       1: RP
+       2: Grupo
+       3: Categ
+       4: Rodeo
+       5: Días Lact.
+       6: Lact. (OCULTAR)
+       7: Le. CA (OCULTAR)
+       8: Le. UC 
+       9: F. UC (OCULTAR)
+       10: Est. Rep (OCULTAR)
+       11: Días Preñ. (OCULTAR)
+       12: F. Racion (OCULTAR)
+       13: Ración
+       14: Boton aplicar (MANTENER - es una columna funcional importante)
+       15: R. Sugerida
+       16: Rac. Manual (OCULTAR)
+    */
+    th:nth-child(6),
+    td:nth-child(6),
+    th:nth-child(7),
+    td:nth-child(7),
+    th:nth-child(9),
+    td:nth-child(9),
+    th:nth-child(10),
+    td:nth-child(10),
+    th:nth-child(11),
+    td:nth-child(11),
+    th:nth-child(12),
+    td:nth-child(12),
+    th:nth-child(14),
+    td:nth-child(14),
+    th:nth-child(16),
+    td:nth-child(16) {
+      display: none;
+    }
+
+    .sortIcon {
+      display: none;
+    }
+  }
+
+  .resumenNutricion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+
+
+
+  /* Control buttons container */
+  .headerActions {
+    justify-content: center;
+    width: 100%;
+    flex-wrap: wrap; // Permitir que los botones bajen si es necesario
+  }
+
+  .mensajeCaja {
+    padding: 1rem 0.5rem;
+  }
 }

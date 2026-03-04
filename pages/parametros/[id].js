@@ -255,9 +255,9 @@ const ParametroEdit = ({
           <Contenedor>
             <Form onSubmit={handleSubmit}>
               <Row>
-                <Col>
+                <Col xs={12} md={4} className="mb-3">
                   <Form.Group>
-                    Categoría:
+                    <Form.Label>Categoría:</Form.Label>
                     <Form.Control
                       as="select"
                       name="categoria"
@@ -270,18 +270,18 @@ const ParametroEdit = ({
                     </Form.Control>
                   </Form.Group>
                 </Col>
-                <Col>
+                <Col xs={12} md={4} className="mb-3">
                   <Form.Group>
-                    Unidad de Medida:
+                    <Form.Label>Unidad de Medida:</Form.Label>
                     <Form.Control as="select" name="um" value={um} onChange={handleChange}>
                       <option value="Dias Lactancia">Días Lactancia</option>
                       <option value="Lts. Producidos">Lts. Producidos</option>
                     </Form.Control>
                   </Form.Group>
                 </Col>
-                <Col>
+                <Col xs={12} md={4} className="mb-3">
                   <Form.Group>
-                    Condición:
+                    <Form.Label>Condición:</Form.Label>
                     <Form.Control as="select" name="condicion" value={condicion} onChange={handleChange}>
                       <option value="entre">Entre</option>
                       <option value="menor">Menor a</option>
@@ -292,9 +292,9 @@ const ParametroEdit = ({
               </Row>
 
               <Row>
-                <Col>
+                <Col xs={12} md={4} className="mb-3">
                   <Form.Group>
-                    Mínimo:
+                    <Form.Label>Mínimo:</Form.Label>
                     <Form.Control
                       type="number"
                       name="min"
@@ -307,9 +307,9 @@ const ParametroEdit = ({
                     {errores.min && <Alert variant="danger">{errores.min}</Alert>}
                   </Form.Group>
                 </Col>
-                <Col>
+                <Col xs={12} md={4} className="mb-3">
                   <Form.Group>
-                    Máximo:
+                    <Form.Label>Máximo:</Form.Label>
                     <Form.Control
                       type="number"
                       name="max"
@@ -322,9 +322,9 @@ const ParametroEdit = ({
                     {errores.max && <Alert variant="danger">{errores.max}</Alert>}
                   </Form.Group>
                 </Col>
-                <Col>
+                <Col xs={12} md={4} className="mb-3">
                   <Form.Group>
-                    Kgs. Ración:
+                    <Form.Label>Kgs. Ración:</Form.Label>
                     <Form.Control
                       type="number"
                       name="racion"
@@ -339,14 +339,14 @@ const ParametroEdit = ({
               </Row>
 
               <Row className="mt-3">
-                <Col>
-                  <Button variant="success" type="submit" block>
+                <Col xs={12} className="mb-2">
+                  <Button variant="success" type="submit" block className="w-100">
                     Guardar
                   </Button>
                 </Col>
                 {!idParametro && (
-                  <Col>
-                    <Button variant="info" block onClick={() => router.push('/parametros')}>
+                  <Col xs={12}>
+                    <Button variant="info" block onClick={() => router.push('/parametros')} className="w-100">
                       Volver
                     </Button>
                   </Col>

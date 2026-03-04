@@ -263,7 +263,7 @@
 
 .tablaScroll {
   min-width: 15px;
-
+  overflow-x: auto;
 }
 
 .botonNuevo {
@@ -1439,4 +1439,53 @@
 .promedioGlobalTexto {
   font-size: 18px;
   font-weight: bold;
+}
+
+/* RESPONSIVE STYLES ADDED */
+@media (max-width: 768px) {
+  .bloqueBotones {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+
+    :global(.dropdown),
+    button {
+      width: 100% !important;
+      margin: 0 !important;
+    }
+
+    .nuevoGrupoBtn {
+      margin-left: 0;
+      justify-content: center;
+    }
+  }
+
+  .resumenContenido {
+    grid-template-columns: 1fr;
+    /* Stack items vertically */
+    gap: 15px;
+  }
+
+  .cardGrupo {
+    padding: 10px;
+
+    .headerGrupo {
+      flex-direction: column;
+      align-items: center;
+      /* Center align for better mobile look */
+      text-align: center;
+      gap: 15px;
+    }
+
+    .promedioWrapper {
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .accionesGrupo {
+      justify-content: center;
+      width: 100%;
+      margin-top: 10px;
+    }
+  }
 }

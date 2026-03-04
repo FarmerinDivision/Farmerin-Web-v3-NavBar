@@ -1,4 +1,5 @@
 import React, { useEffect, useContext, useState } from 'react';
+import app from 'firebase/app';
 import { FirebaseContext } from '../../firebase2';
 import useValidacion from '../../hook/useValidacion';
 import validarCrearAnimal from '../../validacion/validarCrearAnimal';
@@ -152,7 +153,78 @@ const ModalAnimalForm = ({ animal, show, onHide, guardarElim }) => {
 
     try {
       if (modoEdicion) {
-        await firebase.db.collection('animal').doc(animal.id).update(valores);
+        // Detectar cambios en campos específicos para registrar eventos
+        const eventosARegistrar = [];
+
+        // Cambio eRP
+        if (animal && 'erp' in animal) {
+          const valorAnterior = animal.erp || '';
+          const valorNuevo = erp || '';
+          const ambosVacios = valorAnterior === '' && valorNuevo === '';
+          if (!ambosVacios && valorAnterior !== valorNuevo) {
+            eventosARegistrar.push({
+              tipo: 'Cambio eRP',
+              detalle: `eRP anterior: ${valorAnterior || 'Sin eRP'}`,
+            });
+          }
+        }
+
+        // Cambio RP
+        if (animal && 'rp' in animal) {
+          const valorAnterior = animal.rp || '';
+          const valorNuevo = rp || '';
+          const ambosVacios = valorAnterior === '' && valorNuevo === '';
+          if (!ambosVacios && valorAnterior !== valorNuevo) {
+            eventosARegistrar.push({
+              tipo: 'Cambio RP',
+              detalle: `RP anterior: ${valorAnterior || 'Sin RP'}`,
+            });
+          }
+        }
+
+        // Cambio Grupo
+        if (animal && 'grupo' in animal) {
+          const normalizarGrupo = (valor) => {
+            if (valor === undefined || valor === null || valor === '') return '0';
+            return String(valor);
+          };
+
+          const valorAnteriorNorm = normalizarGrupo(animal.grupo);
+          const valorNuevoNorm = normalizarGrupo(grupo);
+
+          if (valorAnteriorNorm !== valorNuevoNorm) {
+            eventosARegistrar.push({
+              tipo: 'Cambio Grupo',
+              detalle: `Grupo anterior: Grupo ${valorAnteriorNorm}`,
+            });
+          }
+        }
+
+        // Aseguramos que los valores actuales (incluyendo erp actualizado) se persistan
+        await firebase.db.collection('animal').doc(animal.id).update({
+          ...valores,
+          erp,
+        });
+
+        // Registrar eventos de cambios, si corresponde
+        if (eventosARegistrar.length > 0) {
+          const idTamboEvento = idtambo || (tamboSel && tamboSel.id) || '';
+          const usuarioEvento = (usuario && usuario.displayName) || (usuario && usuario.email) || '';
+          const refAnimal = firebase.db.collection('animal').doc(animal.id);
+
+          const promesasEventos = eventosARegistrar.map((ev) =>
+            refAnimal.collection('eventos').add({
+              detalle: ev.detalle,
+              fecha: app.firestore.FieldValue.serverTimestamp(),
+              idtambo: idTamboEvento,
+              tipo: ev.tipo,
+              usuario: usuarioEvento,
+            })
+          );
+
+          await Promise.all(promesasEventos);
+        }
+
         setDescExito('Animal editado con éxito!');
       } else {
         await firebase.db.collection('animal').add(valores);

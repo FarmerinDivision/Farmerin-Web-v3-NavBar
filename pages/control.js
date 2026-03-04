@@ -53,6 +53,19 @@ const Control = () => {
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [showRodeoModal, setShowRodeoModal] = useState(false);
     const [orderRacManual, setOrderRacManual] = useState('asc');
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
 
 
@@ -272,6 +285,7 @@ const Control = () => {
 
     const handleClickRP = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderRp == 'asc') {
             const a = animales.sort((a, b) => (a.rp < b.rp) ? 1 : -1);
             guardarOrderRp('desc');
@@ -281,14 +295,11 @@ const Control = () => {
             guardarOrderRp('asc');
             guardarAnimales(b);
         }
-
-
-
     }
-
 
     const handleClickER = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderEr == 'asc') {
             const a = animales.sort((a, b) => (a.estrep < b.estrep) ? 1 : -1);
             guardarOrderEr('desc');
@@ -298,13 +309,11 @@ const Control = () => {
             guardarOrderEr('asc');
             guardarAnimales(b);
         }
-
-
-
     }
 
     const handleClickEP = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderEp == 'asc') {
             const a = animales.sort((a, b) => (a.estpro < b.estpro) ? 1 : -1);
             guardarOrderEp('desc');
@@ -314,13 +323,11 @@ const Control = () => {
             guardarOrderEp('asc');
             guardarAnimales(b);
         }
-
-
-
     }
 
     const handleClickGr = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderGr == 'asc') {
             const a = animales.sort((a, b) => (a.categoria < b.categoria) ? 1 : -1);
             guardarOrderGr('desc');
@@ -330,14 +337,11 @@ const Control = () => {
             guardarOrderGr('asc');
             guardarAnimales(b);
         }
-
-
-
     }
-
 
     const handleClickGrupo = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderGrupo === 'asc') {
             const ordenados = animales.sort((a, b) => (a.grupo < b.grupo ? 1 : -1));
             setOrderGrupo('desc');
@@ -349,9 +353,9 @@ const Control = () => {
         }
     };
 
-
     const handleClickRo = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderRo == 'asc') {
             const a = animales.sort((a, b) => (a.rodeo < b.rodeo) ? 1 : -1);
             guardarOrderRo('desc');
@@ -361,13 +365,11 @@ const Control = () => {
             guardarOrderRo('asc');
             guardarAnimales(b);
         }
-
-
-
     }
 
     const handleClickLact = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderLact == 'asc') {
             const a = animales.sort((a, b) => (parseInt(a.lactancia) < parseInt(b.lactancia)) ? 1 : -1);
             guardarOrderLact('desc');
@@ -381,6 +383,7 @@ const Control = () => {
 
     const handleClickUC = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderUC == 'asc') {
             const a = animales.sort((a, b) => (parseFloat(a.uc) < parseFloat(b.uc)) ? 1 : -1);
             guardarOrderUC('desc');
@@ -390,11 +393,11 @@ const Control = () => {
             guardarOrderUC('asc');
             guardarAnimales(b);
         }
-
     }
 
     const handleClickCA = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderCA == 'asc') {
             const a = animales.sort((a, b) => (parseFloat(a.ca) < parseFloat(b.ca)) ? 1 : -1);
             guardarOrderCA('desc');
@@ -404,7 +407,6 @@ const Control = () => {
             guardarOrderCA('asc');
             guardarAnimales(b);
         }
-
     }
 
     /*  
@@ -424,6 +426,7 @@ const Control = () => {
   */
     const handleClickDl = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderDl == 'asc') {
             const a = animales.sort((a, b) => (parseInt(a.diasLact) < parseInt(b.diasLact)) ? 1 : -1);
             guardarOrderDl('desc');
@@ -437,6 +440,7 @@ const Control = () => {
 
     const handleClickDP = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderDP == 'asc') {
             const a = animales.sort((a, b) => (parseInt(a.diasLact) < parseInt(b.diasLact)) ? 1 : -1);
             guardarOrderDP('desc');
@@ -450,6 +454,7 @@ const Control = () => {
 
     const handleClickRac = e => {
         e.preventDefault();
+        if (isMobile) return;
         if (orderRac == 'asc') {
             const a = animales.sort((a, b) => (parseInt(a.racion) < parseInt(b.racion)) ? 1 : -1);
             guardarOrderRac('desc');
@@ -463,6 +468,7 @@ const Control = () => {
 
     const handleClickRacManual = e => {
         e.preventDefault();
+        if (isMobile) return;
 
         const ordenados = [...animales].sort((a, b) => {
             const valA = a.racionManual ? 1 : 0;
@@ -642,52 +648,57 @@ const Control = () => {
                         <Botonera>
                             <h6 className={styles.resumenNutricion}>
 
-                                <div className={styles.tooltipInfo}>
-                                    <Button variant="info" size="sm" className={styles.btnInfo} onClick={() => setShowInfoModal(true)}>
-                                        Info
-                                    </Button>
-                                    <span className={styles.tooltipExcelText}>Informacion de botones</span>
+                                <div className={styles.headerTitle}>
+                                    {/* TU RESUMEN ORIGINAL */}
+                                    <strong className={styles.nombreControl}>Control de alimentación:</strong>{" "}
+                                    <strong>{animales.length}</strong> animales -{" "}
+                                    <strong className={styles.nombreControl}>Promedio actual:</strong>{" "}
+                                    <strong>{promRacMod}</strong> Kgs.-{" "}
+                                    <strong className={styles.nombreControl}>Promedio Sugerido:</strong>{" "}
+                                    <strong>{promSug}</strong> Kgs.-{" "}
+                                    <strong className={styles.nombreControl}>Promedio Días Lact.:</strong>{" "}
+                                    <strong>{promLac}</strong> Días.
                                 </div>
 
-                                {/* TU RESUMEN ORIGINAL */}
-                                <strong className={styles.nombreControl}>Control de alimentación:</strong>{" "}
-                                <strong>{animales.length}</strong> animales -{" "}
-                                <strong className={styles.nombreControl}>Promedio actual:</strong>{" "}
-                                <strong>{promRacMod}</strong> Kgs.-{" "}
-                                <strong className={styles.nombreControl}>Promedio Sugerido:</strong>{" "}
-                                <strong>{promSug}</strong> Kgs.-{" "}
-                                <strong className={styles.nombreControl}>Promedio Días Lact.:</strong>{" "}
-                                <strong>{promLac}</strong> Días.
-                                <div className={styles.tooltipExcel}>
-
-                                    {/* ✅ Botón que muestra cantidad por rodeo */}
-                                    <OverlayTrigger
-                                        placement="bottom"
-                                        overlay={
-                                            <Tooltip style={{ fontSize: 13 }}>
-                                                {Object.entries(rodeos).map(([rodeo, cant]) => (
-                                                    <div key={rodeo}>
-                                                        <strong>Rodeo {rodeo}:</strong> {cant} animales
-                                                    </div>
-                                                ))}
-                                            </Tooltip>
-                                        }
-                                    >
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() => setShowRodeoModal(true)}
-                                            className={styles.btnExcel}
-                                        >
-                                            Rodeos ({Object.keys(rodeos).length})
+                                <div className={styles.headerActions}>
+                                    <div className={styles.tooltipInfo}>
+                                        <Button variant="info" size="sm" className={styles.btnInfo} onClick={() => setShowInfoModal(true)}>
+                                            Info
                                         </Button>
+                                        <span className={styles.tooltipExcelText}>Informacion de botones</span>
+                                    </div>
 
-                                    </OverlayTrigger>
+                                    <div className={styles.tooltipExcel}>
 
-                                    <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
-                                        <RiFileExcel2Fill size={22} /> Exportar Excel
-                                    </button>
-                                    <span className={styles.tooltipExcelText}>Descargar planilla de Excel</span>
+                                        {/* ✅ Botón que muestra cantidad por rodeo */}
+                                        <OverlayTrigger
+                                            placement="bottom"
+                                            overlay={
+                                                <Tooltip style={{ fontSize: 13 }}>
+                                                    {Object.entries(rodeos).map(([rodeo, cant]) => (
+                                                        <div key={rodeo}>
+                                                            <strong>Rodeo {rodeo}:</strong> {cant} animales
+                                                        </div>
+                                                    ))}
+                                                </Tooltip>
+                                            }
+                                        >
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setShowRodeoModal(true)}
+                                                className={styles.btnExcel}
+                                            >
+                                                Rodeos ({Object.keys(rodeos).length})
+                                            </Button>
+
+                                        </OverlayTrigger>
+
+                                        <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
+                                            <RiFileExcel2Fill size={22} /> Exportar Excel
+                                        </button>
+                                        <span className={styles.tooltipExcelText}>Descargar planilla de Excel</span>
+                                    </div>
                                 </div>
 
                             </h6>
