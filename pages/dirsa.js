@@ -24,6 +24,25 @@ const Dirsa = () => {
     const inputFileRefEvento = useRef(null);
     const inputFileRefLechero = useRef(null);
 
+    const [dragEvento, setDragEvento] = useState(false);
+    const [dragLechero, setDragLechero] = useState(false);
+
+    const handleDropEvento = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragEvento(false);
+        const file = e.dataTransfer.files[0];
+        if (file) setArchivoEvento(file);
+    };
+
+    const handleDropLechero = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragLechero(false);
+        const file = e.dataTransfer.files[0];
+        if (file) setArchivoLechero(file);
+    };
+
     const [total, setTotal] = useState(0);
     const [procesados, setProcesados] = useState(0);
 
@@ -496,7 +515,13 @@ const Dirsa = () => {
 
                     {/* 📥 Cargar Eventos */}
                     <Col md={4} className="mb-3 mb-md-0">
-                        <div className={styles.cardWrapper}>
+                        <div
+                            className={styles.cardWrapper}
+                            onDragOver={(e) => { e.preventDefault(); setDragEvento(true); }}
+                            onDragLeave={() => setDragEvento(false)}
+                            onDrop={handleDropEvento}
+                            style={dragEvento ? { border: '2px dashed #0d6efd', borderRadius: '8px', background: '#f0f4ff' } : {}}
+                        >
                             <h5 className={styles.sectionTitle}>📥 Cargar Eventos</h5>
 
                             <input
@@ -543,7 +568,13 @@ const Dirsa = () => {
 
                     {/* 🥛 Cargar Control Lechero */}
                     <Col md={4} className="mb-3 mb-md-0">
-                        <div className={styles.cardWrapper}>
+                        <div
+                            className={styles.cardWrapper}
+                            onDragOver={(e) => { e.preventDefault(); setDragLechero(true); }}
+                            onDragLeave={() => setDragLechero(false)}
+                            onDrop={handleDropLechero}
+                            style={dragLechero ? { border: '2px dashed #0d6efd', borderRadius: '8px', background: '#f0f4ff' } : {}}
+                        >
                             <h5 className={styles.sectionTitle}>🥛 Cargar Control Lechero</h5>
 
                             <input

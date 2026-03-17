@@ -176,13 +176,49 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
                         erp: erp
                     });
 
-
                     console.log(`✅ Evento registrado para RP '${rp}' con detalle: ${detalleEvento}`);
 
                     if (litros !== null && !esValorEspecial) {
                         console.log(`🔄 Actualizando 'uc' con: ${litros} y 'fuc' con la fecha del evento`);
+
+                        // 🔍 Buscar el CA: el evento anterior más reciente que tenga litros válidos
+                        let caValor = 0;
+                        try {
+                            const eventosSnap = await firebase.db
+                                .collection('animal').doc(doc.id)
+                                .collection('eventos')
+                                .where('tipo', '==', 'Control Lechero mediante planilla Dirsa')
+                                .get();
+
+                            // Ordenar todos los eventos por fecha desc en memoria
+                            const eventosOrdenados = eventosSnap.docs
+                                .map(evDoc => evDoc.data())
+                                .filter(ev => ev.fecha)
+                                .sort((a, b) => {
+                                    const fa = a.fecha.toDate ? a.fecha.toDate() : new Date(a.fecha);
+                                    const fb = b.fecha.toDate ? b.fecha.toDate() : new Date(b.fecha);
+                                    return fb - fa; // desc
+                                });
+
+                            // El índice 0 es el recién cargado (= uc).
+                            // Desde el índice 1 en adelante buscamos el primero con litros válidos (= ca).
+                            for (let i = 1; i < eventosOrdenados.length; i++) {
+                                const evData = eventosOrdenados[i];
+                                if (evData.detalle) {
+                                    const match = evData.detalle.match(/\d+(\.\d+)?/);
+                                    if (match) {
+                                        caValor = parseFloat(match[0]);
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error(`⚠️ Error buscando CA para RP '${rp}':`, e);
+                        }
+
                         await firebase.db.collection('animal').doc(doc.id).update({
                             uc: litros,
+                            ca: caValor,
                             fuc: fechaEvento   // 👈 misma fecha que se usó en el evento
                         });
                     }

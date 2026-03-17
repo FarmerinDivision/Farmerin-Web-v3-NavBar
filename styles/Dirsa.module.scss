@@ -449,6 +449,23 @@
   }
 }
 
+.produccionmj-curvaBtn {
+  background-color: #2a4cb8;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #1e3a8a;
+  }
+}
+
 /* ====== MENSAJES ====== */
 .mensajeCaja {
   background-color: #fff8e1;
@@ -852,7 +869,7 @@ $font-main: 'Inter', 'Roboto', sans-serif;
   border: none;
   border-radius: 6px;
 
-  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  background: linear-gradient(135deg, #2e7d32, #2e7d32);
 
   cursor: pointer;
 
@@ -979,8 +996,9 @@ $font-main: 'Inter', 'Roboto', sans-serif;
 ========================= */
 
 .produccionmj-curvaBtn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 
   font-size: 12px;
@@ -992,7 +1010,7 @@ $font-main: 'Inter', 'Roboto', sans-serif;
   border: none;
   border-radius: 6px;
 
-  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  background: linear-gradient(135deg, #287fb8, #206592);
 
   cursor: pointer;
 
@@ -1001,7 +1019,7 @@ $font-main: 'Inter', 'Roboto', sans-serif;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 
   &:hover {
-    background: linear-gradient(135deg, #66bb6a, #388e3c);
+    background: linear-gradient(135deg, #226d9f, #1a5378);
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   }
@@ -1012,7 +1030,7 @@ $font-main: 'Inter', 'Roboto', sans-serif;
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35);
+    box-shadow: 0 0 0 2px rgb(34, 109, 159);
   }
 }
 

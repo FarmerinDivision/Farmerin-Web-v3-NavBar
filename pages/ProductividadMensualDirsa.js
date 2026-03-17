@@ -129,7 +129,7 @@ const ProductividadMensualDirsa = () => {
 
           return {
             id: doc.id,
-            animalId, 
+            animalId,
             fecha: format(ev.fecha.toDate(), 'dd/MM/yyyy'),
             RP: ev.rp || '',
             ERP: ev.erp || '',
@@ -484,7 +484,7 @@ const ProductividadMensualDirsa = () => {
                           className={styles["produccionmj-curvaBtn"]}
                           onClick={() => abrirCurva(ev.animalId)}
                         >
-                          📈 Ver curva
+                          Ver Rendimiento individual
                         </button>
                       </td>
                     </tr>

@@ -2,6 +2,9 @@ import React, { useEffect, useState, useContext } from "react";
 import { FirebaseContext } from "../firebase2";
 import { Form } from "react-bootstrap";
 import styles from "../styles/Dirsa.module.scss";
+import { Button } from "react-bootstrap";
+import differenceInDays from "date-fns/differenceInDays";
+import FichaAnimal from "../components/layout/fichaAnimal";
 import {
     LineChart,
     Line,
@@ -25,6 +28,8 @@ const AnimalCurvaCompleto = ({ animalId }) => {
     const [loading, setLoading] = useState(true);
     const [anioSeleccionado, setAnioSeleccionado] = useState(anioActual);
     const [aniosDisponibles, setAniosDisponibles] = useState([]);
+    const [animalGeneralData, setAnimalGeneralData] = useState(null);
+    const [showFicha, setShowFicha] = useState(false);
 
     // Extrae litros desde "16.2 lts."
     const extraerLitros = (detalle) => {
@@ -42,6 +47,26 @@ const AnimalCurvaCompleto = ({ animalId }) => {
             setLoading(true);
 
             try {
+                const animalDoc = await firebase.db.collection("animal").doc(animalId).get();
+                if (animalDoc.exists) {
+                    const data = animalDoc.data();
+                    let diasLact = 0;
+                    try {
+                        const fparto = data.fparto;
+                        if (fparto) {
+                            const dateParto = fparto.toDate ? fparto.toDate() : new Date(fparto);
+                            diasLact = differenceInDays(Date.now(), dateParto);
+                        }
+                    } catch (e) {
+                        diasLact = 0;
+                    }
+                    
+                    setAnimalGeneralData({
+                        id: animalDoc.id,
+                        diasLact,
+                        ...data
+                    });
+                }
 
                 const eventosRef = firebase.db
                     .collection("animal")
@@ -119,10 +144,34 @@ const AnimalCurvaCompleto = ({ animalId }) => {
 
     return (
         <div>
+            {animalGeneralData && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                    <div>
+                        <strong style={{ fontSize: '1.1rem', color: '#2774a8' }}>RP: {animalGeneralData.rp}</strong> | <strong style={{ color: '#555' }}>eRP: {animalGeneralData.erp}</strong> | <strong>Días Lact.: {animalGeneralData.diasLact}</strong>
+                    </div>
+                    <Button 
+                        variant="primary" 
+                        size="sm" 
+                        style={{ backgroundColor: '#2a4cb8', borderColor: '#2a4cb8', fontWeight: 'bold' }}
+                        onClick={() => setShowFicha(true)}
+                    >
+                        Ver Ficha
+                    </Button>
+                </div>
+            )}
+            {/* Modal Ficha Animal */}
+            {animalGeneralData && (
+                 <FichaAnimal 
+                    animal={animalGeneralData} 
+                    show={showFicha} 
+                    setShow={setShowFicha} 
+                 />
+            )}
 
             {/* Selector de año */}
             {aniosDisponibles.length > 0 && (
-                <Form.Select
+                <Form.Control
+                    as="select"
                     className={styles["produccionmj-selectorAnio"]}
                     value={anioSeleccionado}
                     onChange={(e) =>
@@ -134,7 +183,7 @@ const AnimalCurvaCompleto = ({ animalId }) => {
                             {anio}
                         </option>
                     ))}
-                </Form.Select>
+                </Form.Control>
             )}
 
             {/* Sin datos */}

@@ -215,6 +215,7 @@ const NavBar = () => {
                 <Link href="/BotonAgregar"><span>Boton Agregar Campo</span></Link>
                 <Link href="/agregarIDTAMBO"><span>Agregar ID Tambo a Eventos</span></Link>
                 <Link href="/colocarTemperatura"><span>Colocar Temperatura</span></Link>
+                <Link href="/AgregarCAanimal"><span>Agregar CA a Animales</span></Link>
               </div>
             </div>
           )}
