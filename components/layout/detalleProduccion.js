@@ -3,7 +3,23 @@ import { FirebaseContext } from '../../firebase2';
 import { format } from 'date-fns';
 
 const DetalleProduccion = ({ prod }) => {
-  const { id, fecha, prodM, prodT, produccion, desM, desT, descarte, guaM, guaT, guachera, fabrica, animalesEnOrd } = prod;
+  const {
+    id,
+    fecha,
+    prodM,
+    prodT,
+    produccion,
+    desM,
+    desT,
+    descarte,
+    guaM,
+    guaT,
+    guachera,
+    fabrica,
+    animalesEnOrd,
+    tempMax,
+    estadoDelClima
+  } = prod;
   const { firebase } = useContext(FirebaseContext);
 
   const [fecProd, setFecProd] = useState('');
@@ -56,6 +72,12 @@ const DetalleProduccion = ({ prod }) => {
     }).format(numberValue);
   };
 
+  const formatTemperatura = (temp) => {
+    const numberValue = parseFloat(temp);
+    if (isNaN(numberValue)) return '';
+    return Math.trunc(numberValue);
+  };
+
   const animales = parseFloat(animalesEnOrd);
   const produccionNum = parseFloat(produccion);
   const prodIndv = !isNaN(animales) && animales !== 0 && !isNaN(produccionNum)
@@ -82,6 +104,8 @@ const DetalleProduccion = ({ prod }) => {
       <td>{formatNumber(animalesEnOrd)}</td>
       <td>{formatProdIndv(prodIndv)}</td>
       <td>{fabrica}</td>
+      <td>{formatTemperatura(tempMax)}</td>
+      <td>{estadoDelClima}</td> 
     </tr>
   );
 };

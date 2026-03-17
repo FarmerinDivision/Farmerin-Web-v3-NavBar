@@ -385,6 +385,8 @@ const Produccion = () => {
                     <th>Vacas en Ordeñe</th>
                     <th>Prod. Individual</th>
                     <th>Fábrica</th>
+                    <th>Temperatura</th>
+                    <th>Clima</th>
                   </tr>
                 </thead>
                 <tbody>

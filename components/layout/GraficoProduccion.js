@@ -31,11 +31,13 @@ const TooltipGeneral = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const prod = payload.find(p => p.dataKey === 'produccion')?.value;
     const vacas = payload.find(p => p.dataKey === 'animales')?.value;
+    const temperatura = payload.find(p => p.dataKey === 'temperatura')?.value;
     return (
       <div style={{ background: '#fff', border: '1px solid #ccc', padding: 10, borderRadius: 6 }}>
         <p><strong>{label}</strong></p>
         <p>🍼 Producción: <strong>{formatNumber(prod)} lts</strong></p>
         <p>🐄 Vacas en ordeñe: <strong>{formatNumber(vacas)}</strong></p>
+        <p>🌡️ Temperatura: <strong>{formatNumber(temperatura)} °C</strong></p>
       </div>
     );
   }
@@ -54,7 +56,8 @@ const GraficoProduccion = ({ data, promedioTotal }) => {
     return {
       fecha: fechaObj.toISOString().split('T')[0], // YYYY-MM-DD
       produccion: item.produccion,
-      animales: item.animalesEnOrd
+      animales: item.animalesEnOrd,
+      temperatura: item.tempMax
     };
   });
 
@@ -97,15 +100,23 @@ const GraficoProduccion = ({ data, promedioTotal }) => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="fecha" tickFormatter={formatXAxisLabel} />
             <YAxis
-              yAxisId="left"
+              yAxisId="produccion"
               tickFormatter={formatNumber}
               label={{ value: 'Producción (lts)', angle: -90, position: 'insideLeft' }}
             />
+
             <YAxis
-              yAxisId="right"
+              yAxisId="vacas"
               orientation="right"
               tickFormatter={formatNumber}
               label={{ value: 'Vacas en ordeñe', angle: -90, position: 'insideRight' }}
+            />
+
+            <YAxis
+              yAxisId="temp"
+              orientation="right"
+              tickFormatter={(v) => `${v}°`}
+              hide
             />
             <Tooltip content={<TooltipGeneral />} />
             <Legend verticalAlign="top" height={36} />
@@ -114,16 +125,27 @@ const GraficoProduccion = ({ data, promedioTotal }) => {
               barSize={30}
               fill="#81d4fa"
               name="🍼 Producción"
-              yAxisId="left"
+              yAxisId="produccion"
             />
+
             <Line
               type="monotone"
               dataKey="animales"
-              stroke="#66bb6a"
+              stroke="#43a047"
               strokeWidth={2}
-              dot={{ r: 2 }}
+              dot={{ r: 3 }}
               name="🐄 Vacas en ordeñe"
-              yAxisId="right"
+              yAxisId="vacas"
+            />
+
+            <Line
+              type="monotone"
+              dataKey="temperatura"
+              stroke="#ffa726"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              name="🌡️ Temperatura"
+              yAxisId="temp"
             />
           </ComposedChart>
         </ResponsiveContainer>

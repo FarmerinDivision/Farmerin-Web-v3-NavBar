@@ -2,8 +2,9 @@ import React, { useState, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
 import { Botonera, Mensaje, Contenedor } from '../components/ui/Elementos';
-import { Form, Row, Col, Table } from 'react-bootstrap';
+import { Form, Row, Col, Table, Modal, Button } from 'react-bootstrap';
 import { RiSearchLine } from 'react-icons/ri';
+import { FiTrendingUp } from "react-icons/fi";
 import { format } from 'date-fns';
 import styles from '../styles/Dirsa.module.scss';
 import {
@@ -21,6 +22,7 @@ import {
 } from 'recharts';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import AnimalCurvaCompleto from "./AnimalCurvaProduccion";
 
 const Loader = () => (
   <div className={styles.loaderContainerGraficoD}>
@@ -50,6 +52,8 @@ const ProductividadMensualDirsa = () => {
   const [mostrarGrafico, setMostrarGrafico] = useState(false);
   const [datosAnuales, setDatosAnuales] = useState([]);
   const [mostrarFiscalizadas, setMostrarFiscalizadas] = useState(false);
+  const [showCurvaModal, setShowCurvaModal] = useState(false);
+  const [animalSeleccionado, setAnimalSeleccionado] = useState(null);
 
   const MESES = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -121,8 +125,11 @@ const ProductividadMensualDirsa = () => {
             return null;
           }
 
+          const animalId = doc.ref.parent.parent.id;
+
           return {
             id: doc.id,
+            animalId, 
             fecha: format(ev.fecha.toDate(), 'dd/MM/yyyy'),
             RP: ev.rp || '',
             ERP: ev.erp || '',
@@ -265,6 +272,16 @@ const ProductividadMensualDirsa = () => {
     });
   }
 
+  const abrirCurva = (animalId) => {
+    setAnimalSeleccionado(animalId);
+    setShowCurvaModal(true);
+  };
+
+  const cerrarCurva = () => {
+    setShowCurvaModal(false);
+    setAnimalSeleccionado(null);
+  };
+
 
   return (
     <Layout titulo="Productividad Mensual Dirsa">
@@ -406,7 +423,6 @@ const ProductividadMensualDirsa = () => {
                     >
                       {ev.detalle}
                     </td>
-
                   </tr>
                 ))}
               </tbody>
@@ -443,6 +459,7 @@ const ProductividadMensualDirsa = () => {
                   <th>eRP</th>
                   <th>Fecha</th>
                   <th>Litros</th>
+                  <th>Rendimiento individual</th>
                 </tr>
               </thead>
               <tbody>
@@ -461,6 +478,14 @@ const ProductividadMensualDirsa = () => {
                           readOnly
                           style={{ background: "#eee", cursor: "not-allowed" }}
                         />
+                      </td>
+                      <td>
+                        <button
+                          className={styles["produccionmj-curvaBtn"]}
+                          onClick={() => abrirCurva(ev.animalId)}
+                        >
+                          📈 Ver curva
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -556,6 +581,28 @@ const ProductividadMensualDirsa = () => {
 
         )}
       </div>
+      <Modal
+        show={showCurvaModal}
+        onHide={cerrarCurva}
+        size="lg"
+        centered
+      >
+
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Curva de Producción del Animal
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+
+          {animalSeleccionado && (
+            <AnimalCurvaCompleto animalId={animalSeleccionado} />
+          )}
+
+        </Modal.Body>
+
+      </Modal>
     </Layout>
   );
 };

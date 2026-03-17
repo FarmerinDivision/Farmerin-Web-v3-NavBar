@@ -832,3 +832,284 @@ $font-main: 'Inter', 'Roboto', sans-serif;
   color: #287fb8; // color corporativo
   text-align: center;
 }
+
+
+/* =========================
+   CURVA DE PRODUCCIÓN
+========================= */
+
+.produccionmj-curvaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  padding: 4px 12px;
+
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+  &:hover {
+    background: linear-gradient(135deg, #66bb6a, #388e3c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35);
+  }
+}
+
+/* =========================
+   SELECTOR DE AÑO
+========================= */
+
+.produccionmj-selectorAnio {
+  max-width: 160px;
+  margin-bottom: 14px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  border-radius: 6px;
+
+  border: 1px solid #dcdcdc;
+
+  padding: 6px 10px;
+
+  background: #fff;
+
+  transition: border 0.2s ease;
+
+  &:focus {
+    border-color: #4caf50;
+    outline: none;
+  }
+}
+
+/* =========================
+   CONTENEDOR DEL GRÁFICO
+========================= */
+
+.produccionmj-curvaContainer {
+
+  width: 100%;
+  height: 350px;
+
+  padding: 10px;
+
+  border-radius: 10px;
+
+  background: #fafafa;
+
+  border: 1px solid #e6e6e6;
+
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.04);
+
+}
+
+/* =========================
+   MENSAJE SIN DATOS
+========================= */
+
+.produccionmj-sinDatos {
+
+  padding: 25px;
+
+  text-align: center;
+
+  font-size: 14px;
+
+  color: #777;
+
+  background: #fafafa;
+
+  border-radius: 8px;
+
+  border: 1px dashed #ddd;
+
+}
+
+/* =========================
+   MODAL CURVA
+========================= */
+
+.produccionmj-modalHeader {
+
+  background: #f7f7f7;
+
+  border-bottom: 1px solid #e5e5e5;
+
+  font-weight: 600;
+
+}
+
+.produccionmj-modalTitle {
+
+  font-size: 16px;
+
+  color: #333;
+
+}
+
+.produccionmj-modalBody {
+
+  padding: 20px;
+
+}
+
+/* =========================
+   CURVA DE PRODUCCIÓN
+========================= */
+
+.produccionmj-curvaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  padding: 4px 12px;
+
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+  &:hover {
+    background: linear-gradient(135deg, #66bb6a, #388e3c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35);
+  }
+}
+
+/* =========================
+   SELECTOR DE AÑO
+========================= */
+
+.produccionmj-selectorAnio {
+  max-width: 160px;
+  margin-bottom: 14px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  border-radius: 6px;
+
+  border: 1px solid #dcdcdc;
+
+  padding: 6px 10px;
+
+  background: #fff;
+
+  transition: border 0.2s ease;
+
+  &:focus {
+    border-color: #4caf50;
+    outline: none;
+  }
+}
+
+/* =========================
+   CONTENEDOR DEL GRÁFICO
+========================= */
+
+.produccionmj-curvaContainer {
+
+  width: 100%;
+  height: 350px;
+
+  padding: 10px;
+
+  border-radius: 10px;
+
+  background: #fafafa;
+
+  border: 1px solid #e6e6e6;
+
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.04);
+
+}
+
+/* =========================
+   MENSAJE SIN DATOS
+========================= */
+
+.produccionmj-sinDatos {
+
+  padding: 25px;
+
+  text-align: center;
+
+  font-size: 14px;
+
+  color: #777;
+
+  background: #fafafa;
+
+  border-radius: 8px;
+
+  border: 1px dashed #ddd;
+
+}
+
+/* =========================
+   MODAL CURVA
+========================= */
+
+.produccionmj-modalHeader {
+
+  background: #f7f7f7;
+
+  border-bottom: 1px solid #e5e5e5;
+
+  font-weight: 600;
+
+}
+
+.produccionmj-modalTitle {
+
+  font-size: 16px;
+
+  color: #333;
+
+}
+
+.produccionmj-modalBody {
+
+  padding: 20px;
+
+}
