@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 import AnimalCurvaCompleto from "./AnimalCurvaProduccion";
 
 const Loader = () => (
@@ -54,6 +55,8 @@ const ProductividadMensualDirsa = () => {
   const [mostrarFiscalizadas, setMostrarFiscalizadas] = useState(false);
   const [showCurvaModal, setShowCurvaModal] = useState(false);
   const [animalSeleccionado, setAnimalSeleccionado] = useState(null);
+  const [ordenLitros, setOrdenLitros] = useState(null); // 'asc' | 'desc' | null
+
 
   const MESES = [
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -283,6 +286,24 @@ const ProductividadMensualDirsa = () => {
   };
 
 
+  const handleSortLitros = () => {
+    if (ordenLitros === 'asc') {
+      setOrdenLitros('desc');
+    } else if (ordenLitros === 'desc') {
+      setOrdenLitros(null);
+    } else {
+      setOrdenLitros('asc');
+    }
+  };
+
+  const eventosOrdenados = [...eventos.filter(ev => !ev.fiscalizada)];
+
+  if (ordenLitros === 'asc') {
+    eventosOrdenados.sort((a, b) => (a.litros || 0) - (b.litros || 0));
+  } else if (ordenLitros === 'desc') {
+    eventosOrdenados.sort((a, b) => (b.litros || 0) - (a.litros || 0));
+  }
+
   return (
     <Layout titulo="Productividad Mensual Dirsa">
       <div className={styles.dirsaRoot}>
@@ -458,37 +479,42 @@ const ProductividadMensualDirsa = () => {
                   <th>RP</th>
                   <th>eRP</th>
                   <th>Fecha</th>
-                  <th>Litros</th>
+                  <th>
+                    <div className={styles.thTooltipWrapper} onClick={handleSortLitros}>
+                      <span className={styles.thContent}>
+                        Litros
+                        <FaSort size={20} className={styles.sortIcon} />
+                      </span>
+                    </div>
+                  </th>
                   <th>Rendimiento individual</th>
                 </tr>
               </thead>
               <tbody>
-                {eventos
-                  .filter(ev => !ev.fiscalizada)
-                  .map((ev) => (
-                    <tr key={ev.id}>
-                      <td>{ev.RP}</td>
-                      <td>{ev.ERP}</td>
-                      <td>{ev.fecha}</td>
-                      <td>
-                        <Form.Control
-                          type="text"
-                          value={ev.litros !== null ? `${ev.litros} ` : ev.detalle}
-                          disabled
-                          readOnly
-                          style={{ background: "#eee", cursor: "not-allowed" }}
-                        />
-                      </td>
-                      <td>
-                        <button
-                          className={styles["produccionmj-curvaBtn"]}
-                          onClick={() => abrirCurva(ev.animalId)}
-                        >
-                          Ver Rendimiento individual
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                {eventosOrdenados.map((ev) => (
+                  <tr key={ev.id}>
+                    <td>{ev.RP}</td>
+                    <td>{ev.ERP}</td>
+                    <td>{ev.fecha}</td>
+                    <td>
+                      <Form.Control
+                        type="text"
+                        value={ev.litros !== null ? `${ev.litros} ` : ev.detalle}
+                        disabled
+                        readOnly
+                        style={{ background: "#eee", cursor: "not-allowed" }}
+                      />
+                    </td>
+                    <td>
+                      <button
+                        className={styles["produccionmj-curvaBtn"]}
+                        onClick={() => abrirCurva(ev.animalId)}
+                      >
+                        Ver Rendimiento individual
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </Table>
           </Contenedor>

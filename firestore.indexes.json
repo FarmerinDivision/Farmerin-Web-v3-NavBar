@@ -1,0 +1,39 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "animal",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "rp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "animal",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "rp", "order": "ASCENDING" },
+        { "fieldPath": "fbaja", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "macho",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "rp", "order": "ASCENDING" },
+        { "fieldPath": "fbaja", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "eventos",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

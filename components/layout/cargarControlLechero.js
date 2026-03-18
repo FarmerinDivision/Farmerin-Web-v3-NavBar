@@ -188,27 +188,18 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
                                 .collection('animal').doc(doc.id)
                                 .collection('eventos')
                                 .where('tipo', '==', 'Control Lechero mediante planilla Dirsa')
+                                .orderBy('fecha', 'desc')
+                                .limit(2)
                                 .get();
 
-                            // Ordenar todos los eventos por fecha desc en memoria
-                            const eventosOrdenados = eventosSnap.docs
-                                .map(evDoc => evDoc.data())
-                                .filter(ev => ev.fecha)
-                                .sort((a, b) => {
-                                    const fa = a.fecha.toDate ? a.fecha.toDate() : new Date(a.fecha);
-                                    const fb = b.fecha.toDate ? b.fecha.toDate() : new Date(b.fecha);
-                                    return fb - fa; // desc
-                                });
-
-                            // El índice 0 es el recién cargado (= uc).
-                            // Desde el índice 1 en adelante buscamos el primero con litros válidos (= ca).
-                            for (let i = 1; i < eventosOrdenados.length; i++) {
-                                const evData = eventosOrdenados[i];
+                            // El doc[0] es el recién cargado (= uc).
+                            // El doc[1] (si existe) es el control anterior (= ca).
+                            if (eventosSnap.docs.length >= 2) {
+                                const evData = eventosSnap.docs[1].data();
                                 if (evData.detalle) {
                                     const match = evData.detalle.match(/\d+(\.\d+)?/);
                                     if (match) {
                                         caValor = parseFloat(match[0]);
-                                        break;
                                     }
                                 }
                             }
