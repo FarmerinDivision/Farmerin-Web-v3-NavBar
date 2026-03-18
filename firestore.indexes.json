@@ -13,8 +13,44 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "fbaja", "order": "ASCENDING" },
+        { "fieldPath": "rp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "animal",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "estpro", "order": "ASCENDING" },
+        { "fieldPath": "fbaja", "order": "ASCENDING" },
+        { "fieldPath": "rp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "animal",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
         { "fieldPath": "rp", "order": "ASCENDING" },
         { "fieldPath": "fbaja", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "animal",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "erp", "order": "ASCENDING" },
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "mbaja", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "animal",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "erp", "order": "ASCENDING" },
+        { "fieldPath": "mbaja", "order": "ASCENDING" }
       ]
     },
     {
@@ -27,13 +63,115 @@
       ]
     },
     {
+      "collectionGroup": "alerta",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "parametro",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "orden", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "parametro",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "grupo", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "eventos",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         { "fieldPath": "tipo", "order": "ASCENDING" },
         { "fieldPath": "fecha", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "eventos",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "eventos",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "idtambo", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fecha", "order": "ASCENDING" },
+        { "fieldPath": "visto", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fecha", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fecha", "order": "ASCENDING" },
+        { "fieldPath": "vistoUsuario", "arrayConfig": "CONTAINS" }
+      ]
+    },
+    {
+      "collectionGroup": "recepcion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fecha", "order": "ASCENDING" },
+        { "fieldPath": "visto", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "recepcion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fecha", "order": "ASCENDING" },
+        { "fieldPath": "tipo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tambo",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarios", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nombre", "order": "DESCENDING" }
+      ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "eventos",
+      "fieldPath": "fecha",
+      "ttl": false,
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" },
+        { "arrayConfig": "CONTAINS", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    }
+  ]
 }
