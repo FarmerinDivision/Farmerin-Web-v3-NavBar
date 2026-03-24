@@ -9,10 +9,9 @@ const DetalleParteDiario = ({ animal, inicio, fin, visto,tipo }) => {
   const { firebase,usuario } = useContext(FirebaseContext);
 
   useEffect(() => {
-    
+    guardarEventos([]); // Limpiar antes de buscar si cambian los filtros
     buscarEventos();
-    console.log(usuario);
-  }, []);
+  }, [inicio, fin, visto, tipo]);
 
   function buscarEventos() {
     try {
@@ -25,11 +24,8 @@ const DetalleParteDiario = ({ animal, inicio, fin, visto,tipo }) => {
         
         query=query.where('visto', '==', v);
       }
-      //agrega filtro de tipo de evento
-      if (tipo != 'todos') {
-       
-        query=query.where('tipo', '==', tipo);
-      }
+      //agrega filtro de tipo de evento (eliminado de la query para evitar problemas de índices)
+      //Se filtrará en memoria en snapshotEventos
       query.get().then(snapshotEventos);
       //firebase.db.collection('animal').doc(id).collection('eventos').where('fecha','>=',inicio).where('fecha','<=',fin).get().then(snapshotEventos);
 
@@ -45,9 +41,16 @@ const DetalleParteDiario = ({ animal, inicio, fin, visto,tipo }) => {
         id: doc.id,
         ...doc.data()
       }
-    })
+    }).filter(e => {
+        // Filtrar por tipo en memoria
+        if (tipo !== 'todos') {
+            const t = (e.tipo || '').trim().toLowerCase();
+            return t === tipo.toLowerCase();
+        }
+        return true;
+    });
     
-    guardarEventos(eventos => [...eventos, even]);
+    guardarEventos(prevEventos => [...prevEventos, ...even]);
 
   }
 

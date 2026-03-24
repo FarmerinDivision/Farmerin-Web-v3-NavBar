@@ -170,10 +170,8 @@ function buscarEventos(an, iniciob, finb) {
       if (visto === 'true') query = query.where('vistoUsuario', 'array-contains', usuario.uid);
     }
 
-    // Filtro de tipo de evento
-    if (tipo !== 'todos') {
-      query = query.where('tipo', '==', tipo);
-    }
+    // Filtro de tipo de evento (eliminado de la query para evitar problemas de índices y coincidencia exacta)
+    // Se filtrará en memoria en snapshotEventos
 
     function snapshotEventos(snapshot) {
       const nuevosEventos = [];
@@ -188,6 +186,11 @@ function buscarEventos(an, iniciob, finb) {
 
         // Saltar si es "Control Lechero" o si es usuario Dirsa
         if (tipoEvento === 'Control Lechero' || esDirsa) {
+          return;
+        }
+
+        // --- FILTRO: Tipo de evento seleccionado ---
+        if (tipo !== 'todos' && tipoEvento.toLowerCase() !== tipo.toLowerCase()) {
           return;
         }
         // ---------------------------------------------------------------
