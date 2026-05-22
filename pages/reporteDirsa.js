@@ -47,6 +47,10 @@ const ReporteDirsa = () => {
         fechaEtiqueta = `${fini}_a_${ffin}`;
       } else if (valores?.tipoFecha === 'mv') {
         fechaEtiqueta = `mes_${format(Date.now(), 'yyyy-MM')}`;
+      } else if (valores?.tipoFecha === 'ma') {
+        const ma = new Date();
+        ma.setMonth(ma.getMonth() - 1);
+        fechaEtiqueta = `mes_anterior_${format(ma, 'yyyy-MM')}`;
       }
 
       const filtros = [];
@@ -133,6 +137,14 @@ const ReporteDirsa = () => {
       finb = firebase.fechaTimeStamp(ff);
     }
 
+    if (tipoFecha === "ma") {
+      const actual = new Date();
+      const primerDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth() - 1, 1);
+      const ultimoDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth(), 0);
+      iniciob = firebase.fechaTimeStamp(format(primerDiaMesAnterior, 'yyyy-MM-dd'));
+      finb = firebase.fechaTimeStamp(format(ultimoDiaMesAnterior, 'yyyy-MM-dd') + 'T21:59:00');
+    }
+
     // Ejecutamos la búsqueda de eventos por animal
     animales.forEach(a => {
       buscarEventos(a, iniciob, finb);
@@ -165,6 +177,10 @@ const ReporteDirsa = () => {
         .where('fecha', '>=', iniciob)
         .where('fecha', '<=', finb);
 
+      /* 
+      SE COMENTA EL FILTRADO EN CONSULTA PORQUE REQUIERE ÍNDICES COMPUESTOS 
+      Y FALLA SI NO ESTÁN CREADOS. EL FILTRADO SE HACE AHORA EN EL CLIENTE.
+      
       // Filtro de visto
       if (visto !== 'todos') {
         if (visto === 'true') query = query.where('vistoUsuario', 'array-contains', usuario.uid);
@@ -174,6 +190,7 @@ const ReporteDirsa = () => {
       if (tipo !== 'todos') {
         query = query.where('tipo', '==', tipo);
       }
+      */
 
       function snapshotEventos(snapshot) {
         const nuevosEventos = [];
@@ -214,10 +231,18 @@ const ReporteDirsa = () => {
 
           // ✅ Filtrar solo eventos cuyo campo usuario contenga " - Dirsa"
           if (typeof e.usuario === 'string' && e.usuario.includes(' - Dirsa')) {
-            const noVisto = visto === 'false' && (!e.vistoUsuario || e.vistoUsuario.indexOf(usuario.uid) === -1);
-            const todoVisto = visto !== 'false';
+            
+            // ✅ Filtro por tipo de evento (Cliente)
+            const coincideTipo = tipo === 'todos' || e.tipo === tipo;
+            
+            // ✅ Filtro por estado (Visto / Pendiente) (Cliente)
+            const esVisto = e.vistoUsuario && e.vistoUsuario.indexOf(usuario.uid) !== -1;
+            const coincideVisto = 
+              visto === 'todos' || 
+              (visto === 'true' && esVisto) || 
+              (visto === 'false' && !esVisto);
 
-            if (noVisto || todoVisto) {
+            if (coincideTipo && coincideVisto) {
               nuevosEventos.push(e);
             }
           }
@@ -347,6 +372,19 @@ const ReporteDirsa = () => {
                     MES EN CURSO
                   </Button>
                   <span className={styles.parteTooltipText}>Mes en curso</span>
+                </div>
+                <div className={styles.parteTooltip}>
+                  <Button
+                    className={`${styles.parteBtn} ${valores.tipoFecha === 'ma' ? 'activo' : ''
+                      }`}
+                    variant="info"
+                    name="tipoFecha"
+                    value="ma"
+                    onClick={handleChange}
+                  >
+                    MES ANTERIOR
+                  </Button>
+                  <span className={styles.parteTooltipText}>Mes anterior</span>
                 </div>
                 <div className={styles.parteTooltip}>
                   <Button

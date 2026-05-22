@@ -25,9 +25,14 @@ const Footer = () => {
           Ultra I+D+I
         </a>
         <span className={styles.separator}>&</span>
-        <a className={`${styles.link} ${styles.devSignature}`}>
-          Facundo Peralta and Farmerin Developer.
+        <a  
+          href="https://studio--studio-2931549742-72d7c.us-central1.hosted.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${styles.link} ${styles.devSignature}`}>
+          FALTRA STUDIO
         </a>
+        <a>and Farmerin Developer.</a>
 
       </div>
     </footer>

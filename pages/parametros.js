@@ -1,5 +1,5 @@
 // src/components/Parametros.js
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
@@ -35,6 +35,8 @@ const Parametros = () => {
   const [promediosIndividuales, setPromediosIndividuales] = useState({});
   const [showInfo, setShowInfo] = useState(false);
   const [parametrosModificados, setParametrosModificados] = useState(false);
+  const [showSyncInfo, setShowSyncInfo] = useState(false);
+  const pendingPorcentajeRef = useRef(null);
 
   const dispatch = useDispatch();
 
@@ -155,7 +157,22 @@ const Parametros = () => {
   };
 
   function snapshotParametros(snapshot) {
-    setValor(snapshot.data().porcentaje);
+    const porcentajeRemoto = Number(snapshot.data()?.porcentaje ?? 0);
+
+    // Evita que una lectura tardía pise el último valor elegido por el usuario.
+    if (
+      pendingPorcentajeRef.current !== null &&
+      porcentajeRemoto !== pendingPorcentajeRef.current
+    ) {
+      return;
+    }
+
+    setValor(porcentajeRemoto);
+    setPorc(porcentajeRemoto);
+
+    if (pendingPorcentajeRef.current === porcentajeRemoto) {
+      pendingPorcentajeRef.current = null;
+    }
   }
 
   const cargarGrupos = async () => {
@@ -230,43 +247,141 @@ const Parametros = () => {
     }
   };
 
+  const obtenerFactorPorcentajeAnimal = (valorPorcentaje) => {
+    const factores = {
+      10: 1.1,
+      20: 1.2,
+      30: 1.3,
+      40: 1.4,
+      50: 1.5,
+      60: 1.6,
+      70: 1.7,
+      80: 1.8,
+      90: 1.9,
+      100: 2,
+      '-10': 0.9,
+      '-20': 0.8,
+      '-30': 0.7,
+      '-40': 0.6,
+      '-50': 0.5,
+    };
+
+    return factores[valorPorcentaje] ?? 1;
+  };
+
+  const actualizarPorcentajeAnimalesEnFirebase = async (nuevoFactorPorcentaje) => {
+    if (!tamboSel) return;
+
+    const endpoint = 'https://us-central1-farmerin-navarro.cloudfunctions.net/actualizarPorcentajeAnimales';
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idtambo: tamboSel.id,
+          porcentaje: nuevoFactorPorcentaje,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cloud Function status ${response.status}`);
+      }
+      return;
+    } catch (fnError) {
+      console.warn('Fallo Cloud Function, usando fallback local:', fnError);
+    }
+
+    // Fallback local: mantiene la lógica actual de batches en paralelo.
+    const animalesObjetivo = animales.filter((a) => !a.fbaja && !a.mbaja);
+    if (animalesObjetivo.length > 0) {
+      const chunkSize = 450;
+      const commits = [];
+      let batch = firebase.db.batch();
+      let opsInBatch = 0;
+
+      animalesObjetivo.forEach((a) => {
+        const ref = firebase.db.collection('animal').doc(a.id);
+        batch.update(ref, { porcentaje: nuevoFactorPorcentaje });
+        opsInBatch += 1;
+
+        if (opsInBatch >= chunkSize) {
+          commits.push(batch.commit());
+          batch = firebase.db.batch();
+          opsInBatch = 0;
+        }
+      });
+
+      if (opsInBatch > 0) {
+        commits.push(batch.commit());
+      }
+
+      await Promise.all(commits);
+      return;
+    }
+
+    if (animalesObjetivo.length === 0) {
+      const snapshot = await firebase.db
+        .collection('animal')
+        .where('idtambo', '==', tamboSel.id)
+        .where('estpro', '==', 'En Ordeñe')
+        .get();
+
+      const chunkSize = 450;
+      const commits = [];
+      let batch = firebase.db.batch();
+      let opsInBatch = 0;
+
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.fbaja || data.mbaja) return;
+
+        batch.update(doc.ref, { porcentaje: nuevoFactorPorcentaje });
+        opsInBatch += 1;
+
+        if (opsInBatch >= chunkSize) {
+          commits.push(batch.commit());
+          batch = firebase.db.batch();
+          opsInBatch = 0;
+        }
+      });
+
+      if (opsInBatch > 0) {
+        commits.push(batch.commit());
+      }
+
+      if (commits.length === 0) return;
+      await Promise.all(commits);
+    }
+  };
+
   const handleApplyChange = async () => {
     if (selectedChange === null || !tamboSel) return;
+    setShowSyncInfo(true);
 
     let nuevoPorcentaje = selectedChange;
     if (nuevoPorcentaje > 100) nuevoPorcentaje = 100;
     if (nuevoPorcentaje < -50) nuevoPorcentaje = -50;
 
-    const porcentajeAnimal = { porcentaje: 1 + nuevoPorcentaje / 100 };
+    const porcentajeAnimal = { porcentaje: obtenerFactorPorcentajeAnimal(nuevoPorcentaje) };
     const p = { porcentaje: nuevoPorcentaje };
 
     // ✅ Cambio instantáneo en pantalla
+    pendingPorcentajeRef.current = nuevoPorcentaje;
     setValor(nuevoPorcentaje);
     setPorc(nuevoPorcentaje);
     setSelectedChange(null);
+    setAnimales(prev =>
+      prev.map((animal) => {
+        if (animal.fbaja || animal.mbaja) return animal;
+        return { ...animal, porcentaje: porcentajeAnimal.porcentaje };
+      })
+    );
 
     try {
       // ✅ Actualiza el porcentaje general en el tambo
       await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
-
-      // ✅ Batch update para animales (más rápido)
-      const snapshot = await firebase.db
-        .collection('animal')
-        .where('idtambo', '==', tamboSel.id)
-        .get();
-
-      const batch = firebase.db.batch();
-      snapshot.docs
-        .filter(doc => {
-          const data = doc.data();
-          return !data.fbaja && !data.mbaja;
-        })
-        .forEach(doc => {
-          const ref = firebase.db.collection('animal').doc(doc.id);
-          batch.update(ref, porcentajeAnimal);
-        });
-
-      await batch.commit();
+      await actualizarPorcentajeAnimalesEnFirebase(porcentajeAnimal.porcentaje);
 
       // ✅ Notificación
       const noti = {
@@ -288,6 +403,9 @@ const Parametros = () => {
       }));
 
     } catch (error) {
+      pendingPorcentajeRef.current = null;
+      await obtenerPorcentaje();
+      await cargarAnimales();
       console.error("Error al aplicar cambio:", error);
     }
   };
@@ -295,35 +413,27 @@ const Parametros = () => {
 
   const restablecer = async () => {
     if (!tamboSel) return;
+    setShowSyncInfo(true);
 
     const p = { porcentaje: 0 };
     const pAnimal = { porcentaje: 1 };
 
     // ✅ Cambio instantáneo en pantalla
+    pendingPorcentajeRef.current = 0;
     setValor(0);
+    setPorc(0);
     setSelectedChange(null);
     setIsIncrease(true);
+    setAnimales(prev =>
+      prev.map((animal) => {
+        if (animal.fbaja || animal.mbaja) return animal;
+        return { ...animal, porcentaje: pAnimal.porcentaje };
+      })
+    );
 
     try {
       await firebase.db.collection('tambo').doc(tamboSel.id).update(p);
-
-      const snapshot = await firebase.db
-        .collection('animal')
-        .where('idtambo', '==', tamboSel.id)
-        .get();
-
-      const batch = firebase.db.batch();
-      snapshot.docs
-        .filter(doc => {
-          const data = doc.data();
-          return !data.fbaja && !data.mbaja;
-        })
-        .forEach(doc => {
-          const ref = firebase.db.collection('animal').doc(doc.id);
-          batch.update(ref, pAnimal);
-        });
-
-      await batch.commit();
+      await actualizarPorcentajeAnimalesEnFirebase(pAnimal.porcentaje);
 
       const noti = {
         mensaje: 'SE VOLVIÓ AL VALOR ORIGINAL DE LA RACIÓN.',
@@ -342,6 +452,9 @@ const Parametros = () => {
       }));
 
     } catch (error) {
+      pendingPorcentajeRef.current = null;
+      await obtenerPorcentaje();
+      await cargarAnimales();
       console.error("Error al restablecer:", error);
     }
   };
@@ -1307,6 +1420,20 @@ const Parametros = () => {
 
         <Modal.Footer>
           <Button variant="primary" onClick={() => setShowInfo(false)}>
+            Entendido
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showSyncInfo} onHide={() => setShowSyncInfo(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Actualizacion en proceso</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Los cambios se guardaron correctamente. Pueden verse reflejados en unos minutos.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowSyncInfo(false)}>
             Entendido
           </Button>
         </Modal.Footer>

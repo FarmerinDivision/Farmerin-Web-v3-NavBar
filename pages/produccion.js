@@ -50,6 +50,19 @@ const Produccion = () => {
         inicio: firebase.fechaTimeStamp(primerDiaMes),
         fin: firebase.fechaTimeStamp(format(Date.now(), 'yyyy-MM-dd') + 'T23:59:59') // Fin del día
       };
+    } else if (tipo === 'ma') {
+      const actual = new Date();
+      const primerDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth() - 1, 1);
+      const ultimoDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth(), 0);
+      const inicioMa = format(primerDiaMesAnterior, 'yyyy-MM-dd');
+      const finMa = format(ultimoDiaMesAnterior, 'yyyy-MM-dd');
+      nuevosValores = {
+        ...nuevosValores,
+        fini: inicioMa,
+        ffin: finMa,
+        inicio: firebase.fechaTimeStamp(inicioMa),
+        fin: firebase.fechaTimeStamp(finMa + 'T23:59:59') // Fin del día
+      };
     } else if (tipo === 'ef') {
       const { fini, ffin } = valores;
       nuevosValores = {
@@ -277,6 +290,16 @@ const Produccion = () => {
                     MES EN CURSO
                   </Button>
                   <span className={styles.RepoProduTooltipText}>Mes actual</span>
+                </div>
+                <div className={styles.RepoProduTooltip}>
+                  <Button
+                    className={`${styles.produccionBtn} ${valores.tipoFecha === 'ma' ? 'activo' : ''}`}
+                    variant="info"
+                    onClick={() => realizarBusqueda('ma')}
+                  >
+                    MES ANTERIOR
+                  </Button>
+                  <span className={styles.RepoProduTooltipText}>Mes anterior</span>
                 </div>
                 <div className={styles.RepoProduTooltip}>
                   <Button

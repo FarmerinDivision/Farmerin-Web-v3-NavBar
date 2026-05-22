@@ -47,6 +47,10 @@ const ParteDiario = () => {
         fechaEtiqueta = `${fini}_a_${ffin}`;
       } else if (valores?.tipoFecha === 'mv') {
         fechaEtiqueta = `mes_${format(Date.now(), 'yyyy-MM')}`;
+      } else if (valores?.tipoFecha === 'ma') {
+        const ma = new Date();
+        ma.setMonth(ma.getMonth() - 1);
+        fechaEtiqueta = `mes_anterior_${format(ma, 'yyyy-MM')}`;
       }
 
       const filtros = [];
@@ -131,6 +135,14 @@ const ParteDiario = () => {
       const primerDiaMes = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
       iniciob = firebase.fechaTimeStamp(primerDiaMes);
       finb = firebase.fechaTimeStamp(ff);
+    }
+
+    if (tipoFecha === "ma") {
+      const actual = new Date();
+      const primerDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth() - 1, 1);
+      const ultimoDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth(), 0);
+      iniciob = firebase.fechaTimeStamp(format(primerDiaMesAnterior, 'yyyy-MM-dd'));
+      finb = firebase.fechaTimeStamp(format(ultimoDiaMesAnterior, 'yyyy-MM-dd') + 'T21:59:00');
     }
 
     // Ejecutamos la búsqueda de eventos por animal
@@ -361,6 +373,18 @@ function buscarEventos(an, iniciob, finb) {
                     MES EN CURSO
                   </Button>
                   <span className={styles.parteTooltipText}>Mes en curso</span>
+                </div>
+                <div className={styles.parteTooltip}>
+                  <Button
+                    className={`${styles.parteBtn} ${valores.tipoFecha === 'ma' ? 'activo' : ''}`}
+                    variant="info"
+                    name="tipoFecha"
+                    value="ma"
+                    onClick={handleChange}
+                  >
+                    MES ANTERIOR
+                  </Button>
+                  <span className={styles.parteTooltipText}>Mes anterior</span>
                 </div>
                 <div className={styles.parteTooltip}>
                   <Button className={`${styles.parteBtn} ${valores.tipoFecha === 'ef' ? 'activo' : ''}`} variant="info" name="tipoFecha" value="ef" onClick={handleChange}>

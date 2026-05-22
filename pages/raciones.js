@@ -114,18 +114,23 @@ function control_ingreso() {
       const nombreLimpio = limpiarNombreHoja(nombreHoja);
       console.log(`Agregando hoja: ${nombreLimpio}`, datos);
 
+      const formatearERP = (rfid) => {
+        const erp = rfid?.replace(/⛔/g, '').trim() || '';
+        return erp.length === 14 ? `0${erp}` : erp;
+      };
+
       let datosFormateados;
       if (nombreHoja === 'Seca/NR') {
         datosFormateados = datos.map(animal => ({
           'RP': animal.rp || animal.RP || 'No Registrada',
-          'eRP': animal.RFID?.replace(/⛔/g, '') || 'eRP desconocido',
+          'eRP': formatearERP(animal.RFID),
           'EST.PRO': animal.estpro || 'No Registrada',
           'EST.REP': animal.estrep || 'No Registrada'
         }));
       } else {
         datosFormateados = datos.map(animal => ({
           'RP': animal.RP || 'No Registrada',
-          'eRP': animal.RFID?.replace(/⛔/g, '') || 'eRP desconocido',
+          'eRP': formatearERP(animal.RFID),
           'Dias Ausentes': animal.DiasAusente || 'No Registrado'
         }));
       }

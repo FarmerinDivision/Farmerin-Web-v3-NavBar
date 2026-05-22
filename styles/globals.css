@@ -20,3 +20,106 @@ x a {
 th {
   background-color: white
 }
+/* Custom Modal Consumos */
+.custom-modal-consumos {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+}
+
+.custom-modal-consumos .modal-dialog {
+  max-width: 1000px !important;
+  width: 90% !important;
+  margin: auto !important;
+  transition: transform 0.3s ease-out;
+}
+
+.custom-modal-content {
+  border-radius: 24px !important;
+  border: none !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  overflow: hidden;
+}
+
+.custom-modal-header {
+  background: #ffffff !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 1.75rem 2.5rem !important;
+}
+
+.custom-modal-body {
+  padding: 2rem 2.5rem !important;
+}
+
+/* Fixed 3-Card Row Layout (No Scroll) */
+.cards-horizontal-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important; /* No scroll allowed */
+  gap: 1.25rem !important;
+  padding: 10px 0 !important;
+  width: 100% !important;
+  justify-content: space-between !important;
+}
+
+.consumption-card-item {
+  flex: 1 !important; /* All cards take same space */
+  min-width: 0 !important; /* Allows shrinking below content size */
+  max-width: 33.33% !important; /* Ensures strictly side-by-side */
+}
+
+/* Hover effect and Description Overlay for Consumption Cards */
+.consumption-card {
+  position: relative !important;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  border: none !important;
+  background-color: white !important;
+}
+
+.consumption-card:hover {
+  transform: scale(1.05) translateY(-5px) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12) !important;
+  z-index: 10;
+}
+
+.card-description-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1.5rem !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: all 0.3s ease !important;
+  text-align: center !important;
+  z-index: 5 !important;
+  border-radius: 15px !important;
+}
+
+.consumption-card:hover .card-description-overlay {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.card-description-text {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.4 !important;
+}
+
+@media (max-width: 768px) {
+
+  .cards-horizontal-row {
+    gap: 0.75rem !important;
+  }
+}
+

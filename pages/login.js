@@ -191,10 +191,16 @@ const Login = () => {
             Regístrate en Farmerin
           </button>
         </div>
-        <div>
+        <div className={styles.footerContainer}>
           <div className={styles.divider}><span>O</span></div>
-          <p className={styles.TextFaarmerin}> Farmerin Division S.A. - © 2020 </p>
-
+          <div className={styles.footerLinks}>
+            <a href="https://farmerin.com.ar/" target="_blank" rel="noopener noreferrer" className={styles.link}> Farmerin Division S.A. </a>
+            <span className={styles.separator}>|</span>
+            <a href="https://ultraidi.com.ar/" target="_blank" rel="noopener noreferrer" className={styles.link}>Ultra I+D+I</a>
+            <span className={styles.separator}>&</span>
+            <a href="https://studio--studio-2931549742-72d7c.us-central1.hosted.app" target="_blank" rel="noopener noreferrer" className={styles.link}>Faltra Studio</a>
+            <span className={styles.devText}>and Farmerin Dev.</span>
+          </div>
         </div>
       </div>
 

@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "b20871a4-6073-420b-9fcf-97ab2c170e80"
+      }
+    },
+    "android": {
+      "package": "com.safarmerindivnav.farmerin"
+    }
+  }
+}

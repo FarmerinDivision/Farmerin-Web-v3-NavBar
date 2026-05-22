@@ -65,6 +65,14 @@ const Recepciones = () => {
       fin = firebase.fechaTimeStamp(hoy);
     }
 
+    if (tipoFecha == "ma") {
+      const actual = new Date();
+      const primerDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth() - 1, 1);
+      const ultimoDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth(), 0);
+      inicio = firebase.fechaTimeStamp(format(primerDiaMesAnterior, 'yyyy-MM-dd'));
+      fin = firebase.fechaTimeStamp(format(ultimoDiaMesAnterior, 'yyyy-MM-dd') + 'T21:59:00');
+    }
+
     guardarValores({
       fini: fini,
       ffin: ffin,
@@ -102,8 +110,8 @@ const Recepciones = () => {
 
     guardarValores(newValores);
 
-    // Si el usuario selecciona "ULTIMO DÍA" o "MES EN CURSO", ejecuta la búsqueda automáticamente
-    if (e.target.value === "ud" || e.target.value === "mv") {
+    // Si el usuario selecciona "ULTIMO DÍA" o "MES EN CURSO", o "MES ANTERIOR", ejecuta la búsqueda automáticamente
+    if (e.target.value === "ud" || e.target.value === "mv" || e.target.value === "ma") {
       setTimeout(() => handleSubmit(new Event("submit")), 0);
     }
   };
@@ -183,6 +191,18 @@ const Recepciones = () => {
                       MES EN CURSO
                     </Button>
                     <span className={styles.recepcionTooltipText}>Eventos del ultimo mes</span>
+                  </div>
+                  <div className={styles.recepcionTooltip}>
+                    <Button
+                      className={`${styles.recepcionBtn} ${valores.tipoFecha === 'ma' ? 'activo' : ''}`}
+                      variant="info"
+                      name="tipoFecha"
+                      value="ma"
+                      onClick={handleChange}
+                    >
+                      MES ANTERIOR
+                    </Button>
+                    <span className={styles.recepcionTooltipText}>Mes anterior</span>
                   </div>
                   <div className={styles.recepcionTooltip}>
                     <Button
