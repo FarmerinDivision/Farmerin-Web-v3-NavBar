@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { RiAddBoxLine } from 'react-icons/ri';
-import FichaAnimal from './fichaAnimal';
+import { useRouter } from 'next/router';
+import { RiAddBoxLine, RiEyeLine } from 'react-icons/ri';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import differenceInDays from 'date-fns/differenceInDays'
-import { format } from 'date-fns'
-import styles from '../../styles/gralAnimales.module.scss'
+import differenceInDays from 'date-fns/differenceInDays';
+import { format } from 'date-fns';
+import styles from '../../styles/gralAnimales.module.scss';
+import FichaAnimal from './fichaAnimal';
 
 const DetalleGralAnimal = ({ animal }) => {
 
-   const { id, idtambo, rp, erp, racion, lactancia, ingreso, observaciones, estpro, estrep, fparto, fservicio, categoria, uc, ca, rodeo,grupo, nservicio, diasLact } = animal;
-   const [show, setShow] = useState(false);
-   const [calculado, guardarCalculado] = useState({})
-   const handleShow = () => { setShow(true) };
-
+   const { id, idtambo, rp, erp, racion, lactancia, ingreso, observaciones, estpro, estrep, fparto, fservicio, categoria, uc, ca, rodeo, grupo, nservicio, diasLact } = animal;
+   const router = useRouter();
+   const [calculado, guardarCalculado] = useState({});
+   const [showFicha, setShowFicha] = useState(false);
 
    useEffect(() => {
-
       let fser;
-      //formateo fecha de servicio
+      // formateo fecha de servicio
       try {
          fser = format(new Date(fservicio), 'dd/MM/yy');
       } catch (error) {
@@ -28,75 +27,72 @@ const DetalleGralAnimal = ({ animal }) => {
          fser
       };
       guardarCalculado(calc);
-
    }, []);
 
    return (
       <>
          <tr>
-            <td >
+            <td style={{ cursor: 'pointer', fontWeight: 700, color: '#1e293b' }} onClick={() => setShowFicha(true)}>
                {rp}
             </td>
-            <td >
+            <td>
                {erp}
             </td>
-            <td >
+            <td>
                {grupo}
             </td>
-            <td >
+            <td>
                {categoria}
             </td>
-            <td >
+            <td>
                {rodeo}
             </td>
-            <td >
+            <td>
                {estrep}
             </td>
-            <td >
+            <td>
                {estpro}
             </td>
-            <td >
+            <td>
                {lactancia}
             </td>
-            <td >
+            <td>
                {uc}
             </td>
-            <td >
+            <td>
                {ca}
             </td>
-            <td >
+            <td>
                {diasLact}
             </td>
-            <td >
+            <td>
                {racion}
             </td>
-            <td >
+            <td>
                {nservicio}
             </td>
-            <td >
+            <td>
                {calculado.fser}
             </td>
 
-
             <td>
                <div className={styles.tooltipWrapper}>
-                  <Button className={styles.btnIconoInfo} onClick={handleShow}>
-                     <RiAddBoxLine size={20} />
+                  <Button className={styles.btnIconoInfo} onClick={() => setShowFicha(true)}>
+                     <RiEyeLine size={20} />
                   </Button>
                   <span className={styles.tooltipText}>Ver ficha</span>
                </div>
             </td>
          </tr>
-         {show &&
+
+         {showFicha && (
             <FichaAnimal
                animal={animal}
-               show={show}
-               setShow={setShow}
+               show={showFicha}
+               setShow={setShowFicha}
             />
-         }
-
+         )}
       </>
-
    );
 }
 

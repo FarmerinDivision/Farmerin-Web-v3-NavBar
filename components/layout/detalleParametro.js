@@ -8,6 +8,7 @@ import { Button, Form, Row, Col, Alert, Spinner, Table, Modal } from 'react-boot
 import { RiAddBoxLine } from 'react-icons/ri';
 import { format } from 'date-fns';
 import styles from '../../styles/Parametro.module.scss'
+import modalStyles from '../../styles/modalParametro.module.scss'
 import ParametroEdit from '../../pages/parametros/[id]';
 
 
@@ -203,10 +204,9 @@ const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreate
             size="lg"
             centered
             backdrop="static"
+            dialogClassName={modalStyles.premiumModalParametro}
+            backdropClassName={modalStyles.premiumModalBackdrop}
          >
-            <Modal.Header closeButton>
-               <Modal.Title>Nuevo Parámetro</Modal.Title>
-            </Modal.Header>
             <Modal.Body>
                <ParametroEdit
                   idParametro="0"

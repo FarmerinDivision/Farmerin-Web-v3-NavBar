@@ -1,40 +1,21 @@
-
 import React, { useState, useContext, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FirebaseContext } from '../../firebase2';
 import { ContenedorSpinner } from '../ui/Elementos';
-import MapContainer from './MapContainer';
 import DetalleHorario from './detalleHorario';
-import ModalTamboForm from '../../pages/tambos/ModalTamboForm'; // Nuevo
+import ModalTamboForm from '../../pages/tambos/ModalTamboForm';
 import { useAdmin } from '../utils/AdminContext';
-
 import { format } from 'date-fns';
-import {
-  Card,
-  Button,
-  Modal,
-  Row,
-  Col,
-  Form,
-  Spinner,
-  Table,
-  Alert
-} from 'react-bootstrap';
-
-import {
-  RiEdit2Line,
-  RiAddBoxLine,
-  RiDeleteBin2Line
-} from 'react-icons/ri';
-
+import { Button, Modal, Row, Col, Form, Spinner, Table, Alert } from 'react-bootstrap';
+import { HiOutlineInformationCircle, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi';
+import { FaMapMarkerAlt } from 'react-icons/fa';
 import styles from '../../styles/Tambos.module.scss';
+import modalStyles from '../../styles/modalTamboForm.module.scss';
 
 const DetalleTambos = ({ tambo }) => {
   const fetch = require('node-fetch');
-
   const { id, nombre, ubicacion, bajadas, turnos, tolvas, link } = tambo;
-  const { usuario, firebase, guardarTamboSel, tamboSel } = useContext(FirebaseContext);
+  const { usuario, firebase, guardarTamboSel } = useContext(FirebaseContext);
   const router = useRouter();
   const { activateAdminMode, deactivateAdminMode } = useAdmin();
 
@@ -46,7 +27,7 @@ const DetalleTambos = ({ tambo }) => {
   const [estadoApi, guardarEstadoApi] = useState(null);
   const [show, setShow] = useState(false);
   const [showData, setShowData] = useState(false);
-  const [showEditar, setShowEditar] = useState(false); // Nuevo
+  const [showEditar, setShowEditar] = useState(false);
   const [cargando, setCargando] = useState(false);
 
   useEffect(() => {
@@ -59,14 +40,11 @@ const DetalleTambos = ({ tambo }) => {
     setCargando(true);
     try {
       await guardarTamboSel(tambo);
-
-      // Verificación de Admin
       if (tambo.admin === true) {
         activateAdminMode();
       } else {
         deactivateAdminMode();
       }
-
       setTimeout(() => {
         router.push('/animales');
       }, 1000);
@@ -130,114 +108,180 @@ const DetalleTambos = ({ tambo }) => {
 
   return (
     <>
-      <Card className={styles.card}>
-        <div className={styles.cardContent}>
-          <div className={styles.nombreUbicacion}>
-            <div className={styles.nombre}> {nombre}</div>
-            <div className={styles.ubicacion}> {ubicacion}</div>
+      <div className={styles.tamboCard}>
+        {/* ENCABEZADO DE LA TARJETA */}
+        <div className={styles.cardHeader}>
+
+          {/* TÍTULO Y UBICACIÓN */}
+          <div className={styles.titleWrap}>
+            <h3>{nombre}</h3>
+            <div className={styles.location}>
+              <FaMapMarkerAlt size={12} color="#97a0aeff" />
+              {ubicacion}
+            </div>
           </div>
 
-          <div className={styles.botonCentro}>
-            <Button className={styles.botonIngresar} onClick={selecTambo} disabled={cargando}>
-              Ingresar al tambo
-            </Button>
-          </div>
-
-          <div className={styles.acciones}>
-            <div className={styles.tooltipWrapper}>
-              <Button className={styles.btnIconoInfo} onClick={handleShowData}>
-                <RiAddBoxLine size={20} />
-              </Button>
-              <span className={styles.tooltipText}>Ver información</span>
-            </div>
-
-            <div className={styles.tooltipWrapper}>
-              <Button className={styles.btnIconoEditar} onClick={() => setShowEditar(true)}>
-                <RiEdit2Line size={20} />
-              </Button>
-              <span className={styles.tooltipText}>Editar tambo</span>
-            </div>
-
-            <div className={styles.tooltipWrapper}>
-              <Button className={styles.btnIconoBorrar} onClick={handleShow}>
-                <RiDeleteBin2Line size={20} />
-              </Button>
-              <span className={styles.tooltipText}>Eliminar tambo</span>
-            </div>
+          {/* ACCIONES SECUNDARIAS (Visibles al hover) */}
+          <div className={styles.cardActions}>
+            <button className={styles.iconBtn} onClick={handleShowData} title="Información">
+              <HiOutlineInformationCircle size={18} />
+            </button>
+            <button className={styles.iconBtn} onClick={() => setShowEditar(true)} title="Editar">
+              <HiOutlinePencil size={18} />
+            </button>
+            <button className={`${styles.iconBtn} ${styles.btnDelete}`} onClick={handleShow} title="Eliminar">
+              <HiOutlineTrash size={18} />
+            </button>
           </div>
         </div>
-      </Card>
+
+        {/* BOTÓN PRINCIPAL */}
+        <button className={styles.btnIngresar} onClick={selecTambo} disabled={cargando}>
+          Ingresar al Tambo
+        </button>
+      </div>
 
       {/* Modal Confirmación */}
-      <Modal show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Atención!</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>¿Desea eliminar el tambo {nombre}?</p>
-          <Alert variant="danger" show={error}>
-            <Alert.Heading>Oops! Se ha producido un error!</Alert.Heading>
-            <p>{descError}</p>
-          </Alert>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="success" onClick={eliminarTambo}>Aceptar</Button>
-          <Button variant="danger" onClick={handleClose}>Cancelar</Button>
-        </Modal.Footer>
+      <Modal 
+        show={show} 
+        onHide={handleClose}
+        size="md"
+        centered
+        dialogClassName={modalStyles.premiumModalTamboSmall}
+        backdropClassName={modalStyles.premiumBackdropTambo}
+      >
+        <div className={modalStyles.header}>
+          <div>
+            <h2 className={modalStyles.title}>¡Atención!</h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+              Confirmación de eliminación
+            </p>
+          </div>
+          <button type="button" className={modalStyles.closeButton} onClick={handleClose} aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+
+        <div className={modalStyles.body}>
+          <div className={modalStyles.sectionBlock} style={{ textAlign: 'center', marginBottom: 0 }}>
+            <h3 style={{ fontSize: '18px', color: '#0f172a', marginBottom: '16px', fontWeight: '600' }}>
+              ¿Desea eliminar el tambo <strong>{nombre}</strong>?
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '14px', marginBottom: error ? '16px' : '0' }}>
+              Esta acción no se puede deshacer.
+            </p>
+
+            <Alert variant="danger" show={error} style={{ textAlign: 'left', marginBottom: 0, marginTop: '16px', borderRadius: '8px' }}>
+              <Alert.Heading style={{ fontSize: '15px' }}>Oops! Se ha producido un error!</Alert.Heading>
+              <p style={{ margin: 0, fontSize: '14px' }}>{descError}</p>
+            </Alert>
+          </div>
+        </div>
+
+        <div className={modalStyles.footer}>
+          <button type="button" className={modalStyles.btnSecondary} onClick={handleClose}>
+            Cancelar
+          </button>
+          <button type="button" className={modalStyles.btnDanger} onClick={eliminarTambo}>
+            Sí, eliminar tambo
+          </button>
+        </div>
       </Modal>
 
       {/* Modal Información */}
-      <Modal show={showData} onHide={handleCloseData}>
-        <Modal.Header closeButton>
-          <Modal.Title>Tambo {nombre}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Row><Col><h5>Ubicación: {ubicacion}</h5></Col></Row>
-          <Row>
-            <Col><h5>Turnos: {turnos}</h5></Col>
-            <Col><h5>Bajadas: {bajadas}</h5></Col>
-            <Col><h5>Kgs. Tolvas: {tolvas}</h5></Col>
-          </Row>
-          <Row className="mt-3">
-            <Col>
-              <Form.Control type="date" value={fecha} onChange={handleChange} required />
-            </Col>
-            <Col>
-              <Button variant="success" onClick={buscarHorarios}>Ver Horarios</Button>
-            </Col>
-          </Row>
-
-          <div className="mt-3">
-            {estadoApi === 'buscando' && (
-              <ContenedorSpinner>
-                <Spinner animation="border" variant="info" />
-              </ContenedorSpinner>
-            )}
-            {estadoApi === 'error' && <Alert variant="danger">No se puede acceder al tambo</Alert>}
-            {estadoApi === 'resultados' && horarios?.length === 0 && (
-              <Alert variant="success">No hay resultados para la fecha seleccionada</Alert>
-            )}
-            {estadoApi === 'resultados' && horarios?.length > 0 && (
-              <Table responsive>
-                <thead>
-                  <tr>
-                    <th>Turno</th>
-                    <th>Inicio</th>
-                    <th>Fin</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {horarios.map(h => (
-                    <DetalleHorario key={h.id} horario={h} />
-                  ))}
-                </tbody>
-              </Table>
-            )}
+      <Modal 
+        show={showData} 
+        onHide={handleCloseData}
+        size="md"
+        centered
+        dialogClassName={modalStyles.premiumModalTamboSmall}
+        backdropClassName={modalStyles.premiumBackdropTambo}
+      >
+        <div className={modalStyles.header}>
+          <div>
+            <h2 className={modalStyles.title}>{nombre}</h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+              Información operativa del establecimiento
+            </p>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="info" onClick={handleCloseData}>Cerrar</Button>
-        </Modal.Footer>
+          <button type="button" className={modalStyles.closeButton} onClick={handleCloseData} aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+        
+        <div className={modalStyles.body}>
+          <div className={modalStyles.sectionBlock}>
+            <h3 className={modalStyles.sectionTitle}>Información General</h3>
+            <div className={modalStyles.gridRowTwoCols}>
+              <div className={modalStyles.infoCard}>
+                <p className={modalStyles.infoCardLabel}>Ubicación</p>
+                <p className={modalStyles.infoCardValue}>{ubicacion || '-'}</p>
+              </div>
+              <div className={modalStyles.infoCard}>
+                <p className={modalStyles.infoCardLabel}>Turnos</p>
+                <p className={modalStyles.infoCardValue}>{turnos || 0}</p>
+              </div>
+              <div className={modalStyles.infoCard}>
+                <p className={modalStyles.infoCardLabel}>Bajadas</p>
+                <p className={modalStyles.infoCardValue}>{bajadas || 0}</p>
+              </div>
+              <div className={modalStyles.infoCard}>
+                <p className={modalStyles.infoCardLabel}>Tolvas (kg)</p>
+                <p className={modalStyles.infoCardValue}>{tolvas || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className={modalStyles.sectionBlock}>
+            <h3 className={modalStyles.sectionTitle}>Horarios de Operación</h3>
+            
+            <div className={modalStyles.gridRowTwoCols} style={{ alignItems: 'flex-end', marginBottom: '0' }}>
+              <div className={modalStyles.formGroup}>
+                <Form.Label>Fecha</Form.Label>
+                <Form.Control type="date" value={fecha} onChange={handleChange} required />
+              </div>
+              <div>
+                <button type="button" className={modalStyles.btnPrimary} onClick={buscarHorarios} style={{ width: '100%' }}>
+                  Ver Horarios
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              {estadoApi === 'buscando' && (
+                <ContenedorSpinner>
+                  <Spinner animation="border" variant="info" />
+                </ContenedorSpinner>
+              )}
+              {estadoApi === 'error' && <Alert variant="danger">No se puede acceder al tambo</Alert>}
+              {estadoApi === 'resultados' && horarios?.length === 0 && (
+                <Alert variant="success">No hay resultados para la fecha seleccionada</Alert>
+              )}
+              {estadoApi === 'resultados' && horarios?.length > 0 && (
+                <Table responsive>
+                  <thead>
+                    <tr>
+                      <th>Turno</th>
+                      <th>Inicio</th>
+                      <th>Fin</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {horarios.map(h => (
+                      <DetalleHorario key={h.id} horario={h} />
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className={modalStyles.footer}>
+          <button type="button" className={modalStyles.btnSecondary} onClick={handleCloseData}>
+            Cerrar
+          </button>
+        </div>
       </Modal>
 
       {/* Modal Edición */}
@@ -255,7 +299,7 @@ const DetalleTambos = ({ tambo }) => {
           <div className={styles.loadingWrapper}>
             <Spinner animation="border" role="status" variant="primary" />
             <p className={styles.nombreTambo}>
-              Ingresando a <strong>{tamboSel?.nombre}</strong>...
+              Ingresando a <strong>{nombre}</strong>...
             </p>
           </div>
         </Modal.Body>

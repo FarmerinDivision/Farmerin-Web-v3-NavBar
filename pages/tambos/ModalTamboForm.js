@@ -5,6 +5,7 @@ import validarCrearTambo from '../../validacion/validarCrearTambo';
 import { Form, Button, Alert, Spinner, Row, Col, Modal } from 'react-bootstrap';
 import { format } from 'date-fns';
 import styles from '../../styles/Animales.module.scss';
+import modalStyles from '../../styles/modalTamboForm.module.scss';
 
 const STATE_INICIAL = {
   idusuario: '',
@@ -80,58 +81,89 @@ const ModalTamboForm = ({ tamboData, show, onHide }) => {
 
     setProcesando(false);
   }
-
   return (
-    <Modal show={show} onHide={onHide} size="lg" centered className={styles.modalAnimal}>
-      <Modal.Header closeButton>
-        <Modal.Title>{modoEdicion ? 'Editar Tambo' : 'Nuevo Tambo'}</Modal.Title>
-      </Modal.Header>
+    <Modal  
+      show={show} 
+      onHide={onHide} 
+      size="lg" 
+      centered 
+      dialogClassName={modalStyles.premiumModalTambo}
+      backdropClassName={modalStyles.premiumBackdropTambo}
+    >
+      <div className={modalStyles.header}>
+        <h2 className={modalStyles.title}>{modoEdicion ? 'Editar Tambo' : 'Nuevo Tambo'}</h2>
+        <button type="button" className={modalStyles.closeButton} onClick={onHide} aria-label="Cerrar">
+          ✕
+        </button>
+      </div>
 
-      <Modal.Body>
+      <div className={modalStyles.body}>
         {procesando && <Spinner animation="border" variant="info" className="mb-3" />}
         {exito && <Alert variant="success">{descExito}</Alert>}
         {error && <Alert variant="danger">{descError}</Alert>}
 
-        <Form onSubmit={handleSubmit}>
-          <Row>
-            <Col><Form.Group><Form.Label>Nombre</Form.Label>
-              <Form.Control type="text" name="nombre" value={nombre} onChange={handleChange} required />
-            </Form.Group></Col>
-            <Col><Form.Group><Form.Label>Ubicación</Form.Label>
-              <Form.Control type="text" name="ubicacion" value={ubicacion} onChange={handleChange} />
-            </Form.Group></Col>
-            <Col><Form.Group><Form.Label>Turnos diarios</Form.Label>
-              <Form.Control type="number" name="turnos" min={1} max={4} value={turnos} onChange={handleChange} required />
-            </Form.Group></Col>
-          </Row>
+            <Form onSubmit={handleSubmit}>
+              <div className={modalStyles.gridRowTwoCols}>
+                
+                <div className={modalStyles.sectionBlock} style={{ marginBottom: 0 }}>
+                  <h3 className={modalStyles.sectionTitle}>Información General</h3>
+                  <div className={modalStyles.gridRowOneCol}>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Nombre</Form.Label>
+                      <Form.Control type="text" name="nombre" value={nombre} onChange={handleChange} required />
+                    </div>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Ubicación</Form.Label>
+                      <Form.Control type="text" name="ubicacion" value={ubicacion} onChange={handleChange} />
+                    </div>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Turnos diarios</Form.Label>
+                      <Form.Control type="number" name="turnos" min={1} max={4} value={turnos} onChange={handleChange} required />
+                    </div>
+                  </div>
+                </div>
 
-          <Row>
-            <Col><Form.Group><Form.Label>Bajadas</Form.Label>
-              <Form.Control type="number" name="bajadas" min={1} max={100} value={bajadas} onChange={handleChange} />
-            </Form.Group></Col>
-            <Col><Form.Group><Form.Label>Tolvas (kg)</Form.Label>
-              <Form.Control type="number" name="tolvas" min={10} max={200} value={tolvas} onChange={handleChange} />
-            </Form.Group></Col>
-            <Col><Form.Group><Form.Label>Limpieza tolvas (días)</Form.Label>
-              <Form.Control type="number" name="freclimp" min={5} max={30} value={freclimp} onChange={handleChange} />
-            </Form.Group></Col>
-          </Row>
+                <div className={modalStyles.sectionBlock} style={{ marginBottom: 0 }}>
+                  <h3 className={modalStyles.sectionTitle}>Configuración Operativa</h3>
+                  <div className={modalStyles.gridRowTwoCols}>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Bajadas</Form.Label>
+                      <Form.Control type="number" name="bajadas" min={1} max={100} value={bajadas} onChange={handleChange} />
+                    </div>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Tolvas (kg)</Form.Label>
+                      <Form.Control type="number" name="tolvas" min={10} max={200} value={tolvas} onChange={handleChange} />
+                    </div>
+                  </div>
+                  <div className={modalStyles.gridRowOneCol}>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Limpieza tolvas (días)</Form.Label>
+                      <Form.Control type="number" name="freclimp" min={5} max={30} value={freclimp} onChange={handleChange} />
+                    </div>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Link</Form.Label>
+                      <Form.Control type="text" name="link" value={link} onChange={handleChange} />
+                    </div>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Host</Form.Label>
+                      <Form.Control type="text" name="host" value={host} onChange={handleChange} />
+                    </div>
+                  </div>
+                </div>
 
-          <Row>
-            <Col><Form.Group><Form.Label>Link</Form.Label>
-              <Form.Control type="text" name="link" value={link} onChange={handleChange} />
-            </Form.Group></Col>
-            <Col><Form.Group><Form.Label>Host</Form.Label>
-              <Form.Control type="text" name="host" value={host} onChange={handleChange} />
-            </Form.Group></Col>
-          </Row>
+              </div>
 
-          <div className="d-flex justify-content-end mt-4">
-            <Button variant="secondary" onClick={onHide} className="me-2">Cancelar</Button>
-            <Button variant="success" type="submit">Guardar</Button>
+          <div className={modalStyles.footer}>
+            <button type="button" className={modalStyles.btnSecondary} onClick={onHide} disabled={procesando}>
+              Cancelar
+            </button>
+            <button type="submit" className={modalStyles.btnPrimary} disabled={procesando}>
+              {procesando && <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />}
+              Guardar
+            </button>
           </div>
         </Form>
-      </Modal.Body>
+      </div>
     </Modal>
   );
 };

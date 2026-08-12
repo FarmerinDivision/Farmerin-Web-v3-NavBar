@@ -1,9 +1,9 @@
 import React, { useState, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
-import { GiFarmer } from 'react-icons/gi';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
-import { Button, Alert, Modal, Form, Badge, InputGroup, FormControl } from 'react-bootstrap';
+import { GiFarmer, GiHistogram, GiWheat, GiInfo, GiCow } from 'react-icons/gi';
+import { FiSettings, FiLogOut, FiTrash2, FiChevronRight, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { Alert, Modal, Button } from 'react-bootstrap';
 import { useRouter } from 'next/router';
 import MachosHembrasBoton from '../components/utils/MachosHembrasBoton';
 import InformacionTambo from '../components/utils/ObtenerInfoTambo';
@@ -115,102 +115,178 @@ const UserProfile = () => {
       setAnimacionLeido(false);
     }, 500);
   };
+
   return (
     <Layout>
-      <div className={styles.farmerinCardContainer}>
-        <div className={styles.farmerinCard}>
-          {usuario ? (
-            <div className={styles.farmerinCardInfos}>
-              <div className={styles.farmerinCardImage}>
-                <GiFarmer size={50} />
+      <div className={styles.dashboardContainer}>
+
+        {/* ── FILA SUPERIOR: Hero Card + Acciones Rápidas ── */}
+        <div className={styles.dashboardTopRow}>
+
+          {/* HERO CARD — Tarjeta del tambo */}
+          <div className={styles.heroCard}>
+            <div className={styles.heroCardTop}>
+              <div className={styles.heroCardAvatar}>
+                <GiFarmer size={32} color="#7dce80" />
               </div>
-              <div className={styles.farmerinCardInfo}>
-                <h5 className={styles.farmerinCardName}>{usuario.displayName}</h5>
-                <p className={styles.farmerinCardTambo}>
-                  {tamboSel?.nombre || 'No seleccionado'}
-                </p>
+              {usuario ? (
+                <div className={styles.heroCardUserInfo}>
+                  <p className={styles.heroCardWelcome}>Bienvenido de nuevo</p>
+                  <h2 className={styles.heroCardUserName}>{usuario.displayName}</h2>
+                </div>
+              ) : (
+                <Alert variant="warning">No hay información de usuario disponible.</Alert>
+              )}
+            </div>
+
+            <div className={styles.heroCardDivider} />
+
+            <div className={styles.heroCardBottom}>
+              <p className={styles.heroCardTamboLabel}>Actualmente estás trabajando en</p>
+              <h1 className={styles.heroCardTamboName}>
+                {tamboSel?.nombre || 'No seleccionado'}
+              </h1>
+              <div className={styles.heroCardStatusRow}>
+                <div className={styles.heroCardStatusDot} />
+                <p className={styles.heroCardStatusText}>Sesión activa</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ACCIONES RÁPIDAS */}
+          <div className={styles.actionPanel}>
+            <p className={styles.actionPanelTitle}>Acciones rápidas</p>
+            <div className={styles.actionGrid}>
+
+              {/* Calcular Consumos */}
+              <div className={styles.actionCard}>
+                <div className={styles.actionCardIcon}>
+                  <GiHistogram size={22} color="#4db150" />
+                </div>
+                <p className={styles.actionCardLabel}>Calcular consumos</p>
+                {/* Componente original — su botón queda como overlay transparente */}
+                <PerfilCalcularConsumo />
+              </div>
+
+              {/* Cambiar Ración */}
+              <div className={styles.actionCard}>
+                <div className={styles.actionCardIcon}>
+                  <GiWheat size={22} color="#4db150" />
+                </div>
+                <p className={styles.actionCardLabel}>Cambiar ración</p>
+                <PerfilCambiarRacion />
+              </div>
+
+              {/* Obtener Información */}
+              <div className={styles.actionCard}>
+                <div className={styles.actionCardIcon}>
+                  <GiInfo size={22} color="#4db150" />
+                </div>
+                <p className={styles.actionCardLabel}>Obtener información</p>
+                <InformacionTambo tambo={tamboSel} fetch={fetch} />
+              </div>
+
+              {/* Obtener Animales */}
+              <div className={styles.actionCard}>
+                <div className={styles.actionCardIcon}>
+                  <GiCow size={22} color="#4db150" />
+                </div>
+                <p className={styles.actionCardLabel}>Obtener animales</p>
+                <ObtenerAnimalesPerfilForm />
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* ── ACTIVIDAD RECIENTE ── */}
+        <div className={styles.actividadSection}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.sectionTitle}>Actividad reciente</p>
+          </div>
+
+          {ultimoCambio ? (
+            <div
+              className={`${styles.actividadCard} ${ultimoCambio.visto ? styles.actividadVista : styles.actividadNoLeida} ${animacionLeido ? styles.fadeOut : ''}`}
+            >
+              <div className={styles.actividadFecha}>
+                <FiClock size={11} />
+                {new Date(ultimoCambio.fecha?.toDate?.() || ultimoCambio.fecha).toLocaleDateString()}
+              </div>
+
+              <p className={styles.actividadMensaje}>
+                {ultimoCambio.mensaje}
+              </p>
+
+              <div className={styles.actividadActions}>
+                {!ultimoCambio.visto ? (
+                  <button
+                    className={styles.btnMarcarLeido}
+                    onClick={handleMarcarLeidoConAnimacion}
+                  >
+                    <FiCheckCircle size={13} />
+                    Marcar como leída
+                  </button>
+                ) : (
+                  <span className={styles.badgeLeido}>
+                    <FiCheckCircle size={12} />
+                    Leída
+                  </span>
+                )}
+                <button
+                  className={styles.btnVerHistorial}
+                  onClick={() => setShowHistorial(true)}
+                >
+                  Ver historial
+                </button>
               </div>
             </div>
           ) : (
-            <Alert variant="warning">No hay información de usuario disponible.</Alert>
+            <div className={styles.actividadEmpty}>
+              Sin actividad reciente registrada.
+            </div>
           )}
         </div>
 
-        <div className={styles.perfilContenidoDosColumnas}>
-          {/* Columna izquierda: Notificación + historial */}
-          <div className={styles.perfilColIzquierda}>
-            {ultimoCambio && (
-              <div
-                className={`${styles.alertaNotificacionBox} ${ultimoCambio.visto ? styles.visto : ''
-                  } ${animacionLeido ? styles.fadeOut : ''}`}
-              >
-                <p className={styles.alertaNotificacionTexto}>
-                  <strong>
-                    {new Date(ultimoCambio.fecha?.toDate?.() || ultimoCambio.fecha).toLocaleDateString()}:
-                  </strong>{' '}
-                  {ultimoCambio.mensaje}
-                </p>
-                <div className={styles.alertaBotones}>
-                  {!ultimoCambio.visto ? (
-                    <button
-                      className={`${styles.btnNoti} ${styles.btnMarcarLeido}`}
-                      onClick={handleMarcarLeidoConAnimacion}
-                    >
-                      ✅ Marcar como leída
-                    </button>
-                  ) : (
-                    <span className={styles.badgeLeido}>✔️ Leída</span>
-                  )}
-                  <button
-                    className={`${styles.btnNoti} ${styles.btnVerHistorial}`}
-                    onClick={() => setShowHistorial(true)}
-                  >
-                    📜 Ver historial de cambios
-                  </button>
-                </div>
-              </div>
-            )}
+        {/* ── OPCIONES DE USUARIO ── */}
+        <div className={styles.userOptionsSection}>
+          <div className={styles.sectionHeader}>
+            <p className={styles.sectionTitle}>Opciones de usuario</p>
           </div>
 
-          {/* Columna derecha: Botones de acción */}
-          <div className={styles.perfilColDerecha}>
-            <div className={styles.farmerinCardActions}>
-              {/* <PerfilFarmerinConsumo />*/}
-              <PerfilCalcularConsumo />
-              <PerfilCambiarRacion />
-              <InformacionTambo tambo={tamboSel} fetch={fetch} />
-              <ObtenerAnimalesPerfilForm />
+          <div className={styles.userOptionsCard}>
+            {/* Borrar Tambo */}
+            <div
+              className={styles.userOptionItem}
+              onClick={() => handleShow()}
+            >
+              <div className={`${styles.userOptionIcon} ${styles.iconDanger}`}>
+                <FiTrash2 size={17} />
+              </div>
+              <div className={styles.userOptionText}>
+                <p className={`${styles.userOptionLabel} ${styles.labelDanger}`}>Borrar Tambo</p>
+                <p className={styles.userOptionDesc}>Elimina permanentemente este tambo y sus datos</p>
+              </div>
+              <FiChevronRight size={16} className={styles.userOptionChevron} />
+            </div>
+
+            {/* Cerrar Sesión */}
+            <div
+              className={styles.userOptionItem}
+              onClick={() => cerrarSesion()}
+            >
+              <div className={`${styles.userOptionIcon} ${styles.iconNeutral}`}>
+                <FiLogOut size={17} />
+              </div>
+              <div className={styles.userOptionText}>
+                <p className={styles.userOptionLabel}>Cerrar sesión</p>
+                <p className={styles.userOptionDesc}>Salir de tu cuenta de Farmerin</p>
+              </div>
+              <FiChevronRight size={16} className={styles.userOptionChevron} />
             </div>
           </div>
         </div>
 
-        {/* Opciones de Usuario */}
-        <button className={`${styles.configPerfilButton} ${styles.buttonPerfil}`} onClick={() => setShowConfigMenu(!showConfigMenu)}>
-          <svg className={styles.svgIconPerfil} width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="2.5" stroke="white" strokeWidth="2" />
-            <path d="M19 12h3m-3 0a7 7 0 0 0-14 0m14 0a7 7 0 0 1-14 0m-3 0h3" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span className={styles.configPerfilLabel}>Opciones de usuario</span>
-        </button>
-
-        {showConfigMenu && (
-          <div className={styles.configPerfilCard}>
-            <ul className={styles.configPerfilList}>
-              <li className={styles.configPerfilItem} onClick={() => { handleShow(); setShowConfigMenu(false); }}>
-                <svg className={styles.configPerfilIcon} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f05454" strokeWidth="2">
-                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-7 6v6m4-6v6" />
-                </svg>
-                <p className={styles.configPerfilLabel}>Borrar Tambo</p>
-              </li>
-              <li className={styles.configPerfilItem} onClick={() => { cerrarSesion(); setShowConfigMenu(false); }}>
-                <svg className={styles.configPerfilIcon} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7e8590" strokeWidth="2">
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
-                <p className={styles.configPerfilLabel}>Cerrar Sesión</p>
-              </li>
-            </ul>
-          </div>
-        )}
       </div>
 
       {/* Modal: Eliminar Tambo */}

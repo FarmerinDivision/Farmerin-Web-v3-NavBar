@@ -1,0 +1,210 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Modal Override para aumentar el ancho y aplicar estilo premium */
+.premiumModalForm {
+  max-width: 900px !important; /* Aumenta el ancho ~25-35% respecto a lg */
+
+  :global(.modal-content) {
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #ffffff;
+    overflow: hidden;
+  }
+}
+
+.premiumModalBackdrop {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Header */
+.modalHeader {
+  padding: 24px 32px;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #ffffff;
+  
+  :global(.modal-title) {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+
+  :global(.btn-close) {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+/* Body */
+.modalBody {
+  padding: 32px;
+  background-color: #fafafa;
+}
+
+/* Section styling */
+.formSection {
+  margin-bottom: 32px;
+  
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Grid Layout */
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 24px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Inputs */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  :global(.form-label) {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+  }
+
+  :global(.form-control), :global(.form-select) {
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    font-size: 14px;
+    color: #0f172a;
+    padding: 8px 14px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    &:read-only {
+      background-color: #f8fafc;
+      color: #64748b;
+      border-color: #e2e8f0;
+    }
+    
+    &:disabled {
+      background-color: #f1f5f9;
+      opacity: 0.7;
+    }
+  }
+
+  :global(.form-select) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/200.svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+    cursor: pointer;
+  }
+
+  textarea:global(.form-control) {
+    height: auto;
+    min-height: 100px;
+    resize: vertical;
+  }
+}
+
+/* Footer */
+.modalFooter {
+  padding: 20px 32px;
+  background-color: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btnCancel {
+  height: 44px;
+  border-radius: 10px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  background-color: transparent;
+  border: 1px solid #cbd5e1;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+}
+
+.btnSave {
+  height: 44px;
+  border-radius: 10px;
+  padding: 0 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #0f172a; /* Color principal oscuro premium */
+  border: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
+
+  &:hover:not(:disabled) {
+    background-color: #1e293b;
+    box-shadow: 0 6px 12px -2px rgba(15, 23, 42, 0.15);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

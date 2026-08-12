@@ -1,11 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
-import { Botonera, Mensaje, Contenedor } from '../components/ui/Elementos';
-import { Form, Row, Col, Table } from 'react-bootstrap';
-import { RiSearchLine } from 'react-icons/ri';
+import { Form, Row, Col, Modal } from 'react-bootstrap';
+import { RiSearchLine, RiFileExcel2Fill, RiBarChartBoxLine, RiTableLine } from 'react-icons/ri';
+import ControlLecheroCurva from './ControlLecheroCurva';
+import { LuWheat } from 'react-icons/lu';
 import { format } from 'date-fns';
-import styles from '../styles/Dirsa.module.scss';
+import styles from '../styles/ReportesModernos.module.scss';
 import {
     ComposedChart,
     Bar,
@@ -20,25 +21,16 @@ import {
 } from 'recharts';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import SelectTambo from '../components/layout/selectTambo';
 
 const Loader = () => (
-    <div className={styles.loaderContainerGraficoD}>
-        <div className={styles.spinnerGraficoD}></div>
-        <div className={styles.loaderGraficoD}>
-            <p>Cargando</p>
-            <div className={styles.wordsGraficoD}>
-                <span className={styles.wordGraficoD}>Datos de producción</span>
-                <span className={styles.wordGraficoD}>Cantidad de animales</span>
-                <span className={styles.wordGraficoD}>Cantidad de litros</span>
-                <span className={styles.wordGraficoD}>Producción del mes</span>
-                <span className={styles.wordGraficoD}>Datos del tambo</span>
-            </div>
-        </div>
+    <div className={styles.loadingOverlay}>
+        <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}></div>
+        <div className={styles.loadingText}>Procesando datos del control lechero...</div>
     </div>
 );
 
 const ControlLecheroMensual = () => {
-
     const { firebase, tamboSel } = useContext(FirebaseContext);
 
     const [mesSeleccionado, setMesSeleccionado] = useState('');
@@ -49,7 +41,7 @@ const ControlLecheroMensual = () => {
     const [mensaje, setMensaje] = useState('');
     const [mostrarGrafico, setMostrarGrafico] = useState(false);
     const [datosAnuales, setDatosAnuales] = useState([]);
-    const [mostrarFiscalizadas, setMostrarFiscalizadas] = useState(false);
+    const [modalCurva, setModalCurva] = useState({ show: false, animalId: null });
 
     const MESES = [
         'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -65,7 +57,6 @@ const ControlLecheroMensual = () => {
         setDatosAnuales([]);
         setMensaje("Presione buscar para obtener la información del mes seleccionado.");
         setMostrarGrafico(false);
-        setMostrarFiscalizadas(false);
     };
 
     const handleSubmit = async (e) => {
@@ -90,15 +81,23 @@ const ControlLecheroMensual = () => {
             const startDate = new Date(anioSeleccionado, mesIndexSel, 1);
             const endDate = new Date(anioSeleccionado, mesIndexSel + 1, 1);
 
-            const eventosSnap = await firebase.db
-                .collectionGroup('eventos')
+            const strStart = format(startDate, 'yyyy-MM-dd');
+            const strEnd = format(endDate, 'yyyy-MM-dd');
+
+            const timestampStart = firebase.fechaTimeStamp(strStart);
+            const timestampEnd = firebase.fechaTimeStamp(strEnd);
+
+            // Única consulta a Firestore utilizando solo idtambo.
+            // Esto requiere que hagas clic en el enlace de la consola para crear el índice.
+            const snap = await firebase.db.collectionGroup('eventos')
                 .where('idtambo', '==', tamboSel.id)
                 .where('tipo', '==', 'Control Lechero')
-                .where('fecha', '>=', startDate)
-                .where('fecha', '<', endDate)
+                .where('fecha', '>=', timestampStart)
+                .where('fecha', '<', timestampEnd)
                 .get();
 
-            const resultados = eventosSnap.docs
+            // 1. Primero extraemos los eventos válidos y la referencia al animal padre
+            const resultadosParciales = snap.docs
                 .map(doc => {
                     const ev = doc.data();
                     if (!ev.fecha) return null;
@@ -115,9 +114,9 @@ const ControlLecheroMensual = () => {
 
                     return {
                         id: doc.id,
+                        animalRef: doc.ref.parent.parent,
+                        animalId: doc.ref.parent.parent.id,
                         fecha: format(ev.fecha.toDate(), 'dd/MM/yyyy'),
-                        RP: ev.rp || '',
-                        ERP: ev.erp || '',
                         detalle: detalleOriginal,
                         litros: detalleOriginal.match(/(\d+)/)
                             ? parseInt(detalleOriginal.match(/(\d+)/)[1])
@@ -127,14 +126,48 @@ const ControlLecheroMensual = () => {
                 })
                 .filter(Boolean);
 
-            if (resultados.length === 0) {
+            if (resultadosParciales.length === 0) {
                 setMensaje('No se encontraron controles válidos para el mes seleccionado.');
+                setEventos([]);
+                setProcesando(false);
+                return;
             }
 
-            setEventos(resultados);
+            // 2. Client-side Join: Buscamos la info del animal (RP, eRP)
+            // Utilizamos un Map para cachear y no leer dos veces el mismo animal si tuviera más de 1 control
+            const animalesMap = new Map();
+            const promesasAnimales = [];
+
+            for (const item of resultadosParciales) {
+                if (!animalesMap.has(item.animalId)) {
+                    animalesMap.set(item.animalId, null); // Placeholder para saber que ya lo estamos buscando
+                    promesasAnimales.push(
+                        item.animalRef.get().then(docAnim => {
+                            if (docAnim.exists) {
+                                animalesMap.set(item.animalId, docAnim.data());
+                            }
+                        })
+                    );
+                }
+            }
+
+            // Ejecutamos todas las lecturas de animales en paralelo para máxima velocidad
+            await Promise.all(promesasAnimales);
+
+            // 3. Unimos los datos
+            const resultadosFinales = resultadosParciales.map(item => {
+                const dataAnimal = animalesMap.get(item.animalId) || {};
+                return {
+                    ...item,
+                    RP: dataAnimal.rp || dataAnimal.RP || '-',
+                    ERP: dataAnimal.erp || dataAnimal.eRP || dataAnimal.ERP || '-'
+                };
+            });
+
+            setEventos(resultadosFinales);
         } catch (e) {
-            console.log(e);
-            setMensaje('Ocurrió un error al cargar los datos.');
+            console.error('[ControlLechero] Error handleSubmit:', e);
+            setMensaje(`Error al cargar los datos: ${e?.message || e}`);
         }
 
         setProcesando(false);
@@ -148,52 +181,58 @@ const ControlLecheroMensual = () => {
 
         setProcesandoGrafico(true);
         const anio = anioSeleccionado;
-        const datos = [];
 
         try {
-            for (let mes = 0; mes < 12; mes++) {
-                const inicio = new Date(anio, mes, 1);
-                const fin = new Date(anio, mes + 1, 1);
+            const inicioAnio = new Date(anio, 0, 1);
+            const finAnio = new Date(anio + 1, 0, 1);
 
-                const snap = await firebase.db
-                    .collectionGroup('eventos')
-                    .where('idtambo', '==', tamboSel.id)
-                    .where('tipo', '==', 'Control Lechero')
-                    .where('fecha', '>=', inicio)
-                    .where('fecha', '<', fin)
-                    .get();
+            const timestampInicio = firebase.fechaTimeStamp(format(inicioAnio, 'yyyy-MM-dd'));
+            const timestampFin = firebase.fechaTimeStamp(format(finAnio, 'yyyy-MM-dd'));
 
-                let eventosMes = snap.docs
-                    .map(doc => {
-                        const ev = doc.data();
-                        const detalle = ev.detalle?.toLowerCase() || "";
-                        if (
-                            detalle.includes("no se actualizó") ||
-                            detalle.includes("casilla estaba vacía")
-                        ) return null;
+            // Eliminación del N+1. Buscamos todo el año de una sola vez en lugar de hacer 24 consultas en bucle.
+            const snap = await firebase.db.collectionGroup('eventos')
+                .where('idtambo', '==', tamboSel.id)
+                .where('tipo', '==', 'Control Lechero')
+                .where('fecha', '>=', timestampInicio)
+                .where('fecha', '<', timestampFin)
+                .get();
 
-                        const match = ev.detalle?.match(/(\d+)/);
-                        const litros = match ? parseInt(match[1]) : 0;
+            // Inicializar array base de 12 meses en memoria
+            const mesesData = Array.from({ length: 12 }, (_, i) => ({
+                mes: MESES[i].toUpperCase(),
+                total: 0,
+                cantidad: 0
+            }));
 
-                        return litros;
-                    })
-                    .filter(Boolean);
+            // Agrupación y totalización en memoria
+            snap.docs.forEach(doc => {
+                const ev = doc.data();
+                if (!ev.fecha) return;
+                
+                const detalle = ev.detalle?.toLowerCase() || "";
+                if (detalle.includes("no se actualizó") || detalle.includes("casilla estaba vacía")) return;
 
-                const total = eventosMes.reduce((acc, v) => acc + v, 0);
-                const promedio = eventosMes.length > 0
-                    ? parseFloat((total / eventosMes.length).toFixed(2))
-                    : 0;
+                const match = ev.detalle?.match(/(\d+)/);
+                const litros = match ? parseInt(match[1]) : 0;
 
-                datos.push({
-                    mes: MESES[mes].toUpperCase(),
-                    total,
-                    promedio
-                });
-            }
+                const fechaDoc = ev.fecha.toDate();
+                const mesDoc = fechaDoc.getMonth(); // 0 a 11
+
+                mesesData[mesDoc].total += litros;
+                mesesData[mesDoc].cantidad += 1;
+            });
+
+            const datos = mesesData.map(d => {
+                const promedio = d.cantidad > 0 ? parseFloat((d.total / d.cantidad).toFixed(2)) : 0;
+                return { mes: d.mes, total: d.total, promedio };
+            });
 
             setDatosAnuales(datos);
             setMostrarGrafico(true);
 
+        } catch (e) {
+            console.error('[ControlLechero] Error cargarDatosAnuales:', e);
+            setMensaje(`Error al cargar datos anuales: ${e?.message || e}`);
         } finally {
             setProcesandoGrafico(false);
         }
@@ -226,19 +265,14 @@ const ControlLecheroMensual = () => {
         saveAs(blob, nombreArchivo);
     };
 
-    const litrosPorEvento = eventos
-        .filter(ev => !ev.fiscalizada)
-        .map(ev => ev.litros || 0);
-
+    // Cacheamos los eventos válidos para no filtrar el array completo repetidas veces en el JSX.
+    const eventosNoFiscalizados = eventos.filter(ev => !ev.fiscalizada);
+    
+    const litrosPorEvento = eventosNoFiscalizados.map(ev => ev.litros || 0);
     const totalMensual = litrosPorEvento.reduce((a, b) => a + b, 0);
-    const promedioIndividual = eventos.filter(ev => !ev.fiscalizada).length > 0
-        ? (totalMensual / eventos.filter(ev => !ev.fiscalizada).length).toFixed(2)
+    const promedioIndividual = eventosNoFiscalizados.length > 0
+        ? (totalMensual / eventosNoFiscalizados.length).toFixed(2)
         : 0;
-
-    const eventosFiscalizados = eventos.filter(ev =>
-        ev.fiscalizada ||
-        ev.detalle?.toLowerCase().includes("enferma")
-    );
 
     const datosAnualesScaled = (datosAnuales || []).map(d => ({ ...d }));
 
@@ -252,235 +286,239 @@ const ControlLecheroMensual = () => {
         });
     }
 
+    if (!tamboSel) {
+        return (
+            <Layout titulo="Control Lechero Mensual">
+                <SelectTambo />
+            </Layout>
+        );
+    }
+
     return (
-        <Layout titulo="Control Lechero Mensual">
-            <div className={styles.dirsaRoot}>
-                <Botonera>
-                    <h2 className={styles.tituloDirsa}>
-                        Control Lechero <u>Mensual</u>
-                    </h2>
+        <Layout titulo="Control Lechero Mensual" style={{ paddingTop: 0 }}>
+            <div className={styles.reporteRoot}>
+                
+                {/* ENCABEZADO */}
+                <h1 className={styles.headerTitle}>Control Lechero Mensual</h1>
+                <p className={styles.headerSubtitle}>Consulta la producción de leche individual y los consolidados mensuales.</p>
 
-                    <Form onSubmit={handleSubmit} className={styles.form}>
-                        <Row>
-                            <Col md={4}>
-                                <Form.Label>Mes</Form.Label>
-                                <Form.Control
-                                    as="select"
-                                    value={mesSeleccionado}
-                                    onChange={(e) => {
-                                        setMesSeleccionado(e.target.value);
-                                        limpiarDatos();
-                                    }}
-                                >
-                                    <option value="">-- Seleccioná un mes --</option>
-                                    {MESES.map((m, i) => (
-                                        <option key={i} value={m}>{m}</option>
-                                    ))}
-                                </Form.Control>
-                            </Col>
+                {/* TOOLBAR HORIZONTAL */}
+                <div className={styles.toolbarCard}>
+                    <form onSubmit={handleSubmit} className={styles.toolbarRow}>
+                        <div className={styles.filterGroup}>
+                            <label>Mes</label>
+                            <select
+                                value={mesSeleccionado}
+                                onChange={(e) => {
+                                    setMesSeleccionado(e.target.value);
+                                    limpiarDatos();
+                                }}
+                            >
+                                <option value="">-- Seleccioná un mes --</option>
+                                {MESES.map((m, i) => (
+                                    <option key={i} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                            <Col md={4}>
-                                <Form.Label>Año</Form.Label>
-                                <Form.Control
-                                    as="select"
-                                    value={anioSeleccionado}
-                                    onChange={(e) => {
-                                        setAnioSeleccionado(parseInt(e.target.value));
-                                        limpiarDatos();
-                                    }}
-                                >
-                                    {AÑOS.map((a, i) => (
-                                        <option key={i} value={a}>{a}</option>
-                                    ))}
-                                </Form.Control>
-                            </Col>
+                        <div className={styles.filterGroup}>
+                            <label>Año</label>
+                            <select
+                                value={anioSeleccionado}
+                                onChange={(e) => {
+                                    setAnioSeleccionado(parseInt(e.target.value));
+                                    limpiarDatos();
+                                }}
+                            >
+                                {AÑOS.map((a, i) => (
+                                    <option key={i} value={a}>{a}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                            <Col md={4} className={styles.acciones}>
-                                <div className={styles.botonBuscarWrapper}>
-                                    <span className={styles.tooltipDP}>Buscar controles del mes</span>
-                                    <button type="submit" className={styles.botonBuscar}>
-                                        <RiSearchLine size={20} style={{ marginRight: "8px" }} />
-                                        Buscar
-                                    </button>
-                                </div>
-                            </Col>
-                        </Row>
-                    </Form>
-                </Botonera>
+                        <button type="submit" className={styles.btnPrimary}>
+                            <RiSearchLine size={18} />
+                            Buscar
+                        </button>
+                    </form>
+                </div>
 
                 {(procesando || procesandoGrafico) && <Loader />}
 
-                {!procesando && !procesandoGrafico && mensaje && (
-                    <Mensaje>
-                        <div className={styles.mensajeCaja}>{mensaje}</div>
-                    </Mensaje>
+                {!procesando && !procesandoGrafico && mensaje && eventos.length === 0 && (
+                    <div className={styles.emptyState}>
+                        <div className={styles.emoji}>🥛</div>
+                        <h2>{mensaje}</h2>
+                        <p>Ajuste el mes y el año para obtener nuevos resultados.</p>
+                    </div>
                 )}
 
-                {!procesando && !procesandoGrafico &&
-                    eventos.filter(ev => !ev.fiscalizada).length > 0 && (
-                        <div className={styles.headerDirsa}>
-                            <div className={styles.headerTotales}>
-                                <div>
-                                    <strong>Cantidad de animales:</strong>
-                                    <span>{eventos.filter(ev => !ev.fiscalizada).length}</span>
-                                </div>
-                                <div>
-                                    <strong>Total producido:</strong>
-                                    <span>{totalMensual} litros</span>
-                                </div>
-                                <div>
-                                    <strong>Promedio individual:</strong>
-                                    <span>{promedioIndividual} lts</span>
+                {/* RESULTADOS */}
+                {!procesando && !procesandoGrafico && eventosNoFiscalizados.length > 0 && (
+                    <>
+                        {/* KPI GRID */}
+                        <div className={styles.kpiGrid}>
+                            <div className={styles.kpiCard}>
+                                <div className={styles.kpiIcon}>🐄</div>
+                                <div className={styles.kpiContent}>
+                                    <span className={styles.kpiLabel}>Cantidad de animales</span>
+                                    <span className={styles.kpiValue}>{eventosNoFiscalizados.length}</span>
                                 </div>
                             </div>
-
-                            <div className={styles.headerBotones}>
-                                <div className={styles.BotonesPD} onClick={cargarDatosAnuales}>
-                                    <span>{mostrarGrafico ? "Ir a lista" : "Ver gráfico anual"}</span>
+                            <div className={styles.kpiCard}>
+                                <div className={styles.kpiIcon}>🥛</div>
+                                <div className={styles.kpiContent}>
+                                    <span className={styles.kpiLabel}>Producción del mes</span>
+                                    <span className={styles.kpiValue}>{Number(totalMensual).toLocaleString('es-AR')} L</span>
                                 </div>
-
-                                <div className={styles.BotonesPD} onClick={exportarExcel}>
-                                    <span>Descargar Excel</span>
+                            </div>
+                            <div className={styles.kpiCard}>
+                                <div className={styles.kpiIcon}>📈</div>
+                                <div className={styles.kpiContent}>
+                                    <span className={styles.kpiLabel}>Promedio individual</span>
+                                    <span className={styles.kpiValue}>{promedioIndividual} L</span>
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                {/* Tabla principal */}
-                {!procesando && !procesandoGrafico &&
-                    eventos.filter(ev => !ev.fiscalizada).length > 0 &&
-                    !mostrarGrafico && (
-                        <Contenedor>
-                            <h3 style={{
-                                textAlign: "center",
-                                margin: "1rem 0",
-                                fontWeight: "bold",
-                                color: "#2774a8"
-                            }}>
-                                Listado Mensual — Control Lechero<br />
-                                <u style={{ textDecorationColor: "#4cb050" }}>
-                                    {mesSeleccionado.toUpperCase()} {anioSeleccionado}
-                                </u>
-                            </h3>
-
-                            <Table striped bordered hover>
-                                <thead>
-                                    <tr>
-                                        <th>RP</th>
-                                        <th>eRP</th>
-                                        <th>Fecha</th>
-                                        <th>Litros</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {eventos
-                                        .filter(ev => !ev.fiscalizada)
-                                        .map((ev) => (
-                                            <tr key={ev.id}>
-                                                <td>{ev.RP}</td>
-                                                <td>{ev.ERP}</td>
-                                                <td>{ev.fecha}</td>
-                                                <td>
-                                                    <Form.Control
-                                                        type="text"
-                                                        value={ev.litros !== null ? `${ev.litros}` : ev.detalle}
-                                                        disabled
-                                                        readOnly
-                                                        style={{ background: "#eee", cursor: "not-allowed" }}
-                                                    />
-                                                </td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </Table>
-                        </Contenedor>
-                    )}
-
-                {/* Gráfico anual */}
-                {!procesando && !procesandoGrafico &&
-                    datosAnuales.length > 0 && mostrarGrafico && (
-                        <Contenedor>
-                            <h3 style={{
-                                textAlign: "center",
-                                margin: "1rem 0",
-                                fontWeight: "bold",
-                                color: "#2774a8"
-                            }}>
-                                Gráfico Anual — Control Lechero
-                            </h3>
-
-                            <div style={{ width: "100%", height: 360 }}>
-                                <ResponsiveContainer>
-                                    <ComposedChart
-                                        data={datosAnualesScaled}
-                                        margin={{ top: 20, right: 30, left: 20, bottom: 0 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="mes" />
-
-                                        <YAxis
-                                            yAxisId="left"
-                                            tickFormatter={(v) => v.toLocaleString("es-AR")}
-                                            label={{
-                                                value: "Total mensual (lts)",
-                                                angle: -90,
-                                                position: "insideLeft"
-                                            }}
-                                        />
-
-                                        <Tooltip
-                                            formatter={(value, name, props) => {
-                                                const data = props?.payload ?? {};
-                                                const realPromedio = data.promedio ?? null;
-
-                                                if (name === "Total mensual") {
-                                                    return `${Number(value).toLocaleString("es-AR")} lts`;
-                                                }
-
-                                                if (name === "Promedio individual") {
-                                                    return realPromedio !== null
-                                                        ? `${realPromedio} lts/vaca`
-                                                        : value;
-                                                }
-
-                                                return value;
-                                            }}
-                                        />
-
-                                        <Legend verticalAlign="top" height={36} />
-
-                                        <Bar
-                                            dataKey="total"
-                                            yAxisId="left"
-                                            barSize={30}
-                                            fill="#28a745"
-                                            name="Total mensual"
-                                        />
-
-                                        <Line
-                                            type="linear"
-                                            dataKey="promedioScaled"
-                                            yAxisId="left"
-                                            stroke="#287fb8"
-                                            strokeWidth={3}
-                                            dot={{ r: 4, fill: "#287fb8", stroke: "#fff", strokeWidth: 2 }}
-                                            name="Promedio individual"
-                                            isFront={true}
-                                        >
-                                            <LabelList
-                                                dataKey="promedio"
-                                                position="top"
-                                                formatter={(v) => Number(v).toFixed(2)}
-                                                style={{ fill: "#287fb8", fontSize: 12, fontWeight: "bold" }}
-                                            />
-                                        </Line>
-                                    </ComposedChart>
-                                </ResponsiveContainer>
+                        {/* ACCIONES Y CONTENIDO (TABLA / GRÁFICO) */}
+                        <div className={styles.tableCard}>
+                            <div className={styles.tableToolbar}>
+                                <h3>
+                                    {mostrarGrafico 
+                                        ? `Evolución Anual ${anioSeleccionado}` 
+                                        : `Detalle Mensual (${mesSeleccionado.toUpperCase()} ${anioSeleccionado})`
+                                    }
+                                </h3>
+                                <div className={styles.actionsArea}>
+                                    <button type="button" className={styles.btnSecondary} onClick={cargarDatosAnuales}>
+                                        {mostrarGrafico ? <><RiTableLine /> Ver Tabla</> : <><RiBarChartBoxLine /> Ver Gráfico</>}
+                                    </button>
+                                    <button type="button" className={styles.btnSecondary} onClick={exportarExcel}>
+                                        <RiFileExcel2Fill /> Descargar Excel
+                                    </button>
+                                </div>
                             </div>
-                        </Contenedor>
-                    )}
 
+                            {mostrarGrafico ? (
+                                /* GRÁFICO */
+                                <div style={{ width: "100%", height: 400, padding: "20px" }}>
+                                    <ResponsiveContainer>
+                                        <ComposedChart
+                                            data={datosAnualesScaled}
+                                            margin={{ top: 20, right: 30, left: 20, bottom: 0 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                            <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{fill: '#6b7280'}} />
+                                            
+                                            <YAxis
+                                                yAxisId="left"
+                                                axisLine={false} 
+                                                tickLine={false}
+                                                tickFormatter={(v) => v.toLocaleString("es-AR")}
+                                            />
+
+                                            <Tooltip
+                                                contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'}}
+                                                formatter={(value, name, props) => {
+                                                    const data = props?.payload ?? {};
+                                                    const realPromedio = data.promedio ?? null;
+                                                    if (name === "Total mensual") return `${Number(value).toLocaleString("es-AR")} L`;
+                                                    if (name === "Promedio individual") return realPromedio !== null ? `${realPromedio} L/vaca` : value;
+                                                    return value;
+                                                }}
+                                            />
+
+                                            <Legend verticalAlign="top" height={36} />
+
+                                            <Bar
+                                                dataKey="total"
+                                                yAxisId="left"
+                                                barSize={30}
+                                                fill="#3b82f6"
+                                                radius={[4, 4, 0, 0]}
+                                                name="Total mensual"
+                                            />
+
+                                            <Line
+                                                type="monotone"
+                                                dataKey="promedioScaled"
+                                                yAxisId="left"
+                                                stroke="#10b981"
+                                                strokeWidth={3}
+                                                dot={{ r: 4, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }}
+                                                name="Promedio individual"
+                                                isFront={true}
+                                            />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                /* TABLA */
+                                <div className={styles.tableWrapper}>
+                                    <table className={styles.modernTable}>
+                                        <thead>
+                                            <tr>
+                                                <th>RP</th>
+                                                <th>eRP</th>
+                                                <th>Fecha</th>
+                                                <th>Litros</th>
+                                                <th>Curva</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {eventosNoFiscalizados.map((ev) => (
+                                                <tr key={ev.id}>
+                                                    <td style={{fontWeight: 600}}>{ev.RP}</td>
+                                                    <td style={{color: '#6b7280'}}>{ev.ERP || '-'}</td>
+                                                    <td>{ev.fecha}</td>
+                                                    <td>
+                                                        {ev.litros !== null ? (
+                                                            <span className={styles.litrosBadge}>
+                                                                🥛 {ev.litros} L
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{color: '#9ca3af'}}>{ev.detalle}</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            type="button"
+                                                            className={styles.btnSecondary}
+                                                            style={{ fontSize: '0.8rem', padding: '4px 10px' }}
+                                                            onClick={() => setModalCurva({ show: true, animalId: ev.animalId })}
+                                                        >
+                                                            Ver curva
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
+
+            {/* Modal Curva de Producción Individual */}
+            <Modal
+                show={modalCurva.show}
+                onHide={() => setModalCurva({ show: false, animalId: null })}
+                className="custom-modal-consumos"
+                dialogClassName="modal-90w"
+                centered
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Curva de Producción — Control Lechero</Modal.Title>
+                </Modal.Header>
+                <Modal.Body style={{ minHeight: '500px' }}>
+                    {modalCurva.animalId && (
+                        <ControlLecheroCurva animalId={modalCurva.animalId} />
+                    )}
+                </Modal.Body>
+            </Modal>
         </Layout>
     );
 };

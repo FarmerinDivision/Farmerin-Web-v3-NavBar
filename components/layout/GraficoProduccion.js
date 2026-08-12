@@ -138,7 +138,7 @@ const GraficoProduccion = ({ data, promedioTotal }) => {
               yAxisId="vacas"
             />
 
-            <Line
+            {/* <Line
               type="monotone"
               dataKey="temperatura"
               stroke="#ffa726"
@@ -146,7 +146,7 @@ const GraficoProduccion = ({ data, promedioTotal }) => {
               dot={{ r: 3 }}
               name="🌡️ Temperatura"
               yAxisId="temp"
-            />
+            /> */}
           </ComposedChart>
         </ResponsiveContainer>
       </div>

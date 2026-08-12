@@ -6,7 +6,7 @@ import Layout from '../components/layout/layout';
 import DetalleParametro from '../components/layout/detalleParametro';
 import SelectTambo from '../components/layout/selectTambo';
 import { Button, DropdownButton, Dropdown, Row, Col, Modal } from 'react-bootstrap';
-import { RiAddLine, RiEditBoxLine, RiDeleteBin2Line } from 'react-icons/ri';
+import { RiAddLine, RiEditBoxLine, RiDeleteBin2Line, RiArrowUpLine, RiArrowDownLine, RiRefreshLine } from 'react-icons/ri';
 import { format } from 'date-fns';
 import { addNotification } from '../redux/notificacionSlice';
 import styles from '../styles/Parametro.module.scss';
@@ -36,7 +36,17 @@ const Parametros = () => {
   const [showInfo, setShowInfo] = useState(false);
   const [parametrosModificados, setParametrosModificados] = useState(false);
   const [showSyncInfo, setShowSyncInfo] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState({});
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [warningMessage, setWarningMessage] = useState({ nroGrupo: '' });
   const pendingPorcentajeRef = useRef(null);
+
+  const toggleGroup = (id) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [id]: prev[id] !== undefined ? !prev[id] : false
+    }));
+  };
 
   const dispatch = useDispatch();
 
@@ -175,9 +185,9 @@ const Parametros = () => {
     }
   }
 
-  const cargarGrupos = async () => {
+  const cargarGrupos = async (silent = false) => {
     if (!tamboSel) return;
-    setCargandoGrupos(true);
+    if (!silent) setCargandoGrupos(true);
     try {
       let snap;
       try {
@@ -203,8 +213,13 @@ const Parametros = () => {
     } catch (error) {
       console.error('Error cargando grupos', error);
     } finally {
-      setCargandoGrupos(false);
+      if (!silent) setCargandoGrupos(false);
     }
+  };
+
+  const handleParametroChange = () => {
+    setParametrosModificados(true);
+    cargarGrupos(true);
   };
 
   const crearNuevoGrupo = async () => {
@@ -226,19 +241,24 @@ const Parametros = () => {
       // crear ref primero para obtener ID inmediatamente y abrir el modal sin esperar red
       const ref = firebase.db.collection('parametro').doc();
       setNuevoGrupoId(ref.id);
+      
+      const optimisticGroup = { id: ref.id, ...base };
+      setGrupos(prev => [...prev, optimisticGroup].sort((a, b) => Number(a.grupo ?? 0) - Number(b.grupo ?? 0)));
+      
       setShowNuevoGrupo(true); // abrir modal ya
 
       // escribir en background (sin bloquear UI)
       ref.set(base)
         .then(() => {
-          // refrescar lista sin bloquear
-          cargarGrupos();
+          // refrescar lista silenciosamente
+          cargarGrupos(true);
         })
         .catch((error) => {
           console.error('Error creando grupo', error);
           setShowNuevoGrupo(false);
           setSuccessMsgGroup('No se pudo crear el grupo. Intente nuevamente.');
           setShowSuccessGroup(true);
+          setGrupos(prev => prev.filter(g => g.id !== ref.id));
         })
         .finally(() => setCreatingGroup(false));
     } catch (error) {
@@ -505,7 +525,7 @@ const Parametros = () => {
       );
     });
 
-    alert("Redondeos individuales listos en la consola.");
+    console.log("Redondeos individuales listos en la consola.");
   };
 
 
@@ -513,24 +533,30 @@ const Parametros = () => {
   * 🔥 PROMEDIO INDIVIDUAL (FLUJO IGUAL A CONTROL)
   * Usando ración del PARÁMETRO según rodeo
   ***********************************************/
-  const calcularPromedioIndividual = (nroGrupo, gruposData = grupos) => {
+  const calcularPromedioIndividual = (nroGrupo, gruposData = grupos, isManualCalculation = false) => {
     console.log("===============================================");
     console.log("🔥 CALCULANDO PROMEDIO INDIVIDUAL (MODO CONTROL)");
     console.log("Grupo:", nroGrupo);
     console.log("===============================================");
 
-    // 1️⃣ Filtrar animales que realmente pertenecen al grupo
-    const animalesDelGrupo = animales.filter(a => Number(a.grupo) === Number(nroGrupo));
-
-    if (animalesDelGrupo.length === 0) {
-      alert("No hay animales en este grupo.");
+    // 1️⃣ Conseguir parámetros del grupo correcto
+    const grupoEncontrado = gruposData.find(g => g.grupo === nroGrupo);
+    if (!grupoEncontrado) {
       return;
     }
 
-    // 2️⃣ Conseguir parámetros del grupo correcto
-    const grupoEncontrado = gruposData.find(g => g.grupo === nroGrupo);
-    if (!grupoEncontrado) {
-      alert("No se encontró el grupo en parámetros.");
+    const tieneParametros = grupoEncontrado.parametros && grupoEncontrado.parametros.some(p => p.rodeos && p.rodeos.length > 0);
+
+    if (isManualCalculation && !tieneParametros) {
+        setWarningMessage({ nroGrupo });
+        setShowWarningModal(true);
+        return;
+    }
+
+    // 2️⃣ Filtrar animales que realmente pertenecen al grupo
+    const animalesDelGrupo = animales.filter(a => Number(a.grupo) === Number(nroGrupo));
+
+    if (animalesDelGrupo.length === 0) {
       return;
     }
 
@@ -581,9 +607,7 @@ const Parametros = () => {
       );
     });
 
-
     if (usados === 0) {
-      alert("No hay animales válidos para este cálculo.");
       return;
     }
 
@@ -910,332 +934,301 @@ const Parametros = () => {
 
   return (
     <Layout titulo="Parámetros Nutricionales">
-      <div className={styles.container}>
-        <h1 className={styles.titulo}> Parametros de Alimentación</h1>
+      <div className={styles.dashboardContainer}>
+        {/* PANEL IZQUIERDO - SIDEBAR STICKY */}
+        <aside className={styles.sidebarPanel}>
+          <h1 className={styles.titulo}>Parámetros de Alimentación</h1>
 
-        <div className={styles.estadoActual}>
-          <span className={styles.estadoLabel}>Estado actual:</span>
-          <span className={styles.estadoValor}>
-            {valor === 0
-              ? "Por defecto"
-              : valor < 0
-                ? `Reducción del ${valor}%`
-                : `Aumento del ${valor}%`}
-          </span>
-        </div>
+          <div className={styles.estadoActual}>
+            <span className={styles.estadoLabel}>Estado actual:</span>
+            <span className={styles.estadoValor}>
+              {valor === 0
+                ? "Por defecto"
+                : valor < 0
+                  ? `Reducción del ${valor}%`
+                  : `Aumento del ${valor}%`}
+            </span>
+          </div>
 
-        <div className={styles.bloqueBotones}>
-          <DropdownButton
-            id="dropdown-aumentar-button"
-            title={
-              isIncrease && selectedChange !== null
-                ? `Aumento: ${selectedChange}%`
-                : "Seleccionar Aumento"
-            }
-            className={`${styles.dropdownAumentarButton} ${styles.dropdownEstilo}`}
-            variant=""
-            onSelect={(e) => {
-              setSelectedChange(parseInt(e));
-              setIsIncrease(true);
-            }}
-          >
-            {["10", "20", "30", "40", "50", "60", "70", "80", "90", "100"].map(
-              (p) => (
+          {/* Spacer superior para centrar los botones verticalmente */}
+          <div style={{ flexGrow: 1, minHeight: '24px' }}></div>
+
+          <div className={styles.bloqueBotonesSidebar}>
+            <DropdownButton
+              id="dropdown-aumentar-button"
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <RiArrowUpLine size={18} />
+                  <span>
+                    {isIncrease && selectedChange !== null
+                      ? `Aumento: ${selectedChange}%`
+                      : "Aumento"}
+                  </span>
+                </div>
+              }
+              className={`${styles.dropdownAumentarButton} ${styles.dropdownEstilo}`}
+              variant=""
+              onSelect={(e) => {
+                setSelectedChange(parseInt(e));
+                setIsIncrease(true);
+              }}
+            >
+              {["10", "20", "30", "40", "50", "60", "70", "80", "90", "100"].map(
+                (p) => (
+                  <Dropdown.Item key={p} eventKey={p}>
+                    {p}%
+                  </Dropdown.Item>
+                )
+              )}
+            </DropdownButton>
+
+            <DropdownButton
+              id="dropdown-reducir-button"
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <RiArrowDownLine size={18} />
+                  <span>
+                    {!isIncrease && selectedChange !== null
+                      ? `Reducción: ${selectedChange}%`
+                      : "Reducción"}
+                  </span>
+                </div>
+              }
+              className={`${styles.dropdownReducirButton} ${styles.dropdownEstilo}`}
+              variant=""
+              onSelect={(e) => {
+                setSelectedChange(parseInt(e));
+                setIsIncrease(false);
+              }}
+            >
+              {["-10", "-20", "-30", "-40", "-50"].map((p) => (
                 <Dropdown.Item key={p} eventKey={p}>
                   {p}%
                 </Dropdown.Item>
-              )
-            )}
-          </DropdownButton>
+              ))}
+            </DropdownButton>
 
-          <Button className={styles.botonRestablecer} onClick={restablecer}>
-            Restablecer
-          </Button>
+            <Button className={styles.botonRestablecer} onClick={restablecer}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <RiRefreshLine size={18} />
+                <span>Restablecer</span>
+              </div>
+            </Button>
 
-          <DropdownButton
-            id="dropdown-reducir-button"
-            title={
-              !isIncrease && selectedChange !== null
-                ? `Reducción: ${selectedChange}%`
-                : "Seleccionar Reducción"
-            }
-            className={`${styles.dropdownReducirButton} ${styles.dropdownEstilo}`}
-            variant=""
-            onSelect={(e) => {
-              setSelectedChange(parseInt(e));
-              setIsIncrease(false);
-            }}
-          >
-            {["-10", "-20", "-30", "-40", "-50"].map((p) => (
-              <Dropdown.Item key={p} eventKey={p}>
-                {p}%
-              </Dropdown.Item>
-            ))}
-          </DropdownButton>
-
-          <Button className={`${styles.nuevoGrupoBtn} ${styles.mlAuto}`} onClick={crearNuevoGrupo} disabled={creatingGroup}>
-            <RiAddLine size={18} />
-            {creatingGroup ? 'Creando…' : 'Nuevo grupo'}
-          </Button>
-        </div>
-
-        {selectedChange !== null && (
-          <div className={styles.botonAplicarWrapper}>
-            <Button className={styles.botonAplicar} onClick={handleApplyChange}>
-              Aplicar cambio
+            <Button className={styles.nuevoGrupoBtn} onClick={crearNuevoGrupo} disabled={creatingGroup}>
+              <RiAddLine size={18} />
+              {creatingGroup ? 'Creando…' : 'Nuevo grupo'}
             </Button>
           </div>
-        )}
 
-        {/* 🆕 🔵 NUEVO DIV EN EL MEDIO – RESUMEN GENERAL */}
-        <div className={styles.resumenHeader}>
-          <div className={styles.resumenHeaderTop}>
-            <h3 className={styles.resumenTitulo}>Resumen del Tambo</h3>
-
-            {/* Botón de info alineado */}
-            <div className={styles.infoWrapper}>
-              <button className={styles.infoButton} onClick={() => setShowInfo(true)}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="16" x2="12" y2="12"></line>
-                  <line x1="12" y1="8" x2="12" y2="8"></line>
-                </svg>
-                <span className={styles.tooltip}>Información importante</span>
-              </button>
+          {selectedChange !== null && (
+            <div className={styles.botonAplicarWrapper}>
+              <Button className={styles.botonAplicar} onClick={handleApplyChange}>
+                Aplicar cambio
+              </Button>
             </div>
-          </div>
+          )}
 
+          {/* Spacer explícito para forzar el Resumen al fondo del panel */}
+          <div style={{ flexGrow: 1, minHeight: '32px' }}></div>
 
-          <div className={styles.resumenContenido}>
-            <div className={styles.item}>
-              <span className={styles.itemTitulo}>Total animales obtenidos</span>
-              <span className={styles.itemValor}>{animales.length}</span>
-            </div>
-
-            {Object.keys(cantidadAnimalesPorGrupo).map(g => (
-              <div className={styles.item} key={g}>
-                <span className={styles.itemTitulo}>Grupo {g}</span>
-                <span className={styles.itemValor}>
-                  {cantidadAnimalesPorGrupo[g]} animales
-                </span>
-              </div>
-            ))}
-          </div>
-          {grupos.length > 1 && (
-            <div className={styles.promedioGlobalContainer}>
-              <div className={styles.tooltipWrapper}>
-                <button
-                  className={styles.cta}
-                  onClick={async () => {
-
-                    // 1️⃣ Leer parámetros actualizados desde Firebase
-                    const snap = await firebase.db
-                      .collection("parametro")
-                      .where("idtambo", "==", tamboSel.id)
-                      .orderBy("grupo")
-                      .get();
-
-                    const gruposActualizados = snap.docs
-                      .map(d => ({ id: d.id, ...d.data() }))
-                      .filter(d => Array.isArray(d.parametros));
-
-                    // 2️⃣ Calcular promedios individuales por grupo ANTES del global
-                    for (const g of gruposActualizados) {
-                      await calcularPromedioIndividual(g.grupo, gruposActualizados);
-                    }
-
-                    // 3️⃣ Calcular promedio global con la NUEVA FÓRMULA
-                    await calcularPromedioGlobal(gruposActualizados);
-
-                    // 4️⃣ Actualizar el estado de grupos
-                    setGrupos(gruposActualizados);
-
-                    // 5️⃣ Resetear indicador visual
-                    setParametrosModificados(false);
-                  }}
-
-                >
-                  <span className={styles.hoverUnderline}>
-                    {parametrosModificados ? "Recalcular Promedio Global" : "Promedio Global"}
-                  </span>
+          <div className={styles.resumenCompacto}>
+            <div className={styles.resumenHeaderTop}>
+              <h3 className={styles.resumenTituloSidebar}>Resumen</h3>
+              <div className={styles.infoWrapper}>
+                <button className={styles.infoButton} onClick={() => setShowInfo(true)}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="30"
-                    height="10"
-                    viewBox="0 0 46 16"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    <path
-                      d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z"
-                      transform="translate(30)"
-                    ></path>
-                    <g
-                      id="arrow"
-                      stroke="none"
-                      strokeWidth="1"
-                      fill="none"
-                      fillRule="evenodd"
-                    >
-                      <path
-                        className={styles.one}
-                        d="M40.1543933,3.89485454 L58.7849315,21.8256394"
-                      ></path>
-                      <path
-                        className={styles.two}
-                        d="M58.7849315,21.8256394 L40.1543933,39.7558593"
-                      ></path>
-                      <path
-                        className={styles.three}
-                        d="M0.424211384,21.8256394 L58.7849315,21.8256394"
-                      ></path>
-                    </g>
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="8"></line>
                   </svg>
+                  <span className={styles.tooltip}>Información importante</span>
                 </button>
+              </div>
+            </div>
+            <p className={styles.resumenText}>
+              Utilice este panel para configurar el porcentaje de ración a nivel general en todo el tambo.
+              A la derecha verá la cantidad de animales, promedios y sus grupos.
+            </p>
+          </div>
+        </aside>
 
-                <span className={styles.tooltipText}>
-                  Presione para calcular promedio global
-                </span>
+        {/* PANEL DERECHO - MAIN CONTENT */}
+        <main className={styles.mainPanel}>
+          {tamboSel && (
+            <div className={styles.kpiContainer}>
+              <div className={styles.kpiCard}>
+                <span className={styles.kpiLabel}>Total Animales</span>
+                <span className={styles.kpiValue}>{animales.length}</span>
               </div>
 
-              {promedioTotalGrupos && (
-                <div className={styles.promedioGrupo}>
-                  <div className={styles.hoverUnderlineText}>
-                    PROMEDIO GLOBAL: {promedioTotalGrupos} KG
+              {Object.keys(cantidadAnimalesPorGrupo).map(g => (
+                <div className={styles.kpiCard} key={g}>
+                  <span className={styles.kpiLabel}>Grupo {g}</span>
+                  <span className={styles.kpiValue}>{cantidadAnimalesPorGrupo[g]}</span>
+                </div>
+              ))}
+
+              {grupos.length > 1 && (
+                <div className={`${styles.kpiCard} ${styles.kpiGlobalCard}`}>
+                  <div className={styles.kpiGlobalHeader}>
+                    <span className={styles.kpiLabel}>Promedio Global</span>
+                    <div className={styles.tooltipWrapper}>
+                      <button
+                        className={styles.kpiGlobalBtn}
+                        onClick={async () => {
+                          const snap = await firebase.db
+                            .collection("parametro")
+                            .where("idtambo", "==", tamboSel.id)
+                            .orderBy("grupo")
+                            .get();
+                          const gruposActualizados = snap.docs
+                            .map(d => ({ id: d.id, ...d.data() }))
+                            .filter(d => Array.isArray(d.parametros));
+                          for (const g of gruposActualizados) {
+                            await calcularPromedioIndividual(g.grupo, gruposActualizados);
+                          }
+                          await calcularPromedioGlobal(gruposActualizados);
+                          setGrupos(gruposActualizados);
+                          setParametrosModificados(false);
+                        }}
+                      >
+                        <span>
+                          {parametrosModificados ? "Recalcular" : "Calcular"}
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                          <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                      </button>
+                      <span className={styles.tooltipText}>Presione para calcular promedio global</span>
+                    </div>
                   </div>
+                  {promedioTotalGrupos ? (
+                    <span className={styles.kpiValueHighlight}>{promedioTotalGrupos} kg</span>
+                  ) : (
+                    <span className={styles.kpiValueEmpty}>--</span>
+                  )}
                 </div>
               )}
             </div>
-
           )}
 
-        </div>
-
-
-        {tamboSel ? (
-          <>
-            {/* Botón de nuevo grupo movido a la barra de acciones superior */}
-            {cargandoGrupos ? (
-              <div className={styles.spinnerContainerParametros}>
-                <div className={styles.spinnerParametros}></div>
-                <div className={styles.loaderParametros}>
-                  <p>Cargando</p>
-                  <div className={styles.wordsParametros}>
-                    <span className={styles.wordParametro}>Grupos configurados</span>
-                    <span className={styles.wordParametro}>Paratros de Vacas</span>
-                    <span className={styles.wordParametro}>Parametros de Vaquillonas</span>
-                    <span className={styles.wordParametro}>Unidades de medida</span>
-                    <span className={styles.wordParametro}>Rodeo y Orden</span>
+          <div className={styles.gruposContainer}>
+            {tamboSel ? (
+              cargandoGrupos ? (
+                <div className={styles.spinnerContainerParametros}>
+                  <div className={styles.spinnerParametros}></div>
+                  <div className={styles.loaderParametros}>
+                    <p>Cargando</p>
+                    <div className={styles.wordsParametros}>
+                      <span className={styles.wordParametro}>Grupos configurados</span>
+                      <span className={styles.wordParametro}>Paratros de Vacas</span>
+                      <span className={styles.wordParametro}>Parametros de Vaquillonas</span>
+                      <span className={styles.wordParametro}>Unidades de medida</span>
+                      <span className={styles.wordParametro}>Rodeo y Orden</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : grupos.length === 0 ? (
-              <Mensaje>
-                <div className={styles.sinGrupos}>No hay grupos configurados. Cree uno nuevo.</div>
-              </Mensaje>
+              ) : grupos.length === 0 ? (
+                <Mensaje>
+                  <div className={styles.sinGrupos}>No hay grupos configurados. Cree uno nuevo.</div>
+                </Mensaje>
+              ) : (
+                grupos.map((g) => {
+                  const isExpanded = expandedGroups[g.id] !== undefined ? expandedGroups[g.id] : true;
+                  return (
+                    <div key={g.id} className={styles.cardGrupo}>
+                      <div className={styles.headerGrupo}>
+                        <div className={styles.headerGrupoTitleContainer} onClick={() => toggleGroup(g.id)} style={{ cursor: 'pointer' }}>
+                          <h2 className={styles.tituloGrupo}>
+                            <span className={styles.expandIcon}>{isExpanded ? '▼' : '▶'}</span>
+                            Grupo {g.grupo}{g.subtitulo ? ` - ${g.subtitulo}` : ''}
+                          </h2>
+                        </div>
+
+                        <div className={styles.headerGrupoRight}>
+                          <div className={styles.promedioWrapper}>
+                            <span className={styles.promedioValor}>
+                              Promedio: <strong>{promediosIndividuales[g.grupo] ?? "0.00"} kg</strong>
+                            </span>
+
+                            <div className={styles.tooltipWrapper}>
+                              <button
+                                className={styles.modernCalcBtn}
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const snap = await firebase.db
+                                    .collection("parametro")
+                                    .where("idtambo", "==", tamboSel.id)
+                                    .orderBy("grupo")
+                                    .get();
+                                  const gruposActualizados = snap.docs
+                                    .map(d => ({ id: d.id, ...d.data() }))
+                                    .filter(d => Array.isArray(d.parametros));
+                                  await calcularPromedioIndividual(g.grupo, gruposActualizados, true);
+                                  setParametrosModificados(false);
+                                }}
+                              >
+                                <span className={styles.modernCalcBtnText}>
+                                  {parametrosModificados ? "Recalcular" : "Calcular"}
+                                </span>
+                              </button>
+                              <span className={styles.tooltipText}>Presione para calcular</span>
+                            </div>
+                          </div>
+
+                          <div className={styles.accionesGrupo}>
+                            <div className={styles.tooltipWrapper}>
+                              <button className={styles.iconBtnMinimal} onClick={(e) => { e.stopPropagation(); abrirEditarGrupo(g); }}>
+                                <RiEditBoxLine size={18} />
+                              </button>
+                              <span className={styles.tooltipText}>Editar grupo</span>
+                            </div>
+                            <div className={styles.tooltipWrapper}>
+                              <button className={styles.iconBtnMinimalDanger} onClick={(e) => { e.stopPropagation(); confirmarEliminarGrupo(g.id); }}>
+                                <RiDeleteBin2Line size={18} />
+                              </button>
+                              <span className={styles.tooltipText}>Eliminar grupo</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`${styles.grupoContentWrapper} ${isExpanded ? styles.expanded : styles.collapsed}`}>
+                        <div className={styles.tablasGrupoGrid}>
+                          {(g.parametros || []).map((cat) => (
+                            <div className={styles.tablaCategoriaCol} key={cat.categoria}>
+                              <DetalleParametro
+                                idTambo={tamboSel.id}
+                                groupId={g.id}
+                                categoria={cat.categoria}
+                                porcentaje={porcentaje}
+                                onParametroChange={handleParametroChange}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )
             ) : (
-              grupos.map((g) => (
-                <div key={g.id} className={styles.cardGrupo}>
-                  <div className={styles.headerGrupo}>
-                    <h2 className={styles.tituloGrupo}>Grupo {g.grupo}{g.subtitulo ? ` - ${g.subtitulo}` : ''}</h2>
-                    {/* ⭐ Agregá el promedio acá ADENTRO del map ⭐ */}
-                    <div className={styles.promedioWrapper} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-
-                      <div className={styles.tooltipWrapper}>
-                        <button
-                          className={styles.cta}
-                          onClick={async () => {
-
-                            // 1) Leer parámetros actualizados desde Firebase
-                            const snap = await firebase.db
-                              .collection("parametro")
-                              .where("idtambo", "==", tamboSel.id)
-                              .orderBy("grupo")
-                              .get();
-
-                            const gruposActualizados = snap.docs
-                              .map(d => ({ id: d.id, ...d.data() }))
-                              .filter(d => Array.isArray(d.parametros));
-
-                            // 2) Calcular usando parámetros nuevos
-                            await calcularPromedioIndividual(g.grupo, gruposActualizados);
-
-                            setParametrosModificados(false);
-                          }}
-                        >
-                          <span className={styles.hoverUnderline}>
-                            {parametrosModificados ? "Recalcular promedio" : "Calcular promedio"}
-                          </span>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="30"
-                            height="10"
-                            viewBox="0 0 46 16"
-                          >
-                            <path
-                              d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z"
-                              transform="translate(30)"
-                            ></path>
-                          </svg>
-                        </button>
-
-                        {/* 👉 Tooltip nuevo */}
-                        <span className={styles.tooltipText}>Presione para calcular</span>
-                      </div>
-
-
-                      <div className={styles.promedioGrupo}>
-                        <span className={styles.hoverUnderlineText}>
-                          Promedio : <strong>{promediosIndividuales[g.grupo] ?? "0.00"} kg</strong>
-                        </span>
-                      </div>
-                    </div>
-
-
-                    <div className={styles.accionesGrupo}>
-                      <div className={styles.tooltipWrapper}>
-                        <Button variant="outline-primary" size="sm" onClick={() => abrirEditarGrupo(g)}>
-                          <RiEditBoxLine size={25} />
-                        </Button>
-                        <span className={styles.tooltipText}>Editar grupo</span>
-                      </div>
-                      <div className={styles.tooltipWrapper}>
-                        <Button variant="outline-danger" size="sm" onClick={() => confirmarEliminarGrupo(g.id)}>
-                          <RiDeleteBin2Line size={25} />
-                        </Button>
-                        <span className={styles.tooltipText}>Eliminar grupo</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Row className="gx-4 gy-4 mt-2">
-                    {/* PARAMETROS DEL TAMBO */}
-                    {(g.parametros || []).map((cat) => (
-                      <Col md={6} key={cat.categoria}>
-                        <DetalleParametro
-                          idTambo={tamboSel.id}
-                          groupId={g.id}
-                          categoria={cat.categoria}
-                          porcentaje={porcentaje}
-                          onParametroChange={() => setParametrosModificados(true)}
-                        />
-                      </Col>
-                    ))}
-                  </Row>
-                </div>
-              ))
+              <SelectTambo />
             )}
-          </>
-        ) : (
-          <SelectTambo />
-        )}
+          </div>
+        </main>
       </div>
       {/* PARAMETRO DE NUEVO TAMBO SIN VALORES */}
       {showNuevoGrupo && (
@@ -1258,31 +1251,27 @@ const Parametros = () => {
               <Row className="gx-4 gy-4">
                 <Col md={6} className={styles.modalParamCol}>
                   <h5 className={styles.modalParamColTitulo}>Parametros para Vaca</h5>
-                  {(g.parametros || []).map((cat) => (
-                    <Col md={6} key={cat.categoria}>
-                      <DetalleParametro
-                        idTambo={tamboSel?.id}
-                        groupId={nuevoGrupoId}
-                        categoria="Vaca"
-                        porcentaje={porcentaje}
-                      />
-                    </Col>
-                  ))}
-
+                  <div className="mt-3">
+                    <DetalleParametro
+                      idTambo={tamboSel?.id}
+                      groupId={nuevoGrupoId}
+                      categoria="Vaca"
+                      porcentaje={porcentaje}
+                      onParametroChange={handleParametroChange}
+                    />
+                  </div>
                 </Col>
                 <Col md={6} className={styles.modalParamCol}>
                   <h5 className={styles.modalParamColTitulo}>Parametros para Vaquillona</h5>
-                  {(g.parametros || []).map((cat) => (
-                    <Col md={6} key={cat.categoria}>
-                      <DetalleParametro
-                        idTambo={tamboSel?.id}
-                        groupId={nuevoGrupoId}
-                        categoria="Vaquillona"
-                        porcentaje={porcentaje}
-                      />
-                    </Col>
-                  ))}
-
+                  <div className="mt-3">
+                    <DetalleParametro
+                      idTambo={tamboSel?.id}
+                      groupId={nuevoGrupoId}
+                      categoria="Vaquillona"
+                      porcentaje={porcentaje}
+                      onParametroChange={handleParametroChange}
+                    />
+                  </div>
                 </Col>
               </Row>
             </div>
@@ -1434,6 +1423,33 @@ const Parametros = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="primary" onClick={() => setShowSyncInfo(false)}>
+            Entendido
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal Advertencia de Cálculo */}
+      <Modal show={showWarningModal} onHide={() => setShowWarningModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+             </svg>
+             Información
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            El Grupo {warningMessage.nroGrupo} aún no tiene parámetros de alimentación configurados.
+          </p>
+          <p>
+            Para poder calcular el promedio primero debe agregar los parámetros de alimentación para este grupo.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowWarningModal(false)}>
             Entendido
           </Button>
         </Modal.Footer>

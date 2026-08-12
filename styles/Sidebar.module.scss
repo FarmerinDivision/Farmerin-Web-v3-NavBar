@@ -6,9 +6,7 @@
   padding: 15px 30px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   box-shadow: 0 2px 4px rgba(255, 252, 252, 0.04);
-  position: sticky;
-  top: 0;
-  z-index: 999;
+  /* position por defecto (static) — fluye con el documento */
 }
 
 .navContainer {
@@ -68,7 +66,7 @@
     cursor: pointer;
 
     &:hover {
-      color: #0ea5e9;
+      color: #000c12;
     }
   }
 
@@ -95,41 +93,80 @@
     font-weight: 500;
     color: #fbfbfb; // TEXTO DE NUTRICION - REPORTES - HERRAMIENTAS - CONFIGURACION
     cursor: pointer;
-    padding: 5px 0;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 4px;
+    transition: color 0.2s ease, background-color 0.2s ease;
 
-    &:hover {
-      color: #0ea5e9;
+    &:hover,
+    &:focus-visible {
+      color: #fcfeff;
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
+
+    &.activeBtn {
+      color: #f4f4f4;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .arrow {
+      font-size: 11px;
+      transition: transform 150ms ease;
+    }
+
+    &.activeBtn .arrow {
+      transform: rotate(180deg);
     }
   }
 
   .dropdownContent {
-    display: none;
     position: absolute;
-    top: 30px;
+    top: 100%;
+    margin-top: 5px;
     left: 0;
     background-color: #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     border-radius: 8px;
-    min-width: 180px;
-    padding: 10px 0;
+    min-width: 220px;
+    padding: 8px 0;
     z-index: 1000;
 
+    /* Animación de entrada */
+    animation: dropdownFadeIn 150ms ease-out forwards;
+
     span {
-      display: block;
-      padding: 8px 20px;
-      font-size: 14px;
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      min-height: 48px;
+      font-size: 15px;
       color: #374151; // TEXTO DE SECCIONES
       text-decoration: none;
-      transition: background 0.2s ease;
+      transition: background 0.2s ease, color 0.2s ease;
+      cursor: pointer;
 
-      &:hover {
+      &:hover,
+      &:focus-visible {
         background-color: #f3f4f6;
+        color: #0ea5e9;
+        outline: none;
       }
     }
   }
+}
 
-  &:hover .dropdownContent {
-    display: block;
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -140,42 +177,90 @@
 
 /* Botón estilo texto */
 .subDropbtn {
-  padding: 10px 16px;
-  display: block;
+  padding: 12px 20px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   cursor: pointer;
-  color: #080808;
+  color: #374151;
   white-space: nowrap;
+  font-size: 15px;
+  transition: background 0.2s ease, color 0.2s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible {
+    background-color: #f3f4f6;
+    color: #000000;
+    outline: none;
+  }
+
+  &.activeBtn {
+    background-color: #f3f4f6;
+    color: #000000;
+  }
+
+  .arrow {
+    font-size: 11px;
+    transition: transform 150ms ease;
+  }
+
+  &.activeBtn .arrow {
+    transform: rotate(180deg);
+  }
 }
 
 /* Submenú lateral */
 .subDropdownContent {
-  display: none;
   position: absolute;
   top: 0;
   left: 100%;
   /* abre hacia la derecha */
-  background-color: #fffffe;
-  min-width: 200px;
-  border-left: 2px solid #fffffe;
-  border-radius: 3px;
-  padding-left: 1.5px;
-  z-index: 999;
+  background-color: #ffffff;
+  min-width: 220px;
+  border-left: 2px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 8px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+
+  /* Animación de entrada horizontal */
+  animation: subDropdownFadeIn 150ms ease-out forwards;
 }
 
-/* Mostrar submenu al hover */
-.subDropdown:hover .subDropdownContent {
-  display: block;
+@keyframes subDropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Estilo de cada opción dentro del submenu */
 .subDropdownContent a span {
-  padding: 10px 14px;
-  display: block;
-  color: #fffffe;
+  padding: 12px 20px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  color: #374151;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.subDropdownContent a span:hover {
-  background-color: #fffffe;
+.subDropdownContent a span:hover,
+.subDropdownContent a span:focus-visible {
+  background-color: #f3f4f6;
+  color: #004667;
+  outline: none;
 }
 
 /* ===============================
@@ -231,26 +316,21 @@
       /* Slightly darker for contrast */
       padding: 0;
       border-radius: 4px;
+      animation: none;
+      /* No anim in mobile stack */
 
       span {
         color: #fbfbfb;
         /* Light text for dark bg in mobile */
-        padding: 10px 20px;
+        padding: 12px 20px;
+        min-height: 44px;
 
-        &:hover {
+        &:hover,
+        &:focus-visible {
           background-color: rgba(0, 0, 0, 0.1);
           color: #ffffff;
         }
       }
-    }
-
-    /* Show dropdown content on "hover" (tap) or always if simpler, 
-       but restriction says NO JS changes. 
-       Mobilizing hover interactions: in CSS mobile, :hover works sticky on first tap.
-       We'll keep the hover behavior but style it for stacking.
-    */
-    &:hover .dropdownContent {
-      display: block;
     }
   }
 
@@ -260,8 +340,20 @@
 
     .subDropbtn {
       color: #fbfbfb;
-      padding: 10px 20px;
+      padding: 12px 20px;
+      min-height: 44px;
       background-color: rgba(0, 0, 0, 0.05);
+
+      &:hover,
+      &:focus-visible {
+        background-color: rgba(0, 0, 0, 0.1);
+        color: #0c0c0c;
+      }
+
+      &.activeBtn {
+        background-color: rgba(0, 0, 0, 0.1);
+        color: #0f0f0f;
+      }
     }
 
     .subDropdownContent {
@@ -271,14 +363,11 @@
       background-color: rgba(0, 0, 0, 0.1);
       padding-left: 20px;
       min-width: auto;
+      animation: none;
 
       a span {
-        color: #fbfbfb;
+        color: #101010;
       }
-    }
-
-    &:hover .subDropdownContent {
-      display: block;
     }
   }
 }

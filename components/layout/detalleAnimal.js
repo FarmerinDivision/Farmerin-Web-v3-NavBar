@@ -1,16 +1,18 @@
 import React, { useState, useContext } from 'react';
+import { useRouter } from 'next/router';
 import { FirebaseContext } from '../../firebase2';
-import FichaAnimal from './fichaAnimal';
-import ModalAnimalForm from '../../pages/animales/modalAnimalForm'; // ✅ nuevo
-import { RiEdit2Line, RiAddBoxLine, RiDeleteBin2Line } from 'react-icons/ri';
+import { RiEdit2Line, RiAddBoxLine, RiDeleteBin2Line, RiEyeLine } from 'react-icons/ri';
 import { Modal, Button, Alert, Form } from 'react-bootstrap';
 import { format } from 'date-fns';
 import styles from '../../styles/Animales.module.scss';
+import modalStyles from '../../styles/modalTamboForm.module.scss';
 
-const DetalleAnimal = ({ animal, guardarElim }) => {
+const DetalleAnimal = ({ animal, guardarElim, onNavigate }) => {
   const { firebase } = useContext(FirebaseContext);
-  const [showFicha, setShowFicha] = useState(false);
-  const [showEditar, setShowEditar] = useState(false);
+  const router = useRouter();
+  // onNavigate: funcion opcional del padre para guardar el scroll antes de navegar.
+  // Si no se provee, usa router.push directamente (compatibilidad hacia atras).
+  const navigate = onNavigate ?? ((path) => router.push(path));
   const [showElim, setShowElim] = useState(false);
   const [error, guardarError] = useState(false);
   const [descError, guardarDescError] = useState('');
@@ -109,14 +111,14 @@ const DetalleAnimal = ({ animal, guardarElim }) => {
         <td className={styles.celda}>
           <div className={styles.acciones}>
             <div className={styles.tooltipWrapper}>
-              <Button className={styles.btnIconoInfo} onClick={() => setShowFicha(true)}>
-                <RiAddBoxLine size={20} />
+              <Button className={styles.btnIconoInfo} onClick={() => navigate('/animales/' + id)}>
+                <RiEyeLine size={20} />
               </Button>
               <span className={styles.tooltipText}>Ver ficha</span>
             </div>
 
             <div className={styles.tooltipWrapper}>
-              <Button className={styles.btnIconoEditar} onClick={() => setShowEditar(true)}>
+              <Button className={styles.btnIconoEditar} onClick={() => navigate('/animales/editar/' + id)}>
                 <RiEdit2Line size={20} />
               </Button>
               <span className={styles.tooltipText}>Editar animal</span>
@@ -133,44 +135,68 @@ const DetalleAnimal = ({ animal, guardarElim }) => {
       </tr>
 
       {/* Modal de eliminación */}
-      <Modal show={showElim} onHide={handleCloseElim}>
-        <Modal.Header closeButton>
-          <Modal.Title>Atención!</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>¿Desea dar de baja el animal {rp}?</p>
-          <Form.Control as="select" onChange={changeMotivo}>
-            <option value="0">Seleccione motivo...</option>
-            {motivos.map(m => (
-              <option key={m.id} value={m.descripcion}>{m.descripcion}</option>
-            ))}
-          </Form.Control>
-          <Alert variant="danger" show={error}><p>{descError}</p></Alert>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="success" onClick={eliminarAnimal}>Aceptar</Button>
-          <Button variant="danger" onClick={handleCloseElim}>Cancelar</Button>
-        </Modal.Footer>
+      <Modal 
+        show={showElim} 
+        onHide={handleCloseElim}
+        centered
+        dialogClassName={modalStyles.premiumModalTambo}
+        backdropClassName={modalStyles.premiumBackdropTambo}
+      >
+        <div className={modalStyles.header}>
+          <div>
+            <h2 className={modalStyles.title}>Dar de Baja Animal</h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+              Esta acción registrará la baja del animal seleccionado.
+            </p>
+          </div>
+          <button type="button" className={modalStyles.closeButton} onClick={handleCloseElim} aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+        
+        <div className={modalStyles.body}>
+          <div className={modalStyles.sectionBlock}>
+            <div style={{ textAlign: 'center' }}>
+              <p className={modalStyles.infoCardLabel} style={{ marginBottom: '8px' }}>ANIMAL SELECCIONADO</p>
+              <h3 className={modalStyles.infoCardValue} style={{ fontSize: '24px' }}>RP: {rp}</h3>
+            </div>
+          </div>
+
+          <div className={modalStyles.sectionBlock} style={{ marginBottom: 0 }}>
+            <h3 className={modalStyles.sectionTitle}>Motivo de Baja</h3>
+            <div className={modalStyles.formGroup}>
+              <Form.Control as="select" onChange={changeMotivo} defaultValue="0">
+                <option value="0" disabled>Seleccione un motivo de baja</option>
+                {motivos.map(m => (
+                  <option key={m.id} value={m.descripcion}>{m.descripcion}</option>
+                ))}
+              </Form.Control>
+              <span style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+                La baja quedará registrada en el historial del animal.
+              </span>
+            </div>
+            
+            {error && (
+              <Alert variant="danger" className="mt-3 mb-0">
+                <p className="mb-0">{descError}</p>
+              </Alert>
+            )}
+          </div>
+        </div>
+
+        <div className={modalStyles.footer}>
+          <button type="button" className={modalStyles.btnSecondary} onClick={handleCloseElim}>
+            Cancelar
+          </button>
+          <button type="button" className={modalStyles.btnDanger} onClick={eliminarAnimal}>
+            Confirmar Baja
+          </button>
+        </div>
       </Modal>
 
-      {/* Modal ficha */}
-      {showFicha && (
-        <FichaAnimal
-          animal={animal}
-          show={showFicha}
-          setShow={setShowFicha}
-        />
-      )}
 
-      {/* Modal edición */}
-      {showEditar && (
-        <ModalAnimalForm
-          animal={animal}
-          show={showEditar}
-          onHide={() => setShowEditar(false)}
-          guardarElim={guardarElim}
-        />
-      )}
+
+
     </>
   );
 };

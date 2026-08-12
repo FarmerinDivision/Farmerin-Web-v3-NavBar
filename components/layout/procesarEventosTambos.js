@@ -91,6 +91,13 @@ export async function procesarEventosTambo(data, tamboSel, setErrores, setActual
                     let eventoDetalle = `Evento registrado el ${fechaEventoCadena}`;
                     const data = doc.data();
 
+                    // VALIDACIÓN IDTAMBO: segunda verificación de seguridad antes de modificar el animal
+                    if (String(data?.idtambo) !== String(tamboSel.id)) {
+                        console.warn(`🚫 SEGURIDAD: RP '${rp}' pertenece al tambo '${data?.idtambo}', no al tambo '${tamboSel.id}'. Operación bloqueada.`);
+                        setErrores(prev => [...prev, `⛔ RP ${rp} pertenece a otro tambo (${data?.idtambo}). No se registró el evento.`]);
+                        continue; // NUEVO: no actualizar animal ni registrar evento, pasar al siguiente
+                    }
+
                     const codNum = parseInt(codigoEvento, 10);
 
                     switch (codigoEvento) {

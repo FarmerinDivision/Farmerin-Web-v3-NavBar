@@ -1,294 +1,590 @@
-@media (max-width: 768px) {
-  .stickyTable {
-    overflow-x: auto;
-    display: block;
-    width: 100%;
+/* =========================================
+   CENTRO DE CONTROL DE ALIMENTACIÓN
+   ========================================= */
 
-    table {
+.pageContent {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 8px 80px;
+}
+
+/* ---- Header del módulo ---- */
+.moduleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.moduleHeaderMain {
+  flex: 1;
+  min-width: 280px;
+}
+
+.moduleTitle {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.moduleSubtitle {
+  font-size: 0.9375rem;
+  color: #6B7280;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+.moduleHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btnHeaderSecondary,
+.btnHeaderPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #E5E7EB;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+  }
+}
+
+.btnHeaderPrimary {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+
+  &:hover {
+    background: #1F2937;
+    border-color: #1F2937;
+  }
+}
+
+/* ---- Dashboard cards ---- */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.statCard {
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+}
+
+.statLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.statValueAuto {
+  color: #059669;
+}
+
+.statValueManual {
+  color: #D97706;
+}
+
+/* ---- Resumen Nutricional ---- */
+.nutricionalBlock {
+  background: #FAFAFA;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.nutricionalTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 16px;
+}
+
+.nutricionalGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.nutricionalItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nutricionalLabel {
+  font-size: 12px;
+  color: #9CA3AF;
+  font-weight: 500;
+}
+
+.nutricionalValue {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ---- Tabla ---- */
+.tableContainer {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: auto;
+  max-height: calc(100vh - 50px);
+  margin-bottom: 60px;
+  padding: 12px 8px 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB #F9FAFB;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #F9FAFB;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 4px;
+    &:hover { background: #9CA3AF; }
+  }
+}
+
+.controlTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  table-layout: fixed;
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+
+    tr {
+      background: transparent;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -4px;
       width: 100%;
-      font-size: 14px;
+      height: 4px;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.06), transparent);
+      pointer-events: none;
+    }
 
-      thead {
-        display: table;
-        width: 100%;
-        position: sticky;
-        top: 0;
-        background-color: #fff;
-        z-index: 10;
-      }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 21;
+      background: #F9FAFB;
+      color: #6B7280;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 10px 16px 14px;
+      text-align: left;
+      border: none;
+      cursor: default;
+      white-space: nowrap;
+      user-select: none;
 
-      tbody {
-        display: block;
-        width: 100%;
-      }
-
-      tr {
-        display: table;
-        width: 100%;
-        table-layout: fixed;
-      }
-
-      th,
-      td {
-        word-wrap: break-word;
-        padding: 8px;
-        vertical-align: middle;
-        text-align: center;
+      &:hover {
+        color: #374151;
       }
     }
   }
 
-  .controlBtn {
-    padding: 6px 10px !important;
-    font-size: 0.85rem;
-  }
-
-  .nombreControl {
-    display: block;
-    font-weight: 600;
-    font-size: 14px;
-  }
-
-  .resumenNutricion {
+  tbody td {
+    padding: 18px 16px;
+    min-height: 88px;
+    vertical-align: top;
+    border-top: 1px solid #C4CBD4;
+    border-bottom: 1px solid #C4CBD4;
+    background: #ffffff;
     font-size: 13px;
-    text-align: center;
-    margin-bottom: 1rem;
-  }
-
-  .mensajeCaja {
-    text-align: center;
-    font-size: 1rem;
-    padding: 1rem;
+    color: #374151;
+    line-height: 1.45;
+    transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   }
 }
 
-
-// Wrapper del texto principal
-.nombreControl {
-  color: #000; // Texto negro
-  text-decoration: underline;
-  text-decoration-color: #297fb8; // Verde moderno (Tailwind Emerald-500)
-  font-weight: 600;
-}
-
-.resumenNutricion {
-  display: flex !important; // Forzar flex
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap; // Permite que baje si no hay espacio
-  gap: 15px;
-
-  text-align: left; // Cambiar a left
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  padding: 15px 15px; // Un poco más de padding lateral
-  background-color: #f9fbfc;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.headerTitle {
-  flex: 1 1 auto; // Ocupa el espacio disponible
-  min-width: 280px; // Evita que se aplaste demasiado
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0; // Evita que los botones se achiquen
-}
-
-// Botón flotante con tooltip
-.controlTooltip {
-  position: relative;
-  display: inline-block;
-}
-
-.controlTooltip .controlTooltipText {
-  visibility: hidden;
-  width: 220px;
-  /* Ajusta según el texto */
-  background-color: #000a11;
-  color: #fff;
-  text-align: center;
-  padding: 5px;
-  border-radius: 6px;
-  position: absolute;
-  bottom: -35px;
-  /* Hace que aparezca debajo */
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 13px;
-  white-space: nowrap;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.controlTooltip:hover .controlTooltipText {
-  visibility: visible;
-  opacity: 1;
-}
-
-// Botón de aplicar ración
-.controlBtn {
-  border: none;
-  color: white;
-  background-color: #4cb04f;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 16px;
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.05);
-    background-color: #3a9440;
-  }
-}
-
-// Tabla sticky
-.stickyTable {
-  width: 200%;
-  overflow-x: auto;
-}
-
-.stickyTable table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed; // <- hace que cada columna ocupe su espacio real
-}
-
-.stickyTable th,
-.stickyTable td {
-  padding: 8px;
-  text-align: center;
-  font-size: 14px;
-  word-wrap: break-word;
-  white-space: nowrap;
-}
-
-.stickyTable tr:hover td {
-  background-color: #f7f9fa;
-}
-
-/////// TOOLTIP DE LOS TITULOS DE LAS COLUMNAS 
-.thTooltipWrapper {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-  text-align: center;
-
-  &:hover .thTooltipText {
-    visibility: visible;
-    opacity: 1;
-  }
-}
-
-.thContent {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-weight: 600;
-  color: #333;
-}
+.thAnimal { width: 14%; cursor: pointer; }
+.thAlimentacion { width: 14%; cursor: pointer; }
+.thDecision { width: 42%; }
+.thEstado { width: 12%; cursor: pointer; }
+.thAcciones { width: 18%; }
 
 .sortIcon {
   margin-left: 4px;
+  opacity: 0.5;
+  vertical-align: middle;
 }
 
-.thTooltipText {
-  visibility: hidden;
-  width: 220px;
-  /* Ajusta según el texto */
-  background-color: #00111c;
-  color: #fff;
+/* ---- Filas ---- */
+.dataRow {
+  min-height: 88px;
+
+  td:first-child {
+    border-left: 1px solid #C4CBD4;
+    border-radius: 10px 0 0 10px;
+  }
+
+  td:last-child {
+    border-right: 1px solid #C4CBD4;
+    border-radius: 0 10px 10px 0;
+  }
+
+  &:hover td {
+    background: #FAFBFC;
+    border-color: #9CA3AF;
+    box-shadow: 0 2px 10px rgba(17, 24, 39, 0.05);
+  }
+}
+
+.rowAuto:hover td:first-child {
+  box-shadow: inset 3px 0 0 #059669;
+}
+
+.rowManual:hover td:first-child {
+  box-shadow: inset 3px 0 0 #D97706;
+}
+
+/* ---- Columna Animal ---- */
+.animalCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.animalRp {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.animalMeta {
+  font-size: 12px;
+  color: #9CA3AF;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.metaDot {
+  color: #D1D5DB;
+}
+
+/* ---- Columna Alimentación ---- */
+.alimentacionCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.racionPrincipal {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.modoAuto,
+.modoManual {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.editInline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inputRacion {
+  width: 56px;
   text-align: center;
-  padding: 5px;
+  padding: 6px 8px;
+  border: 1px solid #E5E7EB;
   border-radius: 6px;
-  position: absolute;
-  bottom: -35px;
-  /* Hace que aparezca debajo */
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 13px;
-  white-space: nowrap;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-
-
-// Modal
-.modalBody ul {
-  padding-left: 20px;
   font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  outline: none;
+
+  &:focus {
+    border-color: #9CA3AF;
+    box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.2);
+  }
 }
 
-// Mensaje sin resultados
-.mensajeSinResultados {
-  padding: 2rem;
-  text-align: center;
+.kgLabel {
+  font-size: 12px;
+  color: #9CA3AF;
 }
 
-.mensajeCaja {
-  background-color: #f8f9fa;
-  padding: 2rem;
+.btnGuardarInline {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btnCancelarInline {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  background: #fff;
+  color: #6B7280;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ---- Columna Decisión ---- */
+.decisionCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.decisionTitulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.decisionSubtitulo {
+  font-size: 12px;
+  color: #9CA3AF;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.decisionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 16px;
+  margin-top: 2px;
+}
+
+.decisionItem {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.decisionLabel {
+  font-size: 10px;
+  font-weight: 500;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.decisionValue {
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.decisionResultado {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.decisionPreview {
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
   border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.tituloSinResultados {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.decisionPreviewLabel {
+  font-size: 11px;
+  color: #9CA3AF;
+  font-weight: 500;
 }
 
-
-.modal-alert-success .modal-content {
-  border-radius: 1rem;
-  border: none;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  animation: fadeInScale 0.3s ease-in-out;
+.decisionPreviewValor {
+  font-size: 14px;
+  font-weight: 700;
+  color: #059669;
 }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
+.decisionPreviewDetalle {
+  font-size: 11px;
+  color: #6B7280;
+}
+
+/* ---- Columna Estado ---- */
+.badgeAuto,
+.badgeManual {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.badgeAuto {
+  background: #F9FAFB;
+  color: #374151;
+  border-color: #E5E7EB;
+}
+
+.badgeManual {
+  background: #F9FAFB;
+  color: #374151;
+  border-color: #E5E7EB;
+}
+
+/* ---- Columna Acciones ---- */
+.accionesCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btnAccion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background: #ffffff;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
   }
 
-  to {
-    opacity: 1;
-    transform: scale(1);
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
-.modal-alert-error .modal-content {
-  border-radius: 1rem;
-  border: none;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  animation: fadeInScale 0.3s ease-in-out;
+.btnAccionModo {
+  color: #6B7280;
 }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
+/* ---- Footer ---- */
+.footerContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #FAFAFA;
+  border-top: 1px solid #E5E7EB;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
-  to {
-    opacity: 1;
-    transform: scale(1);
+.footerBadge {
+  position: absolute;
+  left: 24px;
+  bottom: 10px;
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #6B7280;
+  font-size: 13px;
+}
+
+.footerText {
+  color: #9CA3AF;
+  font-size: 12px;
+  font-weight: 400;
+
+  strong {
+    color: #6B7280;
   }
 }
 
-/////// ---------- LOADER CONTROL ------------ ///////////
-
+/* ---- Spinner ---- */
 .spinnerContainerControl {
   display: flex;
   flex-direction: column;
@@ -302,7 +598,7 @@
   display: grid;
   border: 4px solid #0000;
   border-radius: 50%;
-  border-right-color: #299fff;
+  border-right-color: #6B7280;
   animation: tri-spinner 1s infinite linear;
 }
 
@@ -322,256 +618,409 @@
 }
 
 @keyframes tri-spinner {
-  100% {
-    transform: rotate(1turn);
-  }
+  100% { transform: rotate(1turn); }
 }
 
 .loaderControl {
-  color: #4a4a4a;
-  font-family: "Poppins", sans-serif;
+  color: #6B7280;
+  font-family: 'Inter', sans-serif;
   font-weight: 500;
-  font-size: 25px;
-  -webkit-box-sizing: content-box;
-  box-sizing: content-box;
-  height: 40px;
-  padding: 10px 10px;
-  display: -webkit-box;
-  display: -ms-flexbox;
+  font-size: 18px;
+  padding: 10px;
   display: flex;
   border-radius: 8px;
 }
 
-.wordsControl {
-  overflow: hidden;
-}
+.wordsControl { overflow: hidden; }
 
 .wordControles {
   display: block;
   height: 100%;
   padding-left: 6px;
-  color: #299fff;
+  color: #9CA3AF;
   animation: cycle-words 5s infinite;
 }
 
 @keyframes cycle-words {
-  10% {
-    -webkit-transform: translateY(-105%);
-    transform: translateY(-105%);
-  }
-
-  25% {
-    -webkit-transform: translateY(-100%);
-    transform: translateY(-100%);
-  }
-
-  35% {
-    -webkit-transform: translateY(-205%);
-    transform: translateY(-205%);
-  }
-
-  50% {
-    -webkit-transform: translateY(-200%);
-    transform: translateY(-200%);
-  }
-
-  60% {
-    -webkit-transform: translateY(-305%);
-    transform: translateY(-305%);
-  }
-
-  75% {
-    -webkit-transform: translateY(-300%);
-    transform: translateY(-300%);
-  }
-
-  85% {
-    -webkit-transform: translateY(-405%);
-    transform: translateY(-405%);
-  }
-
-  100% {
-    -webkit-transform: translateY(-400%);
-    transform: translateY(-400%);
-  }
+  10% { transform: translateY(-105%); }
+  25% { transform: translateY(-100%); }
+  35% { transform: translateY(-205%); }
+  50% { transform: translateY(-200%); }
+  60% { transform: translateY(-305%); }
+  75% { transform: translateY(-300%); }
+  85% { transform: translateY(-405%); }
+  100% { transform: translateY(-400%); }
 }
 
-//// BOTON DE EXCEL
-
-.btnExcel {
-  background-color: #287fb8;
-  color: white;
+/* ---- Modals ---- */
+.modal-alert-success .modal-content,
+.modal-alert-error .modal-content {
+  border-radius: 1rem;
   border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-left: 20px;
-  justify-content: flex-end;
-  gap: 6px;
-  cursor: pointer;
-  transition: 0.2s;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  animation: fadeInScale 0.3s ease-in-out;
+}
 
-  &:hover {
-    background-color: #1f6694;
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ---- Sin resultados ---- */
+.mensajeCaja {
+  text-align: center;
+  padding: 40px;
+}
+
+.tituloSinResultados {
+  font-size: 18px;
+  color: #6B7280;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1200px) {
+  .dashboardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .nutricionalGrid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-.tooltipExcel {
-  position: relative;
-  display: inline-block;
-}
-
-.tooltipExcelText {
-  visibility: hidden;
-  width: 200px;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 5px;
-  font-size: 12px;
-  position: absolute;
-  bottom: 120%;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.tooltipExcel:hover .tooltipExcelText {
-  visibility: visible;
-  opacity: 1;
-}
-
-
-//// BOTON DE info
-
-.btnInfo {
-  background-color: #287fb8;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-right: 20px;
-  justify-content: flex-start;
-  gap: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-
-  &:hover {
-    background-color: #1f6694;
-  }
-}
-
-.tooltipInfo {
-  position: relative;
-  display: inline-block;
-}
-
-.tooltipInfoText {
-  visibility: hidden;
-  width: 200px;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 5px;
-  font-size: 12px;
-  position: absolute;
-  bottom: 120%;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.tooltipInfo:hover .tooltipInfoText {
-  visibility: visible;
-  opacity: 1;
-}
-
-/* RESPONSIVE STYLES ADDED */
 @media (max-width: 768px) {
-  .stickyTable {
-    width: 100% !important;
-    overflow-x: auto;
-    display: block; // Asegura que el contenedor permita scroll y no rompa el layout
-
-    table {
-      min-width: 100%;
-      width: 100%; // Forzar a ocupar ancho disponible
-      table-layout: auto; // Permitir que las columnas se ajusten al contenido restante
-    }
-
-    th,
-    td {
-      font-size: 12px !important; // Ajuste de fuente para mejor lectura
-      padding: 6px 4px !important;
-      white-space: normal; // Permitir wrapping de texto si es necesario
-    }
-
-    /* 
-       OCULTAR COLUMNAS EN MOBILE 
-       Indices basados en el orden de <th> en pages/control.js:
-       1: RP
-       2: Grupo
-       3: Categ
-       4: Rodeo
-       5: Días Lact.
-       6: Lact. (OCULTAR)
-       7: Le. CA (OCULTAR)
-       8: Le. UC 
-       9: F. UC (OCULTAR)
-       10: Est. Rep (OCULTAR)
-       11: Días Preñ. (OCULTAR)
-       12: F. Racion (OCULTAR)
-       13: Ración
-       14: Boton aplicar (MANTENER - es una columna funcional importante)
-       15: R. Sugerida
-       16: Rac. Manual (OCULTAR)
-    */
-    th:nth-child(6),
-    td:nth-child(6),
-    th:nth-child(7),
-    td:nth-child(7),
-    th:nth-child(9),
-    td:nth-child(9),
-    th:nth-child(10),
-    td:nth-child(10),
-    th:nth-child(11),
-    td:nth-child(11),
-    th:nth-child(12),
-    td:nth-child(12),
-    th:nth-child(14),
-    td:nth-child(14),
-    th:nth-child(16),
-    td:nth-child(16) {
-      display: none;
-    }
-
-    .sortIcon {
-      display: none;
-    }
-  }
-
-  .resumenNutricion {
-    display: flex;
+  .moduleHeader {
     flex-direction: column;
-    gap: 10px;
-    padding: 10px;
   }
 
-
-
-  /* Control buttons container */
-  .headerActions {
-    justify-content: center;
+  .moduleHeaderActions {
     width: 100%;
-    flex-wrap: wrap; // Permitir que los botones bajen si es necesario
   }
 
-  .mensajeCaja {
-    padding: 1rem 0.5rem;
+  .dashboardGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nutricionalGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tableContainer {
+    max-height: calc(100vh - 480px);
+  }
+
+  .controlTable {
+    min-width: 720px;
+  }
+
+  .decisionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .footerBadge {
+    display: none;
+  }
+
+  .footerText {
+    text-align: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .nutricionalGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   MODAL — Información del Tambo (ObtenerInfoTambo)
+   ============================================================ */
+
+.tamboDashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Encabezado: nombre + ubicación */
+.tamboHeader {
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #E5E7EB;
+
+  h3 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.02em;
+  }
+
+  .ubicacion {
+    font-size: 0.85rem;
+    color: #6B7280;
+    font-weight: 500;
+  }
+}
+
+/* Fila de stats: Turnos / Bajadas / Tolvas */
+.row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.infoCard {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border: 1px solid #d1fae5;
+  border-radius: 14px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 55, 3, 0.06);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 55, 3, 0.1);
+    border-color: #a7f3d0;
+  }
+
+  small {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6B7280;
+  }
+
+  h1 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #065f46;
+    margin: 0;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+}
+
+/* Sección de consulta de horarios */
+.buscarCard {
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+
+  h5 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #374151;
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 14px;
+      background: #4db150;
+      border-radius: 2px;
+    }
+  }
+}
+
+/* Fila fecha + botón centrados verticalmente */
+.buscarRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.buscarFechaGroup {
+  flex: 1;
+
+  label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #6B7280;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  input[type="date"] {
+    width: 100%;
+    padding: 0.6rem 0.875rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #111827;
+    background: #F9FAFB;
+    outline: none;
+    transition: all 0.18s ease;
+
+    &:focus {
+      border-color: #4db150;
+      box-shadow: 0 0 0 3px rgba(77, 177, 80, 0.15);
+      background: #ffffff;
+    }
+  }
+}
+
+.btnConsultar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #003703 0%, #015a04 100%);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  height: fit-content;
+  box-shadow: 0 2px 8px rgba(0, 55, 3, 0.2);
+
+  &:hover {
+    background: linear-gradient(135deg, #014d04 0%, #026e05 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 55, 3, 0.3);
+    color: #ffffff;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Resultados */
+.mt4 {
+  margin-top: 0.5rem;
+}
+
+.textCenter {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.alertDanger {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Tabla de horarios */
+.tablaCard {
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mb3 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #374151;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: #4db150;
+    border-radius: 2px;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.tr {
+  th {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6B7280;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid #E5E7EB;
+    text-align: center;
+  }
+}
+
+.tbody {
+  td {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #111827;
+    text-align: center;
+    border-bottom: 1px solid #F3F4F6;
+    transition: background 0.15s ease;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: #f0fdf4;
   }
 }

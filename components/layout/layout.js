@@ -34,16 +34,15 @@ const Layout = props => {
   return (
 
     <div className="mainLayout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <NavBar
-        collapsed={collapsed}
-        toggled={toggled}
-        handleToggleSidebar={handleToggleSidebar}
-      />
+      <main className="mainContent" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <NavBar
+          collapsed={collapsed}
+          toggled={toggled}
+          handleToggleSidebar={handleToggleSidebar}
+          noStickyHeader={props.noStickyHeader}
+        />
 
-      <main className="mainContent" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      
-
-        <div >
+        <div style={{ flex: 1 }}>
           {/* Permitir múltiples hijos, fragmentos, etc. */}
           {props.children}
         </div>

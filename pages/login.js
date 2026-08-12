@@ -127,6 +127,25 @@ const Login = () => {
           <span className={styles.notch}></span>
           <span className={styles.sideButtonTop}></span>
           <span className={styles.sideButtonBottom}></span>
+          {/* TODO: Terminado el Mundial, restaurar la versión original de la imagen:
+          <img
+            src="/FondoLoginN.jpg"
+            alt="App Preview"
+            className={styles.phoneScreen}
+          />
+          */}
+         {/* <video
+            className={styles.phoneScreen}
+            style={{ backgroundColor: '#ffffff' }}
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls={false}
+          >
+            <img src="FondoLoginN.jpg" alt="App Preview" className={styles.phoneScreen} />
+          </video>
+          */}
           <img
             src="/FondoLoginN.jpg"
             alt="App Preview"

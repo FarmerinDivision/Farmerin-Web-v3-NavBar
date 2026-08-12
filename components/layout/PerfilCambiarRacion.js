@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { Modal, Button, Form, Spinner, Alert, Row, Col } from "react-bootstrap";
 import { FirebaseContext } from "../../firebase2";
 import { GiWheat } from "react-icons/gi";
+import modalStyles from '../../styles/modalTamboForm.module.scss';
 
 const PerfilCambiarRacion = () => {
   const { tamboSel } = useContext(FirebaseContext);
@@ -146,131 +147,170 @@ const PerfilCambiarRacion = () => {
         </div>
       </div>
 
-      <Modal show={showModal} onHide={handleClose} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Cambiar Ración Estándar</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      <Modal 
+        show={showModal} 
+        onHide={handleClose} 
+        centered
+        dialogClassName={modalStyles.premiumModalTambo}
+        backdropClassName={modalStyles.premiumBackdropTambo}
+      >
+        <div className={modalStyles.header}>
+          <div>
+            <h2 className={modalStyles.title}>Configuración de Ración</h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+              Ajuste los valores de ración para el tambo.
+            </p>
+          </div>
+          <button type="button" className={modalStyles.closeButton} onClick={handleClose} aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+
+        <div className={modalStyles.body}>
           {success && (
-            <Alert variant="success">
-              Ración actualizada correctamente
+            <Alert variant="success" className="mb-4 border-0" style={{ borderRadius: '12px', backgroundColor: '#f0fdf4', color: '#166534' }}>
+              Ración actualizada correctamente.
             </Alert>
           )}
 
           {error && (
-            <Alert variant="danger">
+            <Alert variant="danger" className="mb-4 border-0" style={{ borderRadius: '12px', backgroundColor: '#fef2f2', color: '#991b1b' }}>
               {error}
             </Alert>
           )}
 
           <Form onSubmit={handleUpdate}>
             {!dataLoaded && loading && (
-              <div className="text-center my-4">
+              <div className="text-center py-5">
                 <Spinner animation="border" variant="primary" />
-                <p className="mt-2">Obteniendo valores actuales...</p>
+                <p className="mt-3" style={{ color: '#64748b', fontWeight: '500' }}>Obteniendo valores actuales...</p>
               </div>
             )}
 
             {dataLoaded && (
               <>
-                {/* Visualización de valores actuales */}
-                <div className="current-values-box mb-4 p-3" style={{ backgroundColor: '#f8f9fa', borderRadius: '12px', border: '1px solid #dee2e6' }}>
-                  <Row className="align-items-center">
-                    <Col className="text-center border-right">
-                      <div style={{ fontSize: '0.7rem', color: '#6c757d', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ración Estándar</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#007bff' }}>
-                        {originalRacion || '0'} <span style={{ fontSize: '0.9rem', color: '#adb5bd' }}>kg</span>
-                      </div>
-                    </Col>
+                <div className={modalStyles.sectionBlock}>
+                  <h3 className={modalStyles.sectionTitle}>Valores Actuales</h3>
+                  <div className={modalStyles.gridRowTwoCols} style={{ marginBottom: 0 }}>
+                    <div className={modalStyles.infoCard}>
+                      <p className={modalStyles.infoCardLabel}>Ración Estándar</p>
+                      <h3 className={modalStyles.infoCardValue} style={{ color: '#0f172a' }}>
+                        {originalRacion || '0'} <span style={{ fontSize: '14px', color: '#94a3b8' }}>kg</span>
+                      </h3>
+                    </div>
                     {tamboSel?.version === 1 && (
-                      <Col className="text-center">
-                        <div style={{ fontSize: '0.7rem', color: '#6c757d', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ración Manual</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#fd7e14' }}>
-                          {originalRacionManual || '0'} <span style={{ fontSize: '0.9rem', color: '#adb5bd' }}>kg</span>
-                        </div>
-                      </Col>
+                      <div className={modalStyles.infoCard}>
+                        <p className={modalStyles.infoCardLabel}>Ración Manual</p>
+                        <h3 className={modalStyles.infoCardValue} style={{ color: '#0f172a' }}>
+                          {originalRacionManual || '0'} <span style={{ fontSize: '14px', color: '#94a3b8' }}>kg</span>
+                        </h3>
+                      </div>
                     )}
-                  </Row>
+                  </div>
                 </div>
 
-                <Form.Group controlId="racion">
-                  <Form.Label>Ración Estándar</Form.Label>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    placeholder="Ingrese el valor de la ración"
-                    value={racion}
-                    onChange={(e) => setRacion(e.target.value)}
-                    required
-                  />
-                </Form.Group>
-
-                {tamboSel?.version === 1 && (
-                  <Form.Group controlId="racionManual" className="mt-3">
-                    <Form.Label>Ración manual</Form.Label>
-                    <Form.Control
-                      type="number"
-                      step="0.01"
-                      placeholder="Ingrese el valor de la ración manual"
-                      value={racionManual}
-                      onChange={(e) => setRacionManual(e.target.value)}
-                      required
-                    />
-                  </Form.Group>
-                )}
-
-                <div className="d-flex justify-content-end mt-4">
-                  <Button 
-                    variant="primary" 
-                    type="submit" 
-                    disabled={loading || !racion || (tamboSel?.version === 1 && !racionManual) || success}
-                  >
-                    {loading ? (
-                      <>
-                        <Spinner
-                          as="span"
-                          animation="border"
-                          size="sm"
-                          role="status"
-                          aria-hidden="true"
+                <div className={modalStyles.sectionBlock} style={{ marginBottom: 0 }}>
+                  <h3 className={modalStyles.sectionTitle}>Nuevos Valores</h3>
+                  <div className={modalStyles.gridRowTwoCols} style={{ marginBottom: 0 }}>
+                    <div className={modalStyles.formGroup}>
+                      <Form.Label>Ración Estándar (kg)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={racion}
+                        onChange={(e) => setRacion(e.target.value)}
+                        required
+                      />
+                    </div>
+                    {tamboSel?.version === 1 && (
+                      <div className={modalStyles.formGroup}>
+                        <Form.Label>Ración Manual (kg)</Form.Label>
+                        <Form.Control
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={racionManual}
+                          onChange={(e) => setRacionManual(e.target.value)}
+                          required
                         />
-                        {" Actualizando..."}
-                      </>
-                    ) : (
-                      "Actualizar Ración"
+                      </div>
                     )}
-                  </Button>
+                  </div>
                 </div>
               </>
             )}
+
+            <div className={modalStyles.footer} style={{ marginTop: '24px', padding: '0', borderTop: 'none', backgroundColor: 'transparent' }}>
+              <button 
+                type="button" 
+                className={modalStyles.btnSecondary} 
+                onClick={handleClose}
+                disabled={loading || success}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                className={modalStyles.btnPrimary} 
+                disabled={loading || !racion || (tamboSel?.version === 1 && !racionManual) || success}
+              >
+                {loading ? (
+                  <>
+                    <Spinner
+                      as="span"
+                      animation="border"
+                      size="sm"
+                      role="status"
+                      aria-hidden="true"
+                      className="me-2"
+                    />
+                    Guardando...
+                  </>
+                ) : (
+                  "Actualizar Ración"
+                )}
+              </button>
+            </div>
           </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Cerrar
-          </Button>
-        </Modal.Footer>
+        </div>
       </Modal>
 
       <Modal
         show={showConstruccionModal}
         onHide={() => setShowConstruccionModal(false)}
         centered
+        dialogClassName={modalStyles.premiumModalTambo}
+        backdropClassName={modalStyles.premiumBackdropTambo}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Funcion no disponible</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Seccion en construccion proximamente activa.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowConstruccionModal(false)}
-          >
-            Cerrar
-          </Button>
-        </Modal.Footer>
+        <div className={modalStyles.header}>
+          <div>
+            <h2 className={modalStyles.title}>Función no disponible</h2>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
+              Aviso del sistema
+            </p>
+          </div>
+          <button type="button" className={modalStyles.closeButton} onClick={() => setShowConstruccionModal(false)} aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+        <div className={modalStyles.body}>
+          <div className={modalStyles.sectionBlock} style={{ marginBottom: 0, textAlign: 'center', padding: '40px 24px' }}>
+            <p style={{ color: '#475569', fontSize: '16px', margin: 0 }}>
+              Sección en construcción. Próximamente activa.
+            </p>
+          </div>
+          <div className={modalStyles.footer} style={{ marginTop: '24px', padding: '0', borderTop: 'none', backgroundColor: 'transparent' }}>
+            <button
+              type="button"
+              className={modalStyles.btnPrimary}
+              onClick={() => setShowConstruccionModal(false)}
+              style={{ width: '100%' }}
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
       </Modal>
     </>
   );

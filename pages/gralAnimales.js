@@ -10,7 +10,7 @@ import { Button, Form, Row, Col, Alert, Spinner, Table } from 'react-bootstrap';
 import { RiSearchLine } from 'react-icons/ri';
 import differenceInDays from 'date-fns/differenceInDays'
 import { format } from 'date-fns'
-import ReactExport from "react-export-excel";
+import ReactExport from "../components/utils/ExcelExport";
 import styles from '../styles/gralAnimales.module.scss'
 
 const GralAnimales = () => {
@@ -390,7 +390,10 @@ const GralAnimales = () => {
     <Layout titulo="Reportes">
       <>
         <Botonera>
-          <h6 className={styles.titulo}>Gral Animales - Total de animales: <strong>{animales.length}</strong></h6>
+          <div className={styles.header}>
+            <h1>Gral Animales</h1>
+            <p>Visualice y administre el listado general de animales de su tambo. (Total: <strong>{animales.length}</strong>)</p>
+          </div>
           <Row>
             <Col lg={true}><h6>&nbsp;</h6></Col>
             <Col lg={true}><h6>&nbsp;</h6></Col>

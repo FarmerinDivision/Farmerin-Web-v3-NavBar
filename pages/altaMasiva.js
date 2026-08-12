@@ -9,11 +9,11 @@ import readXlsxFile from 'read-excel-file'
 import Detalle from '../components/layout/detalle';
 import { v4 as uuidv4 } from 'uuid';
 import SelectTambo from '../components/layout/selectTambo';
-import styles from '../styles/altaMasiva.module.scss';
+import styles from '../styles/UploadLayout.module.scss';
 
 const AltaMasiva = () => {
 
-  const { firebase, tamboSel } = useContext(FirebaseContext);
+  const { firebase, tamboSel, usuario } = useContext(FirebaseContext);
   const [file, guardarFile] = useState(null);
   const [errores, guardarErrores] = useState([]);
   const [actualizados, guardarActualizados] = useState([]);
@@ -29,48 +29,110 @@ const AltaMasiva = () => {
 
   }
 
+  // Helper de parseo de fechas robusto
+  const parseFecha = (val) => {
+    if (val === null || val === undefined || val === '') return null;
+    if (val instanceof Date && !isNaN(val.getTime())) {
+      return format(val, 'yyyy-MM-dd');
+    }
+    if (!isNaN(val) && typeof val === 'number') {
+      const d = new Date("1899-12-31");
+      d.setDate(d.getDate() + val);
+      if (!isNaN(d.getTime())) return format(d, 'yyyy-MM-dd');
+    }
+    if (typeof val === 'string') {
+      const parsed = new Date(val);
+      if (!isNaN(parsed.getTime())) return format(parsed, 'yyyy-MM-dd');
+    }
+    return null;
+  };
+
   async function cargarControl() {
     guardarProcesando(true);
-    let fila = 0;
     guardarErrores([]);
     guardarActualizados([]);
 
-    await readXlsxFile(file).then((rows) => {
-      rows.forEach(r => {
+    try {
+      const rows = await readXlsxFile(file);
+      if (rows.length < 2) {
+        guardarErrores(["El archivo está vacío o no contiene suficientes datos."]);
+        guardarProcesando(false);
+        return;
+      }
+
+      // Procesar encabezados
+      const headers = rows[0].map(h => h ? h.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim() : "");
+      
+      const colMap = {
+        erp: headers.findIndex(h => h.includes('erp') || h.includes('e-rp') || h.includes('electronico')),
+        rp: headers.findIndex(h => (h.includes('rp') && !h.includes('erp')) || h.includes('caravana') || h === 'id'),
+        ingreso: headers.findIndex(h => h.includes('ingreso') && !h.includes('peso')),
+        lactancia: headers.findIndex(h => h.includes('lactancia')),
+        categoria: headers.findIndex(h => h.includes('categoria')),
+        estpro: headers.findIndex(h => h.includes('estado pro') || h.includes('estpro') || h.includes('est pro') || h.includes('productivo')),
+        fparto: headers.findIndex(h => h.includes('parto')),
+        racion: headers.findIndex(h => h.includes('racion')),
+        uc: headers.findIndex(h => h === 'uc' || h.includes('control') || h.includes('litro')),
+        anorm: headers.findIndex(h => h.includes('anorm')),
+        estrep: headers.findIndex(h => h.includes('estado rep') || h.includes('estrep') || h.includes('est rep') || h.includes('reproductivo')),
+        fservicio: headers.findIndex(h => h.includes('servicio')),
+        observaciones: headers.findIndex(h => h.includes('observacion') || h === 'obs'),
+        grupo: headers.findIndex(h => h === 'grupo' || h === 'lote')
+      };
+
+      // Validar requeridos
+      const missingColumns = [];
+      if (colMap.rp === -1) missingColumns.push("RP/Caravana");
+      if (colMap.ingreso === -1) missingColumns.push("Fecha de Ingreso");
+      if (colMap.categoria === -1) missingColumns.push("Categoría");
+      if (colMap.estpro === -1) missingColumns.push("Estado Productivo");
+      if (colMap.estrep === -1) missingColumns.push("Estado Reproductivo");
+
+      if (missingColumns.length > 0) {
+         guardarErrores([`Faltan columnas requeridas en el archivo: ${missingColumns.join(", ")}.`]);
+         guardarProcesando(false);
+         return;
+      }
+
+      let fila = 1;
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
         fila++;
-        if (fila != 1) { // saltea la cabecera
+        
+        // Saltamos filas completamente vacías
+        if (r.every(val => val === null || val === undefined || val === '')) continue;
 
-          // 🔍 Debug: imprime toda la fila como array
-          console.log("Fila:", fila, "Datos:", r);
+        const getValue = (index) => index !== -1 ? r[index] : null;
 
-          const a = {
-            erp: r[0],
-            rp: r[1],
-            ingreso: r[2],
-            lactancia: r[3],
-            categoria: r[4],
-            estpro: r[5],
-            fparto: r[6],
-            racion: r[7],
-            uc: r[8],
-            anorm: r[9],
-            estrep: r[10],
-            fservicio: r[11],
-            observaciones: r[12],
-            grupo: r[13],   // 👈 Verificá en consola si es acá o si en realidad es r[14]
-            fila: fila
-          }
+        const a = {
+          erp: getValue(colMap.erp),
+          rp: getValue(colMap.rp),
+          ingreso: getValue(colMap.ingreso),
+          lactancia: getValue(colMap.lactancia),
+          categoria: getValue(colMap.categoria),
+          estpro: getValue(colMap.estpro),
+          fparto: getValue(colMap.fparto),
+          racion: getValue(colMap.racion),
+          uc: getValue(colMap.uc),
+          anorm: getValue(colMap.anorm),
+          estrep: getValue(colMap.estrep),
+          fservicio: getValue(colMap.fservicio),
+          observaciones: getValue(colMap.observaciones),
+          grupo: getValue(colMap.grupo),
+          fila: fila
+        };
 
-          cargarAnimal(a);
-        }
-      });
-    })
+        await cargarAnimal(a);
+      }
+    } catch (error) {
+       guardarErrores(err => [...err, "Error al procesar el archivo: " + error.message]);
+    }
+
     guardarFile(null);
     guardarProcesando(false);
   }
 
   async function cargarAnimal(a) {
-
     let errores = false;
     let e = '';
     let erp = '';
@@ -90,234 +152,203 @@ const AltaMasiva = () => {
     } else {
       grupo = Number(a.grupo);
       if (isNaN(grupo)) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - El grupo debe ser un número";
-        guardarErrores(errores => [...errores, e]);
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - El grupo/lote debe ser numérico.`;
+        guardarErrores(err => [...err, e]);
         errores = true;
-        grupo = 0; // valor por defecto si no es válido
+        grupo = 0;
       }
     }
 
     //valida que el RP no exista
-    if (a.rp && a.rp.length != 0) {
-
-      //si es un numero lo convierto a String
-      if (isNaN(a.rp)) {
-        rp = a.rp;
-      } else {
-        rp = a.rp.toString()
-      }
+    if (a.rp !== null && a.rp !== undefined && a.rp.toString().trim() !== '') {
+      rp = a.rp.toString().trim();
 
       let existeRP = false;
       try {
-        await firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).where('rp', '==', rp).get().then(snapshot => {
-          if (!snapshot.empty) {
-            snapshot.forEach(doc => {
-              existeRP = true;
-            });
-          }
-        });
+        const snapshot = await firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).where('rp', '==', rp).get();
+        if (!snapshot.empty) existeRP = true;
       } catch (error) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Error al consultar RP: " + rp;
-        guardarErrores(errores => [...errores, e]);
+        e = `Fila N°: ${a.fila} / RP: ${rp} - Error al consultar RP en la base de datos.`;
+        guardarErrores(err => [...err, e]);
         errores = true;
       }
 
       if (existeRP) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - El RP ya existe en el tambo";
-        guardarErrores(errores => [...errores, e]);
+        e = `Fila N°: ${a.fila} / RP: ${rp} - El RP ya existe en el tambo.`;
+        guardarErrores(err => [...err, e]);
         errores = true;
       }
     } else {
-      e = "Fila N°: " + a.fila + " / Se debe ingresar un RP";
-      guardarErrores(errores => [...errores, e]);
+      e = `Fila N°: ${a.fila} - Se debe ingresar un RP (caravana).`;
+      guardarErrores(err => [...err, e]);
       errores = true;
     }
 
     //valida que el eRP tenga 15 digitos y que no exista
-    if (a.erp && a.erp.length != 0) {
-      erp = a.erp.toString()
-      if (isNaN(a.erp)) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - El eRP debe ser numerico: " + a.erp;
-        guardarErrores(errores => [...errores, e]);
+    if (a.erp !== null && a.erp !== undefined && a.erp.toString().trim() !== '') {
+      erp = a.erp.toString().trim();
+      if (isNaN(erp)) {
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - El eRP debe ser numérico: ${erp}`;
+        guardarErrores(err => [...err, e]);
+        errores = true;
+      } else if (erp.length !== 15) {
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - El eRP debe tener 15 dígitos: ${erp}`;
+        guardarErrores(err => [...err, e]);
         errores = true;
       } else {
-        if (erp.length != 15) {
-          e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - El eRP debe tener 15 dígitos: " + a.erp;
-          guardarErrores(errores => [...errores, e]);
+        let existeERP = false;
+        try {
+          const snapshot = await firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).where('erp', '==', erp).get();
+          if (!snapshot.empty) existeERP = true;
+        } catch (error) {
+          e = `Fila N°: ${a.fila} / RP: ${a.rp} - Error al consultar el eRP: ${erp}`;
+          guardarErrores(err => [...err, e]);
           errores = true;
-        } else {
-          let existeERP = false;
-          try {
-            await firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).where('erp', '==', a.erp).get().then(snapshot => {
-              if (!snapshot.empty) {
-                snapshot.forEach(doc => {
-                  existeERP = true;
-                });
-              }
-            });
-          } catch (error) {
-            e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Error al consultar el eRP: " + a.erp;
-            guardarErrores(errores => [...errores, e]);
-            errores = true;
-          }
+        }
 
-          if (existeERP) {
-            e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - El eRP ya existe en el tambo: " + a.erp;
-            guardarErrores(errores => [...errores, e]);
-            errores = true;
-          }
+        if (existeERP) {
+          e = `Fila N°: ${a.fila} / RP: ${a.rp} - El eRP ya existe en el tambo: ${erp}`;
+          guardarErrores(err => [...err, e]);
+          errores = true;
         }
       }
     }
 
-    //valida que la fecha sea numerica (en excel son los dias transcurridos desde el 01/01/1900)
-    if (isNaN(a.ingreso) || !a.ingreso) {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Formato incorrecto de fecha de ingreso ";
-      guardarErrores(errores => [...errores, e]);
+    //valida ingreso
+    ingreso = parseFecha(a.ingreso);
+    if (!ingreso) {
+      e = `Fila N°: ${a.fila} / RP: ${a.rp} - Formato incorrecto o falta la fecha de ingreso.`;
+      guardarErrores(err => [...err, e]);
       errores = true;
-    } else {
-      try {
-        ingreso = new Date("1899-12-31");
-        ingreso.setDate(ingreso.getDate() + a.ingreso);
-        ingreso = format(ingreso, 'yyyy-MM-dd');
-      } catch (error) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Formato incorrecto de fecha de ingreso";
-        guardarErrores(errores => [...errores, e]);
-        errores = true;
-      }
     }
 
-    //valida que la lactancia contenga valores
-    if (a.lactancia != 0) {
-      if (!a.lactancia || isNaN(a.lactancia)) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Debe ingresar el numero de lactancias ";
-        guardarErrores(errores => [...errores, e]);
+    //valida que la lactancia contenga valores numericos si existe
+    let lactancia = 0;
+    if (a.lactancia !== null && a.lactancia !== undefined && a.lactancia !== '') {
+      if (isNaN(a.lactancia)) {
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - La lactancia debe ser un número.`;
+        guardarErrores(err => [...err, e]);
         errores = true;
+      } else {
+        lactancia = Number(a.lactancia);
       }
     }
 
     //Controla el valor de la categoria
-    if (a.categoria) {
-      categoria = a.categoria.trim().toLowerCase();
-      if (categoria == 'vaca') {
+    if (a.categoria !== null && a.categoria !== undefined && a.categoria.toString().trim() !== '') {
+      const catNorm = a.categoria.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (catNorm === 'vaca') {
         categoria = 'Vaca';
-      } else if (categoria == 'vaquillona') {
+      } else if (catNorm === 'vaquillona') {
         categoria = 'Vaquillona';
       } else {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Categoria Incorrecta ";
-        guardarErrores(errores => [...errores, e]);
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - Categoría incorrecta: ${a.categoria}. Debe ser Vaca o Vaquillona.`;
+        guardarErrores(err => [...err, e]);
         errores = true;
       }
     } else {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Debe ingresar categoria ";
-      guardarErrores(errores => [...errores, e]);
+      e = `Fila N°: ${a.fila} / RP: ${a.rp} - Debe ingresar categoría.`;
+      guardarErrores(err => [...err, e]);
       errores = true;
     }
 
     //Controla el estado productivo
-    if (a.estpro) {
-      estpro = a.estpro.trim().toLowerCase();
-      if (estpro == 'seca') {
+    if (a.estpro !== null && a.estpro !== undefined && a.estpro.toString().trim() !== '') {
+      const proNorm = a.estpro.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (proNorm === 'seca') {
         estpro = 'seca';
-      } else if (estpro == 'en ordeñe') {
+      } else if (proNorm === 'en ordene' || proNorm === 'en ordeñe') {
         estpro = 'En Ordeñe';
       } else {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Estado productivo incorrecto ";
-        guardarErrores(errores => [...errores, e]);
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - Estado productivo incorrecto: ${a.estpro}`;
+        guardarErrores(err => [...err, e]);
         errores = true;
       }
     } else {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Debe ingresar el estado productivo ";
-      guardarErrores(errores => [...errores, e]);
+      e = `Fila N°: ${a.fila} / RP: ${a.rp} - Debe ingresar el estado productivo.`;
+      guardarErrores(err => [...err, e]);
       errores = true;
     }
 
-    //valida que la fecha de parto sea numerica
-    if (isNaN(a.fparto) && (a.fparto)) {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Formato incorrecto de fecha de parto";
-      guardarErrores(errores => [...errores, e]);
-      errores = true;
-    } else {
-      if (a.fparto) {
-        try {
-          fparto = new Date("1899-12-31");
-          fparto.setDate(fparto.getDate() + a.fparto);
-          fparto = format(fparto, 'yyyy-MM-dd');
-        } catch (error) {
-          e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Formato incorrecto de fecha de parto ";
-          guardarErrores(errores => [...errores, e]);
+    //valida fecha parto
+    if (a.fparto !== null && a.fparto !== undefined && a.fparto !== '') {
+       fparto = parseFecha(a.fparto);
+       if (!fparto) {
+          e = `Fila N°: ${a.fila} / RP: ${a.rp} - Formato incorrecto de fecha de parto.`;
+          guardarErrores(err => [...err, e]);
           errores = true;
-        }
-      }
+       }
     }
 
     //valida que si los kg de racion sean numericos
-    if (isNaN(a.racion)) {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Los Kg. de racion debe ser un valor numerico";
-      guardarErrores(errores => [...errores, e]);
-      errores = true;
-    } else {
-      if ((a.racion < 1) || (a.racion > 50)) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Los Kg. de racio deben ser mayor a 0 y menor a 50";
-        guardarErrores(errores => [...errores, e]);
+    let racion = 0;
+    if (a.racion !== null && a.racion !== undefined && a.racion !== '') {
+      if (isNaN(a.racion)) {
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - Los Kg. de ración deben ser un valor numérico.`;
+        guardarErrores(err => [...err, e]);
         errores = true;
+      } else {
+        racion = Number(a.racion);
+        if (racion < 1 || racion > 50) {
+          e = `Fila N°: ${a.fila} / RP: ${a.rp} - Los Kg. de ración deben ser mayores a 0 y menores a 50.`;
+          guardarErrores(err => [...err, e]);
+          errores = true;
+        }
       }
     }
 
     //Controla el valor del estado reproductivo
-    if (a.estrep) {
-      estrep = a.estrep.trim().toLowerCase();
-      if ((estrep != 'vacia') && (estrep != 'vacía') && (estrep != 'preñada')) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Estado reproductivo incorrecto ";
-        guardarErrores(errores => [...errores, e]);
-        errores = true;
+    if (a.estrep !== null && a.estrep !== undefined && a.estrep.toString().trim() !== '') {
+      const repNorm = a.estrep.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (repNorm === 'vacia' || repNorm === 'vacia') {
+         estrep = 'vacia';
+      } else if (repNorm === 'prenada' || repNorm === 'preñada') {
+         estrep = 'preñada';
       } else {
-        if (estrep == 'vacía') estrep = 'vacia';
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - Estado reproductivo incorrecto: ${a.estrep}`;
+        guardarErrores(err => [...err, e]);
+        errores = true;
       }
     } else {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Debe ingresar el estado reproductivo ";
-      guardarErrores(errores => [...errores, e]);
+      e = `Fila N°: ${a.fila} / RP: ${a.rp} - Debe ingresar el estado reproductivo.`;
+      guardarErrores(err => [...err, e]);
       errores = true;
     }
 
-    //valida que la fecha de servicio sea numerica
-    if (isNaN(a.fservicio) && (a.fservicio)) {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Formato incorrecto de fecha de servicio";
-      guardarErrores(errores => [...errores, e]);
-      errores = true;
-    } else {
-      if (a.fservicio) {
-        try {
-          fservicio = new Date("1899-12-31");
-          fservicio.setDate(fservicio.getDate() + a.fservicio);
-          fservicio = format(fservicio, 'yyyy-MM-dd');
-        } catch (error) {
-          e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Formato incorrecto de fecha de servicio ";
-          guardarErrores(errores => [...errores, e]);
+    //valida fecha servicio
+    if (a.fservicio !== null && a.fservicio !== undefined && a.fservicio !== '') {
+       fservicio = parseFecha(a.fservicio);
+       if (!fservicio) {
+          e = `Fila N°: ${a.fila} / RP: ${a.rp} - Formato incorrecto de fecha de servicio.`;
+          guardarErrores(err => [...err, e]);
           errores = true;
-        }
-      }
+       }
     }
 
     //valida que si el control lechero tiene valores, sea numerico
-    if (isNaN(a.uc)) {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Los litros deben ser un valor numerico";
-      guardarErrores(errores => [...errores, e]);
-      errores = true;
+    let uc = 0;
+    if (a.uc !== null && a.uc !== undefined && a.uc !== '') {
+      if (isNaN(a.uc)) {
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - Los litros (último control) deben ser un valor numérico.`;
+        guardarErrores(err => [...err, e]);
+        errores = true;
+      } else {
+        uc = Number(a.uc);
+      }
     }
 
-    //valida que si tiene una lactancia tenga fecha de parto
-    if ((estpro == 'En Ordeñe') && (!fparto)) {
-      e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Debe ingresar la fecha del ultimo parto";
-      guardarErrores(errores => [...errores, e]);
+    //valida condicionales lógicos
+    if (estpro === 'En Ordeñe' && !fparto) {
+      e = `Fila N°: ${a.fila} / RP: ${a.rp} - Al estar En Ordeñe, debe ingresar la fecha de parto.`;
+      guardarErrores(err => [...err, e]);
       errores = true;
     }
-    //valida  si está preñada tenga fecha de servicio
-    if (estrep == 'preñada') {
+    
+    if (estrep === 'preñada') {
       nservicio = 1;
       if (!fservicio) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " - Debe ingresar la fecha del ultimo servicio";
-        guardarErrores(errores => [...errores, e]);
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - Al estar Preñada, debe ingresar la fecha del último servicio.`;
+        guardarErrores(err => [...err, e]);
         errores = true;
       }
     } else {
@@ -331,37 +362,46 @@ const AltaMasiva = () => {
           idtambo: tamboSel.id,
           ingreso: ingreso,
           rp: rp,
-          erp: a.erp,
-          lactancia: a.lactancia,
-          observaciones: a.observaciones,
+          erp: erp,
+          lactancia: lactancia,
+          observaciones: a.observaciones || '',
           estpro: estpro,
           estrep: estrep,
           fparto: fparto,
           fservicio: fservicio,
           categoria: categoria,
-          racion: a.racion,
+          racion: racion,
           fracion: firebase.ayerTimeStamp(),
           nservicio: nservicio,
-          uc: a.uc,
+          uc: uc,
           fuc: firebase.nowTimeStamp(),
           ca: 0,
-          anorm: a.anorm,
+          anorm: a.anorm || '',
           fbaja: '',
           mbaja: '',
           rodeo: 0,
           sugerido: 0,
           porcentaje: 1,
-          grupo: grupo  // <-- Nuevo campo
-        }
+          grupo: grupo
+        };
 
         //insertar en base de datos
-        await firebase.db.collection('animal').add(animal);
-        let act = "Fila N°: " + a.fila + " / RP: " + a.rp + " - eRP: " + a.erp + " - Lact.: " + a.lactancia + " - Cat.: " + categoria + "- Est. Prod.:" + estpro + " - Grupo:" + grupo;
-        guardarActualizados(actualizados => [...actualizados, act]);
+        const docRef = await firebase.db.collection('animal').add(animal);
+
+        let eventDetalle = "RP: " + rp + (erp ? " - eRP: " + erp : "");
+        await firebase.db.collection('animal').doc(docRef.id).collection('eventos').add({
+          fecha: firebase.fechaTimeStamp(ingreso),
+          tipo: 'Alta',
+          detalle: eventDetalle,
+          usuario: usuario ? usuario.displayName : 'Sistema',
+          tambo: tamboSel.id,
+        });
+
+        let act = `Fila N°: ${a.fila} / RP: ${rp} - Categoría: ${categoria} - Est. Prod.: ${estpro} - Grupo: ${grupo}`;
+        guardarActualizados(actList => [...actList, act]);
       } catch (error) {
-        e = "Fila N°: " + a.fila + " / RP: " + a.rp + " -Error al dar de alta el animal" + error;
-        guardarErrores(errores => [...errores, e]);
-        errores = true;
+        e = `Fila N°: ${a.fila} / RP: ${a.rp} - Error al guardar en base de datos: ${error.message}`;
+        guardarErrores(err => [...err, e]);
       }
     }
   }
@@ -395,168 +435,137 @@ const AltaMasiva = () => {
 
   return (
     <Layout titulo="Alta Masiva">
-      {procesando ? (
-        <ContenedorSpinner>
-          <div className={styles.contenedorSpinner}>
-            <Spinner animation="border" variant="info" />
-            <div className={styles.mensajeCargando}>Procesando alta masiva, por favor espere...</div>
-          </div>
-        </ContenedorSpinner>
-
-      ) : (
-        <>
-          <Botonera>
-            <Row className="justify-content-center mt-3">
-              <Col xs={12} md={6}>
-                <div className={styles.descargaWrapper}>
-                  <h6 className={styles.descargaTitulo}>📥 Descargas útiles para Alta Masiva</h6>
-                  <p className={styles.descargaSubtitulo}>
-                    Estas planillas te ayudarán a cargar correctamente los datos. Elegí una según lo que necesites:
-                  </p>
-                  <div className={styles.botonGrupo}>
-                    <div className={styles.tooltipWrapper}>
-                      <a
-                        href="/docs/planilla-modelo-altaMasiva.xlsx"
-                        download
-                        className={styles.btnDescarga}
-                      >
-                        📄 Modelo
-                      </a>
-                      <span className={styles.tooltipText}>Contiene un ejemplo completo para guiarte en la carga.</span>
-                    </div>
-                    <div className={styles.tooltipWrapper}>
-                      <a
-                        href="/docs/planilla-vacia-altaMasiva.xlsx"
-                        download
-                        className={styles.btnDescarga}
-                      >
-                        📄 Vacía
-                      </a>
-                      <span className={styles.tooltipText}>Plantilla en blanco lista para completar.</span>
-                    </div>
-                  </div>
-                </div>
-              </Col>
-            </Row>
-          </Botonera>
-
-          <Botonera>
-            <Form onSubmit={handleSubmit}>
-              <Row>
-                <Col>
-                  <div
-                    className="container-AltaMasiva"
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    <div
-                      className="header-AltaMasiva"
-                      onClick={() => document.getElementById('file').click()}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M7 10V9C7 6.23858 9.23858 4 12 4C14.7614 4 17 6.23858 17 9V10C19.2091 10 21 11.7909 21 14C21 15.4806 20.1956 16.8084 19 17.5M7 10C4.79086 10 3 11.7909 3 14C3 15.4806 3.8044 16.8084 5 17.5M7 10C7.43285 10 7.84965 10.0688 8.24006 10.1959M12 12V21M12 12L15 15M12 12L9 15"
-                          stroke="#000000"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <p>Presiona aca y carga el alta masiva</p>
-                    </div>
-
-                    <label htmlFor="archivoExcel" className={styles.footerAltaMasiva}>
-                      <svg
-                        fill="#000000"
-                        viewBox="0 0 32 32"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M15.331 6H8.5v20h15V14.154h-8.169z"></path>
-                        <path d="M18.153 6h-.009v5.342H23.5v-.002z"></path>
-                      </svg>
-                      <p>{file ? file.name : 'Ningun archivo seleccionado'}</p>
-                      {file && (
-                        <Button
-                          variant="danger"
-                          onClick={clearFile}
-                          style={{ marginLeft: '10px' }}
-                        >
-                          Borrar
-                        </Button>
-                      )}
-                    </label>
-
-                    <input id="file" type="file" style={{ display: 'none' }} onChange={onFileChange} />
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="justify-content-center" style={{ marginTop: '20px' }}>
-                <Col xs={12} md={6}>
-                  <button className={styles.buttonAltaMasiva} type="submit" block="true">
-                    <span className={styles.spanAltaMasiva}>Cargar Alta Masiva</span>
-                    <svg
-                      className={styles.svgAltaMasiva}
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 74 74"
-                      height="34"
-                      width="34"
-                    >
-                      <circle
-                        className={styles.circleAltaMasiva}
-                        strokeWidth="3"
-                        stroke="white"
-                        r="35.5"
-                        cy="37"
-                        cx="37"
-                      ></circle>
-                      <path
-                        className={styles.pathAltaMasiva}
-                        fill="white"
-                        d="M25 35.5C24.1716 35.5 23.5 36.1716 23.5 37C23.5 37.8284 24.1716 38.5 25 38.5V35.5ZM49.0607 38.0607C49.6464 37.4749 49.6464 36.5251 49.0607 35.9393L39.5147 26.3934C38.9289 25.8076 37.9792 25.8076 37.3934 26.3934C36.8076 26.9792 36.8076 27.9289 37.3934 28.5147L45.8787 37L37.3934 45.4853C36.8076 46.0711 36.8076 47.0208 37.3934 47.6066C37.9792 48.1924 38.9289 48.1924 39.5147 47.6066L49.0607 38.0607ZM25 38.5L48 38.5V35.5L25 35.5V38.5Z"
-                      ></path>
-                    </svg>
-                  </button>
-                </Col>
-              </Row>
-            </Form>
-          </Botonera>
-        </>
-      )}
-
       {tamboSel ? (
-        <Mensaje>
-          {(errores.length !== 0 || actualizados.length !== 0) && (
-            <div className={styles.alertasWrapper}>
-              {errores.length !== 0 && (
-                <div className={`${styles.alertaBox} ${styles.errorBox}`}>
-                  <div className={styles.alertaHeader}>❌ Errores encontrados</div>
-                  <div className={styles.alertaContenido}>
-                    {errores.map((a) => (
-                      <Detalle key={uuidv4()} info={a} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {actualizados.length !== 0 && (
-                <div className={`${styles.alertaBox} ${styles.successBox}`}>
-                  <div className={styles.alertaHeader}>✅ Actualizaciones realizadas</div>
-                  <div className={styles.alertaContenido}>
-                    {actualizados.map((a) => (
-                      <Detalle key={uuidv4()} info={a} />
-                    ))}
-                  </div>
-                </div>
-              )}
+        <div className={styles.mainContainer}>
+          {/* Panel Izquierdo: Acciones */}
+          <div className={styles.leftPanel}>
+            <div className={styles.actionCard}>
+              <h1 className={styles.pageTitle}>Alta Masiva</h1>
+              <p className={styles.pageSubtitle}>Importe animales desde una planilla Excel.</p>
+              
+              <div className={styles.actionCardTitle}>Plantillas</div>
+              <div className={styles.downloadCardsContainer}>
+                <a href="/docs/planilla-modelo-altaMasiva.xlsx" download className={styles.downloadCard}>
+                  <div className={styles.downloadIcon}>📄</div>
+                  <div className={styles.downloadText}>Modelo</div>
+                  <div className={styles.downloadSubtext}>Descargar ejemplo</div>
+                </a>
+                <a href="/docs/planilla-vacia-altaMasiva.xlsx" download className={styles.downloadCard}>
+                  <div className={styles.downloadIcon}>📄</div>
+                  <div className={styles.downloadText}>Vacía</div>
+                  <div className={styles.downloadSubtext}>Descargar plantilla</div>
+                </a>
+              </div>
             </div>
-          )}
-        </Mensaje>
+
+            <div className={styles.actionCard}>
+              <div className={styles.actionCardTitle}>Cargar Archivo</div>
+              <Form onSubmit={handleSubmit}>
+                <div 
+                  className={styles.dropzone}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onClick={() => !file && document.getElementById('file').click()}
+                >
+                  {!file ? (
+                    <>
+                      <div className={styles.dropzoneIcon}>☁️</div>
+                      <p className={styles.dropzoneText}>Arrastre aquí su archivo Excel</p>
+                      <p className={styles.dropzoneSubtext}>o haga click para seleccionarlo</p>
+                    </>
+                  ) : (
+                    <div className={styles.fileSelectedContainer}>
+                      <div className={styles.fileName}>
+                        <span>✔️</span> {file.name}
+                      </div>
+                      <button type="button" className={styles.removeFileBtn} onClick={(e) => { e.stopPropagation(); clearFile(); }}>
+                        Eliminar archivo
+                      </button>
+                    </div>
+                  )}
+                  <input id="file" type="file" style={{ display: 'none' }} onChange={onFileChange} accept=".xlsx, .xls" />
+                </div>
+
+                <button 
+                  className={styles.primaryButton} 
+                  type="submit" 
+                  disabled={!file || procesando}
+                  style={{ marginTop: '15px' }}
+                >
+                  🚀 Cargar Alta Masiva
+                </button>
+              </Form>
+            </div>
+
+            {/* Overlay de procesamiento */}
+            {procesando && (
+              <div className={styles.loadingOverlay}>
+                <div className={styles.spinnerContainer}>
+                  <Spinner animation="border" variant="primary" />
+                  <div className={styles.loadingTitle}>Procesando archivo...</div>
+                  <div className={styles.loadingSubtitle}>No cierre esta ventana.</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Panel Derecho: Resultados */}
+          <div className={styles.rightPanel}>
+             <h2 className={styles.resultsTitle}>Resultado de la carga</h2>
+             <div className={styles.resultsHeader}></div>
+             
+             {errores.length === 0 && actualizados.length === 0 && !procesando ? (
+               <div className={styles.emptyState}>
+                 <div className={styles.emptyStateIcon}>📄</div>
+                 <div className={styles.emptyStateText}>Todavía no se realizaron cargas. Los resultados aparecerán aquí.</div>
+               </div>
+             ) : (
+               <>
+                 <div className={styles.summaryCards}>
+                    <div className={`${styles.summaryCard} ${styles.error}`}>
+                      <div className={styles.summaryLabel}>Errores</div>
+                      <div className={styles.summaryValue}>{errores.length}</div>
+                    </div>
+                    <div className={`${styles.summaryCard} ${styles.success}`}>
+                      <div className={styles.summaryLabel}>Correctos</div>
+                      <div className={styles.summaryValue}>{actualizados.length}</div>
+                    </div>
+                    <div className={styles.summaryCard}>
+                      <div className={styles.summaryLabel}>Total</div>
+                      <div className={styles.summaryValue}>{errores.length + actualizados.length}</div>
+                    </div>
+                 </div>
+
+                 <div className={styles.resultsListsContainer}>
+                    {errores.length > 0 && (
+                      <div className={styles.resultListPanel}>
+                        <div className={`${styles.resultListHeader} ${styles.error}`}>Errores ({errores.length})</div>
+                        <div className={styles.resultListContent}>
+                           {errores.map((e) => (
+                             <div key={uuidv4()} className={`${styles.resultItem} ${styles.error}`}>
+                               <Detalle info={e} />
+                             </div>
+                           ))}
+                        </div>
+                      </div>
+                    )}
+                    {actualizados.length > 0 && (
+                      <div className={styles.resultListPanel}>
+                        <div className={`${styles.resultListHeader} ${styles.success}`}>Actualizaciones ({actualizados.length})</div>
+                        <div className={styles.resultListContent}>
+                           {actualizados.map((a) => (
+                             <div key={uuidv4()} className={`${styles.resultItem} ${styles.success}`}>
+                               <Detalle info={a} />
+                             </div>
+                           ))}
+                        </div>
+                      </div>
+                    )}
+                 </div>
+               </>
+             )}
+          </div>
+        </div>
       ) : (
         <SelectTambo />
       )}

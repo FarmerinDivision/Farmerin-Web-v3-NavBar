@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { FirebaseContext } from '../firebase2';
-import { Botonera, Contenedor } from '../components/ui/Elementos';
 import Layout from '../components/layout/layout';
-import StickyTable from "react-sticky-table-thead"
 import SelectTambo from '../components/layout/selectTambo';
-import { Button, Form, Row, Col, Table, Modal } from 'react-bootstrap';
-import { RiAddBoxLine, RiEdit2Line, RiDeleteBin2Line } from 'react-icons/ri';
+import { Button, Form, Modal } from 'react-bootstrap';
+import { RiEdit2Line, RiDeleteBin2Line, RiAddLine } from 'react-icons/ri';
+import { FaTools, FaPills, FaStethoscope, FaBan } from 'react-icons/fa';
 import ListadoModal from './listados/[id]';
 import styles from '../styles/Listados.module.scss';
 
@@ -49,9 +48,9 @@ const Listados = () => {
     }
   }
 
-  const handleChange = e => {
-    guardarTipo(e.target.value);
-  }
+  const handleChipClick = (nuevoTipo) => {
+    guardarTipo(nuevoTipo);
+  };
 
   const abrirModal = (id) => {
     setIdListadoSel(id);
@@ -74,90 +73,120 @@ const Listados = () => {
     setIdEliminar(null);
   };
 
+  const getIconForType = (tipoStr) => {
+    const t = tipoStr.toLowerCase();
+    if (t.includes('servicio')) return <FaTools color="#4db150" />;
+    if (t.includes('tratamiento')) return <FaPills color="#1f8ef1" />;
+    if (t.includes('enfermedad')) return <FaStethoscope color="#ff9800" />;
+    if (t.includes('baja')) return <FaBan color="#ef4444" />;
+    return <FaTools color="#94a3b8" />; // Default
+  };
+
   return (
-    <Layout titulo="Listados">
-      <>
-        <Botonera>
-          <h5>Tipos</h5>
-          <Row>
-            <Col lg={true}>
-              <Form.Control
-                as="select"
-                id="tipo"
-                name="tipo"
-                value={tipo}
-                placeholder="Seleccione tipo"
-                onChange={handleChange}
-                required
-              >
-                <option value="todos">Todos...</option>
-                <option value="servicio">Servicio</option>
-                <option value="tratamiento">Tratamiento</option>
-                <option value="enfermedad">Enfermedad</option>
-                <option value="baja">Motivo de Baja</option>
-              </Form.Control>
-            </Col>
+    <Layout titulo="Administrador de Listados">
+      <div className={styles.pageContainer}>
+        <div className={styles.contentWrapper}>
+          
+          <header className={styles.header}>
+            <h1>Administrador de Listados</h1>
+            <p>
+              Desde aquí podés crear y administrar todos los listados personalizados utilizados en tu tambo.
+            </p>
+          </header>
 
-            <Col md="auto">
-              <Button
-                className={styles.btnNuevaOpcion}
-                onClick={() => abrirModal("0")}
-              >
-                <RiAddBoxLine size={22} />
-                Nueva Opción
-              </Button>
-            </Col>
-          </Row>
-        </Botonera>
+          <div className={styles.topBar}>
+            <div className={styles.filtersWrapper}>
+              <span className={styles.filtersLabel}>Filtrar por tipo</span>
+              <div className={styles.chipsContainer}>
+                <button 
+                  className={`${styles.chip} ${tipo === 'todos' ? styles.active : ''}`}
+                  onClick={() => handleChipClick('todos')}
+                >
+                  Todos
+                </button>
+                <button 
+                  className={`${styles.chip} ${tipo === 'servicio' ? styles.active : ''}`}
+                  onClick={() => handleChipClick('servicio')}
+                >
+                  Servicio
+                </button>
+                <button 
+                  className={`${styles.chip} ${tipo === 'tratamiento' ? styles.active : ''}`}
+                  onClick={() => handleChipClick('tratamiento')}
+                >
+                  Tratamiento
+                </button>
+                <button 
+                  className={`${styles.chip} ${tipo === 'enfermedad' ? styles.active : ''}`}
+                  onClick={() => handleChipClick('enfermedad')}
+                >
+                  Enfermedad
+                </button>
+                <button 
+                  className={`${styles.chip} ${tipo === 'baja' ? styles.active : ''}`}
+                  onClick={() => handleChipClick('baja')}
+                >
+                  Motivo de Baja
+                </button>
+              </div>
+            </div>
 
-        <Contenedor>
-          {tamboSel ?
-            <StickyTable height={670}>
-              <Table responsive>
-                <thead>
-                  <tr>
-                    <th>Tipo</th>
-                    <th>Descripción</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listados.map(l => (
-                    <tr key={l.id}>
-                      <td>{l.tipo}</td>
-                      <td>{l.descripcion}</td>
-                      <td>
-                        <div className={styles.tooltipWrapper}>
-                          <Button
-                            className={styles.btnIconoEditar}
-                            onClick={() => abrirModal(l.id)}
-                          >
-                            <RiEdit2Line size={20} />
-                          </Button>
-                          <span className={styles.tooltipText}>Editar listado</span>
-                        </div>
+            <button
+              className={styles.btnNuevo}
+              onClick={() => abrirModal("0")}
+            >
+              <RiAddLine size={20} />
+              Nuevo Listado
+            </button>
+          </div>
 
-                        <div className={styles.tooltipWrapper}>
-                          <Button
-                            className={styles.btnIconoEliminar}
-                            onClick={() => handleShowElim(l.id)}
-                          >
-                            <RiDeleteBin2Line size={20} />
-                          </Button>
-                          <span className={styles.tooltipText}>Eliminar listado</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </StickyTable>
-            :
-            <SelectTambo />
-          }
-        </Contenedor>
+          {tamboSel ? (
+            listados.length > 0 ? (
+              <div className={styles.gridContainer}>
+                {listados.map(l => (
+                  <div className={styles.listCard} key={l.id}>
+                    <div className={styles.cardIcon}>
+                      {getIconForType(l.tipo)}
+                    </div>
+                    <div className={styles.cardContent}>
+                      <div className={styles.cardType}>{l.tipo}</div>
+                      <h3 className={styles.cardDesc} title={l.descripcion}>
+                        {l.descripcion}
+                      </h3>
+                    </div>
+                    <div className={styles.cardActions}>
+                      <button 
+                        className={styles.actionBtn} 
+                        onClick={() => abrirModal(l.id)}
+                        title="Editar"
+                      >
+                        <RiEdit2Line size={20} />
+                      </button>
+                      <button 
+                        className={`${styles.actionBtn} ${styles.deleteBtn}`} 
+                        onClick={() => handleShowElim(l.id)}
+                        title="Eliminar"
+                      >
+                        <RiDeleteBin2Line size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <p>No se encontraron listados para este filtro.</p>
+              </div>
+            )
+          ) : (
+            <div className="container mt-4">
+              <SelectTambo />
+            </div>
+          )}
 
-        {/* Modal para alta/edición */}
+        </div>
+
+        {/* Modal para alta/edición (Mantiene componente original) */}
         <ListadoModal
           show={showModal}
           onHide={() => setShowModal(false)}
@@ -165,23 +194,23 @@ const Listados = () => {
         />
 
         {/* Modal confirmación eliminar */}
-        <Modal show={showEliminar} onHide={() => setShowEliminar(false)} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Confirmar eliminación</Modal.Title>
+        <Modal show={showEliminar} onHide={() => setShowEliminar(false)} centered dialogClassName={styles.customModal}>
+          <Modal.Header closeButton className={styles.headerEditar}>
+            <Modal.Title style={{ fontWeight: 600, fontSize: '1.25rem' }}>Confirmar eliminación</Modal.Title>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body style={{ padding: '20px 24px', fontSize: '16px', color: '#475569' }}>
             ¿Seguro que deseas eliminar este listado? Esta acción no se puede deshacer.
           </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowEliminar(false)}>
+          <Modal.Footer style={{ borderTop: 'none', padding: '16px 24px' }}>
+            <Button variant="light" onClick={() => setShowEliminar(false)} style={{ fontWeight: 500 }}>
               Cancelar
             </Button>
-            <Button variant="danger" onClick={eliminarListado}>
+            <Button variant="danger" onClick={eliminarListado} style={{ fontWeight: 600, padding: '8px 16px', borderRadius: '8px' }}>
               Eliminar
             </Button>
           </Modal.Footer>
         </Modal>
-      </>
+      </div>
     </Layout>
   )
 }

@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { FirebaseContext } from '../firebase2';
-import { Botonera, Mensaje, ContenedorSpinner, Contenedor } from '../components/ui/Elementos';
+import { Mensaje } from '../components/ui/Elementos';
 import Layout from '../components/layout/layout';
 import DetalleControl from '../components/layout/detalleControl';
 import SelectTambo from '../components/layout/selectTambo';
-import StickyTable from "react-sticky-table-thead";
 import differenceInDays from 'date-fns/differenceInDays';
-import { Alert, Table, Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Alert, Modal, Button } from 'react-bootstrap';
 import { FaSort } from 'react-icons/fa';
-import { RiSendPlaneLine } from 'react-icons/ri';
-import { useDispatch } from 'react-redux'; // Import useDispatch
+import { RiFileExcel2Fill, RiFilter3Line, RiInformationLine } from 'react-icons/ri';
+import { normalizarParametrosControl } from '../utils/explicarDecisionAlimentacion';
+import { explicarDecisionAlimentacion } from '../utils/explicarDecisionAlimentacion';
+import { GiCow } from 'react-icons/gi';
+import { useDispatch } from 'react-redux';
 import { addNotification } from '../redux/notificacionSlice';
 import styles from '../styles/Control.module.scss'
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import { RiFileExcel2Fill } from "react-icons/ri";
 
 
 // Control
@@ -38,6 +39,7 @@ const Control = () => {
     const [orderDP, guardarOrderDP] = useState('asc');
     const [orderGrupo, setOrderGrupo] = useState('asc');
     const [orderRac, guardarOrderRac] = useState('asc');
+    const [orderCriterio, setOrderCriterio] = useState('asc');
     const [showModal, setShowModal] = useState(false);
     const [modalMessages, setModalMessages] = useState([]);
     const [promRacMod, guardarPromRacMod] = useState(0);
@@ -54,6 +56,7 @@ const Control = () => {
     const [showRodeoModal, setShowRodeoModal] = useState(false);
     const [orderRacManual, setOrderRacManual] = useState('asc');
     const [isMobile, setIsMobile] = useState(false);
+    const [parametrosFlat, setParametrosFlat] = useState([]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -67,21 +70,6 @@ const Control = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-
-
-    const thStyle = {
-        padding: "10px",
-        textAlign: "left",
-        fontWeight: "600",
-        background: "#f1f1f1"
-    };
-
-    const tdStyle = {
-        padding: "8px 10px"
-    };
-
-
-
     const { firebase, tamboSel } = useContext(FirebaseContext);
     const dispatch = useDispatch(); // Ensure dispatch is defined
     let prom = 0;
@@ -92,6 +80,30 @@ const Control = () => {
 
     useEffect(() => {
         if (tamboSel) {
+            const obtenerParametrosDisplay = async () => {
+                try {
+                    let snap;
+                    try {
+                        snap = await firebase.db
+                            .collection('parametro')
+                            .where('idtambo', '==', tamboSel.id)
+                            .orderBy('grupo')
+                            .get();
+                    } catch (errOrder) {
+                        snap = await firebase.db
+                            .collection('parametro')
+                            .where('idtambo', '==', tamboSel.id)
+                            .get();
+                    }
+                    const docsParametros = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+                    setParametrosFlat(normalizarParametrosControl(docsParametros));
+                } catch (error) {
+                    console.log(error);
+                    setParametrosFlat([]);
+                }
+            };
+            obtenerParametrosDisplay();
+
             const obtenerAnim = async () => {
                 try {
                     const snapshot = await firebase.db
@@ -480,6 +492,51 @@ const Control = () => {
         guardarAnimales(ordenados);
     };
 
+    const handleClickCriterio = e => {
+        e.preventDefault();
+        if (isMobile) return;
+
+        // Obtiene el criterio real de cada animal usando la misma lógica del componente
+        // 'asc' => primero "Días de Lactancia", luego "Producción (Último Control)"
+        // 'desc' => primero "Producción (Último Control)", luego "Días de Lactancia"
+        const getCriterio = (a) => {
+            const explicacion = explicarDecisionAlimentacion(a, parametrosFlat);
+            return explicacion.criterio || '—';
+        };
+
+        const getValorNum = (a) => {
+            const criterio = getCriterio(a);
+            if (criterio === 'Días de Lactancia') return parseInt(a.diasLact) || 0;
+            if (criterio === 'Producción (Último Control)') return parseFloat(a.uc) || 0;
+            return 0;
+        };
+
+        const ordenados = [...animales].sort((a, b) => {
+            const cA = getCriterio(a);
+            const cB = getCriterio(b);
+
+            // Prioridad de grupo: 0 = Días de Lactancia, 1 = Producción, 2 = Otros
+            const prioridadCriterio = (c) => {
+                if (c === 'Días de Lactancia') return 0;
+                if (c === 'Producción (Último Control)') return 1;
+                return 2;
+            };
+
+            const pA = prioridadCriterio(cA);
+            const pB = prioridadCriterio(cB);
+
+            if (pA !== pB) {
+                return orderCriterio === 'asc' ? pA - pB : pB - pA;
+            }
+
+            // Dentro del mismo grupo, ordenar por valor numérico descendente
+            return getValorNum(b) - getValorNum(a);
+        });
+
+        setOrderCriterio(orderCriterio === 'asc' ? 'desc' : 'asc');
+        guardarAnimales(ordenados);
+    };
+
 
     // CALCULA RACION MODIFICADA CON DECIMALES
     /*  const calcularRacionModificada = (animalData) => {
@@ -551,7 +608,7 @@ const Control = () => {
             ["CONTROL DE ALIMENTACIÓN"],
             [`Total animales: ${animales.length}`],
             [`Promedio actual de ración: ${promRacMod} Kgs.`],
-            [`Promedio sugerido: ${promSug} Kgs.`],
+            [`Promedio ración objetivo: ${promSug} Kgs.`],
             [`Promedio días lactancia: ${promLac} días.`],
             [], // línea vacía de separación antes de la tabla
         ];
@@ -623,7 +680,14 @@ const Control = () => {
 
     const datosPorGrupo = agruparPorGrupo();
 
-
+    const totalAutomaticos = animales.filter(a => !a.racionManual).length;
+    const totalManuales = animales.filter(a => a.racionManual).length;
+    const diffPromedio = animales.length
+        ? (animales.reduce((s, a) => s + Math.abs(parseInt(a.racion, 10) - parseInt(a.sugerido, 10)), 0) / animales.length).toFixed(2)
+        : '0.00';
+    const promUC = animales.length
+        ? (animales.reduce((s, a) => s + (parseFloat(a.uc) || 0), 0) / animales.length).toFixed(2)
+        : '0.00';
 
     return (
         <Layout titulo="Nutricion">
@@ -644,66 +708,80 @@ const Control = () => {
                         </div>
                     </div>
                 ) : (
-                    <>
-                        <Botonera>
-                            <h6 className={styles.resumenNutricion}>
+                    <div className={styles.pageContent}>
+                        {/* Header del módulo */}
+                        <div className={styles.moduleHeader}>
+                            <div className={styles.moduleHeaderMain}>
+                                <h1 className={styles.moduleTitle}>Control de Alimentación</h1>
+                                <p className={styles.moduleSubtitle}>
+                                    Estado nutricional del rodeo según los parámetros configurados.
+                                </p>
+                            </div>
+                            <div className={styles.moduleHeaderActions}>
+                                <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowConfirmModal(true)}>
+                                    <RiFilter3Line size={16} /> Aplicar ración objetivo
+                                </button>
+                                <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowInfoModal(true)}>
+                                    <RiInformationLine size={16} /> Info
+                                </button>
+                                <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowRodeoModal(true)}>
+                                    <GiCow size={16} /> Rodeos ({Object.keys(rodeos).length})
+                                </button>
+                                <button type="button" className={styles.btnHeaderPrimary} onClick={descargarExcel}>
+                                    <RiFileExcel2Fill size={16} /> Exportar
+                                </button>
+                            </div>
+                        </div>
 
-                                <div className={styles.headerTitle}>
-                                    {/* TU RESUMEN ORIGINAL */}
-                                    <strong className={styles.nombreControl}>Control de alimentación:</strong>{" "}
-                                    <strong>{animales.length}</strong> animales -{" "}
-                                    <strong className={styles.nombreControl}>Promedio actual:</strong>{" "}
-                                    <strong>{promRacMod}</strong> Kgs.-{" "}
-                                    <strong className={styles.nombreControl}>Promedio Sugerido:</strong>{" "}
-                                    <strong>{promSug}</strong> Kgs.-{" "}
-                                    <strong className={styles.nombreControl}>Promedio Días Lact.:</strong>{" "}
-                                    <strong>{promLac}</strong> Días.
+                        {tamboSel && animales.length > 0 && (
+                            <>
+                                <div className={styles.dashboardGrid}>
+                                    <div className={styles.statCard}>
+                                        <span className={styles.statLabel}>Total animales</span>
+                                        <span className={styles.statValue}>{animales.length}</span>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <span className={styles.statLabel}>Animales Automáticos</span>
+                                        <span className={`${styles.statValue} ${styles.statValueAuto}`}>{totalAutomaticos}</span>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <span className={styles.statLabel}>Animales Manuales</span>
+                                        <span className={`${styles.statValue} ${styles.statValueManual}`}>{totalManuales}</span>
+                                    </div>
+                                    {/*  <div className={styles.statCard}>
+                                        <span className={styles.statLabel}>Diferencia promedio de ración</span>
+                                        <span className={styles.statValue}>{diffPromedio} kg</span>
+                                    </div>*/}
                                 </div>
 
-                                <div className={styles.headerActions}>
-                                    <div className={styles.tooltipInfo}>
-                                        <Button variant="info" size="sm" className={styles.btnInfo} onClick={() => setShowInfoModal(true)}>
-                                            Info
-                                        </Button>
-                                        <span className={styles.tooltipExcelText}>Informacion de botones</span>
-                                    </div>
-
-                                    <div className={styles.tooltipExcel}>
-
-                                        {/* ✅ Botón que muestra cantidad por rodeo */}
-                                        <OverlayTrigger
-                                            placement="bottom"
-                                            overlay={
-                                                <Tooltip style={{ fontSize: 13 }}>
-                                                    {Object.entries(rodeos).map(([rodeo, cant]) => (
-                                                        <div key={rodeo}>
-                                                            <strong>Rodeo {rodeo}:</strong> {cant} animales
-                                                        </div>
-                                                    ))}
-                                                </Tooltip>
-                                            }
-                                        >
-                                            <Button
-                                                variant="secondary"
-                                                size="sm"
-                                                onClick={() => setShowRodeoModal(true)}
-                                                className={styles.btnExcel}
-                                            >
-                                                Rodeos ({Object.keys(rodeos).length})
-                                            </Button>
-
-                                        </OverlayTrigger>
-
-                                        <button type="button" className={styles.btnExcel} onClick={descargarExcel}>
-                                            <RiFileExcel2Fill size={22} /> Exportar Excel
-                                        </button>
-                                        <span className={styles.tooltipExcelText}>Descargar planilla de Excel</span>
+                                <div className={styles.nutricionalBlock}>
+                                    <h2 className={styles.nutricionalTitle}>Resumen Nutricional</h2>
+                                    <div className={styles.nutricionalGrid}>
+                                        <div className={styles.nutricionalItem}>
+                                            <span className={styles.nutricionalLabel}>Ración Actual Promedio</span>
+                                            <span className={styles.nutricionalValue}>{promRacMod} kg</span>
+                                        </div>
+                                        <div className={styles.nutricionalItem}>
+                                            <span className={styles.nutricionalLabel}>Ración Sugerida Promedio</span>
+                                            <span className={styles.nutricionalValue}>{promSug} kg</span>
+                                        </div>
+                                        {/*  <div className={styles.nutricionalItem}>
+                                            <span className={styles.nutricionalLabel}>Diferencia Promedio</span>
+                                            <span className={styles.nutricionalValue}>{diffPromedio} kg</span>
+                                        </div>*/}
+                                        <div className={styles.nutricionalItem}>
+                                            <span className={styles.nutricionalLabel}>Promedio Días Lactancia</span>
+                                            <span className={styles.nutricionalValue}>{promLac} días</span>
+                                        </div>
+                                        <div className={styles.nutricionalItem}>
+                                            <span className={styles.nutricionalLabel}>Producción Promedio (Último Control)</span>
+                                            <span className={styles.nutricionalValue}>{promUC} L</span>
+                                        </div>
                                     </div>
                                 </div>
+                            </>
+                        )}
 
-                            </h6>
-
-                        </Botonera>
                         {showManualAlert && (
                             <Alert variant="warning" onClose={() => setShowManualAlert(false)} dismissible>
                                 <strong>⚠ Atención:</strong> Hay animales con ración configurada manualmente.
@@ -721,193 +799,39 @@ const Control = () => {
                                     </div>
                                 </Mensaje>
                             ) : (
-                                <Contenedor>
-                                    <StickyTable className={styles.stickyTable} height={660}>
-                                        <Table responsive>
-                                            <thead>
-                                                <tr>
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickRP}>
-                                                            <span className={styles.thContent}>
-                                                                RP
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Caravana</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickGrupo}>
-                                                            <span className={styles.thContent}>
-                                                                Grupo
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Grupo asignado</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickGr}>
-                                                            <span className={styles.thContent}>
-                                                                Categ
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Categoría del animal</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickRo}>
-                                                            <span className={styles.thContent}>
-                                                                Rodeo
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Rodeo asignado</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickDl}>
-                                                            <span className={styles.thContent}>
-                                                                Días Lact.
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Días en lactancia</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickLact}>
-                                                            <span className={styles.thContent}>
-                                                                Lact.
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Número de lactancia</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickCA}>
-                                                            <span className={styles.thContent}>
-                                                                Le.CA
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Litros Control Anterior</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickUC}>
-                                                            <span className={styles.thContent}>
-                                                                Le.UC
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Litros Último Control</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper}>
-                                                            <span className={styles.thContent}>F.UC</span>
-                                                            <span className={styles.thTooltipText}>Fecha de Último Control</span>
-                                                        </div>
-                                                    </th>
-
-
-                                                    { /* <th>
-                                                <div className={styles.thTooltipWrapper} onClick={handleClickAn}>
-                                                    <span className={styles.thContent}>
-                                                        Anorm.
-                                                        <FaSort size={15} className={styles.sortIcon} />
-                                                    </span>
-                                                    <span className={styles.thTooltipText}>Anomalías</span>
-                                                </div>
-                                            </th>*/}
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickER}>
-                                                            <span className={styles.thContent}>
-                                                                Est. Rep.
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Estado Reproductivo</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickDP}>
-                                                            <span className={styles.thContent}>
-                                                                Días Preñ.
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Días de preñez</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper}>
-                                                            <span className={styles.thContent}>F.Racion</span>
-                                                            <span className={styles.thTooltipText}>Fecha última modificación de ración</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickRac}>
-                                                            <span className={styles.thContent}>
-                                                                Ración
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Ración actual (Kg)</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.controlTooltip}>
-                                                            <Button
-                                                                className={styles.controlBtn}
-                                                                onClick={() => setShowConfirmModal(true)}
-                                                            >
-                                                                <RiSendPlaneLine />
-                                                            </Button>
-                                                            <span className={styles.controlTooltipText}>Asignar la ración sugerida a todos</span>
-                                                        </div>
-                                                    </th>
-
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper}>
-                                                            <span className={styles.thContent}>R.Sugerida</span>
-                                                            <span className={styles.thTooltipText}>Ración Sugerida</span>
-                                                        </div>
-                                                    </th>
-                                                    <th>
-                                                        <div className={styles.thTooltipWrapper} onClick={handleClickRacManual}>
-                                                            <span className={styles.thContent}>
-                                                                Rac. Manual
-                                                                <FaSort size={15} className={styles.sortIcon} />
-                                                            </span>
-                                                            <span className={styles.thTooltipText}>Estado ración manual</span>
-                                                        </div>
-                                                    </th>
-
-
-                                                </tr>
-                                            </thead>
-
-                                            <tbody>
-                                                {animales.map((a) => (
-                                                    <DetalleControl
-                                                        key={a.id}
-                                                        animal={a}
-                                                        animales={animales}
-                                                        guardarAnimales={guardarAnimales}
-                                                        racionModificada={a.racionModificada}
-                                                        aplicarRacionSugerida={aplicarRacionSugerida}
-                                                    />
-                                                ))}
-                                            </tbody>
-                                        </Table>
-                                    </StickyTable>
-                                </Contenedor>
+                                <div className={styles.tableContainer}>
+                                    <table className={styles.controlTable}>
+                                        <thead>
+                                            <tr>
+                                                <th className={styles.thAnimal} onClick={handleClickRP}>
+                                                    Animal <FaSort size={10} className={styles.sortIcon} />
+                                                </th>
+                                                <th className={styles.thAlimentacion} onClick={handleClickRac}>
+                                                    Racion <FaSort size={10} className={styles.sortIcon} />
+                                                </th>
+                                                <th className={styles.thDecision} onClick={handleClickCriterio} style={{ cursor: 'pointer' }}>
+                                                    Decisión <FaSort size={10} className={styles.sortIcon} />
+                                                </th>
+                                                <th className={styles.thEstado} onClick={handleClickRacManual}>
+                                                    Estado <FaSort size={10} className={styles.sortIcon} />
+                                                </th>
+                                                <th className={styles.thAcciones}>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {animales.map((a) => (
+                                                <DetalleControl
+                                                    key={a.id}
+                                                    animal={a}
+                                                    animales={animales}
+                                                    guardarAnimales={guardarAnimales}
+                                                    racionModificada={a.racionModificada}
+                                                    parametrosFlat={parametrosFlat}
+                                                />
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             )
                         ) : (
                             <SelectTambo />
@@ -1020,7 +944,7 @@ const Control = () => {
                                 <Modal.Title>Confirmar Aplicación</Modal.Title>
                             </Modal.Header>
                             <Modal.Body>
-                                ¿Estás seguro de que deseas aplicar la ración sugerida a todos los animales?
+                                ¿Estás seguro de que deseas aplicar la ración objetivo a todos los animales?
                             </Modal.Body>
                             <Modal.Footer>
                                 <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
@@ -1069,7 +993,7 @@ const Control = () => {
                                 </div>
                                 <h5 className="fw-bold text-success">¡Ración modificada!</h5>
                                 <p className="text-muted mb-0">
-                                    Los cambios fueron guardados correctamente.
+                                    Los cambios se guardaron correctamente. Si no los ve reflejados de inmediato, salga de la sección y vuelva a ingresar para actualizar la información.
                                 </p>
                             </Modal.Body>
                             <Modal.Footer className="justify-content-center">
@@ -1130,10 +1054,10 @@ const Control = () => {
 
                             <Modal.Body>
                                 <ul>
-                                    <li><strong>M (Manual)</strong> = Ración editada manualmente por el usuario dentro de control</li>
-                                    <li><strong>A (Automatica)</strong> = Ración automática basada en los parametros de alimentación</li>
-                                    <li><strong>↗️​</strong> = Aplica ración sugerida a todos, excepto los manuales</li>
-                                    <li>Los animales en modo manual <b>no se modifican</b> con cambios segun parametros de alimentación</li>
+                                    <li><strong>Automático</strong> = Ración calculada según los parámetros de alimentación</li>
+                                    <li><strong>Manual</strong> = Ración editada manualmente por el productor</li>
+                                    <li>Los animales en modo manual <b>no se modifican</b> con cambios según parámetros de alimentación</li>
+                                    <li>La columna <b>Decisión</b> explica por qué cada animal tiene su ración actual</li>
                                     <li>Podés ver cuántos animales hay en cada rodeo con el botón "Rodeos"</li>
                                 </ul>
                             </Modal.Body>
@@ -1208,9 +1132,10 @@ const Control = () => {
                             </Modal.Footer>
                         </Modal>
 
-                    </>
+                    </div>
                 )}
             </>
+
         </Layout>
     );
 

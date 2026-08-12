@@ -67,7 +67,7 @@ const DetalleProduccion = ({ prod }) => {
     if (isNaN(numberValue)) return 0;
 
     return new Intl.NumberFormat(navigator.language || 'es-ES', {
-      minimumFractionDigits: 0,
+      minimumFractionDigits: 1,
       maximumFractionDigits: 1
     }).format(numberValue);
   };

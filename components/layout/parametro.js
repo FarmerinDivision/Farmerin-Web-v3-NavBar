@@ -10,6 +10,7 @@ import {
 } from 'react-icons/ri';
 import ParametroEdit from '../../pages/parametros/[id]';
 import styles from '../../styles/Parametro.module.scss';
+import modalStyles from '../../styles/modalParametro.module.scss';
 
 const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpdate, groupId, categoria, onParametroChange }) => {
   const { id, orden, condicion, min, max, um, racion } = parametro;
@@ -171,10 +172,15 @@ const Parametro = ({ parametro, parametros, guardarParametros, porcentaje, onUpd
       </tr>
 
       {/* Modal de edición */}
-      <Modal show={showModal} onHide={handleClose} size="lg" centered backdrop="static">
-        <Modal.Header closeButton className={styles.ModalHeader}>
-          <Modal.Title className={styles.ModalTitle}>Editar Parámetro</Modal.Title>
-        </Modal.Header>
+      <Modal 
+        show={showModal} 
+        onHide={handleClose} 
+        size="lg" 
+        centered 
+        backdrop="static"
+        dialogClassName={modalStyles.premiumModalParametro}
+        backdropClassName={modalStyles.premiumModalBackdrop}
+      >
         <Modal.Body className={styles.ModalBody}>
           <ParametroEdit
             idParametro={id}

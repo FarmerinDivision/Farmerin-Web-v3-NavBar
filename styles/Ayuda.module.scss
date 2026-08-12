@@ -1,152 +1,256 @@
-.contactPage {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+// Contenedor principal de la página
+.pageContainer {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding: 40px 20px;
+  color: #334155;
+}
+
+// Contenedor centrado para máximo ancho
+.contentWrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// Encabezado Global
+.header {
+  text-align: center;
+  margin-bottom: 48px;
+  
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  
+  p {
+    font-size: 18px;
+    color: #64748b;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+}
+
+// Layout Principal (2 Columnas)
+.gridContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 60px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Secciones (Contacto y Redes)
+.section {
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+// Grilla interna para las cards (Redes sociales en grilla)
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.cardsStack {
   display: flex;
-  justify-content: space-around;
-  padding: 20px;
-  background-color: #f0f0f0;
+  flex-direction: column;
+  gap: 16px;
 }
 
-
-.contactSection,
-.socialSection {
-  width: 45%;
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px #020014;
-}
-
-.contactSection,
-.mapSection {
-  width: 95%;
-  background-color: #ffffff;
-  padding: 10px;
-  margin: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px #020014;
-}
-
-// TITULOS CONTACTO - REDES 
-.tituloAyuda {
-  font-family: 'Roboto', sans-serif;
-  /* Fuente moderna */
-  font-size: 2.5rem;
-  /* Tamaño del texto */
-  font-weight: 700;
-  /* Grosor del texto */
-  line-height: 1.2;
-  /* Espaciado entre líneas */
-  letter-spacing: -0.5px;
-  /* Espaciado entre letras */
-  margin: 0.5em 0;
-  /* Márgenes superior e inferior */
-  padding: 0.2em 0.5em;
-  /* Relleno adicional para el fondo */
-  color: #1b89a5;
-  /* Color del texto: Gris oscuro */
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-  /* Sombra suave */
-  border-bottom: 2px solid #1b89a5;
-  /* Línea inferior */
-}
-
-/* Ajustes responsivos */
-@media (max-width: 768px) {
-  .tituloAyuda {
-    font-size: 2rem;
-    /* Tamaño del texto para dispositivos medianos */
-  }
-}
-
-@media (max-width: 480px) {
-  .tituloAyuda {
-    font-size: 1.5rem;
-    /* Tamaño del texto para dispositivos pequeños */
-  }
-}
-// TITULOS UBICACION 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
-
-.tituloAyudaUbi {
-  font-family: 'Roboto', sans-serif;
-  /* Fuente moderna y legible */
-  font-size: 2.5rem;
-  /* Tamaño del texto ajustable */
-  font-weight: 700;
-  /* Grosor del texto */
-  line-height: 1.2;
-  /* Espaciado entre líneas */
-  letter-spacing: -0.5px;
-  /* Espaciado entre letras */
-  margin: 0.5em 0;
-  /* Márgenes superior e inferior */
-  padding: 0;
-  /* Sin relleno adicional */
-}
-
-/* Colores */
-.tituloAyudaUbi {
-  color: #1b89a5;
-  /* Color del texto: Gris oscuro */
-  padding: 0.2em 0.5em;
-  /* Relleno para el fondo */
-}
-
-/* Sombra de texto */
-.tituloAyudaUbi {
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-  /* Sombra suave */
-}
-
-/* Bordes */
-.tituloAyudaUbi {
-  border-bottom: 2px solid #1b89a5;
-  /* Línea en la parte inferior */
-}
-
-/* Ajustes responsivos */
-@media (max-width: 768px) {
-    .tituloAyudaUbi {
-    font-size: 2rem;
-    /* Tamaño del texto para dispositivos medianos */
-  }
-}
-
-@media (max-width: 480px) {
-  .tituloAyudaUbi {
-    font-size: 1.5rem;
-    /* Tamaño del texto para dispositivos pequeños */
-  }
-}
-
-.contactItem {
-  margin-bottom: 15px;
-}
-
-.contactItem a {
-  text-decoration: none;
+// Diseño de la Card de Contacto
+.contactCard {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   align-items: center;
-  color: #020014;
-  /* Color del texto */
-  font-size: 20px;
-  /* Tamaño del texto */
-  font-weight: 500;
-  /* Peso del texto */
+  gap: 20px;
+  text-decoration: none !important;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.025);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  color: #0f172a !important;
+  width: 100%;
+
+  // Botón invisible para envolver el interior y mantener compatibilidad
+  background-color: transparent;
+  outline: none;
+  text-align: left;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    border-color: #4db150; // Institucional Farmerin
+    
+    .iconWrapper {
+      background-color: #4db150;
+      color: #ffffff;
+
+      img {
+        // Hace que la imagen PNG se vuelva completamente blanca en hover
+        filter: brightness(0) invert(1);
+      }
+    }
+  }
+
+  .iconWrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background-color: #f1f5f9;
+    color: #4db150; // Color inicial
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    
+    // Para el caso del logo en imagen
+    img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      transition: filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  .cardContent {
+    display: flex;
+    flex-direction: column;
+    
+    .cardTitle {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0f172a !important;
+      text-decoration: none !important;
+      margin-bottom: 4px;
+    }
+    
+    .cardDesc {
+      font-size: 14px;
+      color: #64748b !important;
+      text-decoration: none !important;
+      margin: 0;
+    }
+  }
 }
 
-.contactItem a i,
-.contactItem a svg {
-  margin-right: 15px;
-  /* Espacio entre el icono y el texto */
-  font-size: 28px;
-  /* Tamaño del icono */
-  color: #1a8aa4;
-  /* Color del icono */
+
+
+// --- MAPA ---
+
+.mapContainerWrapper {
+  margin-top: 40px;
 }
 
-.contactItem a:hover {
-  color: #1a8aa4;
-  /* Color del texto al pasar el mouse */
-  text-decoration: underline;
-  /* Subraya al pasar el mouse */
+.mapSection {
+  h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 12px;
+  }
+  
+  .mapDesc {
+    font-size: 16px;
+    color: #64748b;
+    margin-bottom: 32px;
+  }
+}
+
+.mapBox {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  
+  iframe {
+    border: none;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// Overlay con información de dirección
+.mapOverlay {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255,255,255,0.5);
+  z-index: 10;
+  max-width: 320px;
+
+  @media (max-width: 768px) {
+    top: auto;
+    bottom: 24px;
+    left: 16px;
+    right: 16px;
+    max-width: none;
+  }
+
+  .overlayTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .overlayText {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  .overlayBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background-color: #003703; // Verde muy oscuro institucional
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+
+    &:hover {
+      background-color: #002202;
+    }
+  }
 }

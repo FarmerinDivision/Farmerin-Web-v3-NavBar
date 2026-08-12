@@ -1,0 +1,478 @@
+/* Layout Principal */
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  /* Fondo gris muy claro, estilo Azure/GitHub */
+  min-height: 80vh;
+}
+
+@media (min-width: 992px) {
+  .mainContainer {
+    flex-direction: row;
+  }
+}
+
+/* Paneles */
+.leftPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  /* Para el overlay */
+}
+
+@media (min-width: 992px) {
+  .leftPanel {
+    flex: 0 0 32%;
+    max-width: 32%;
+  }
+}
+
+.rightPanel {
+  flex: 1;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eaeaea;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 880px;
+  /* Alto fijo solicitado */
+}
+
+@media (min-width: 992px) {
+  .rightPanel {
+    flex: 0 0 calc(68% - 30px);
+    max-width: calc(68% - 30px);
+  }
+}
+
+/* Tipografía de Títulos */
+.pageTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 5px 0;
+}
+
+.pageSubtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 10px 0;
+}
+
+/* Tarjetas de Acción Generales */
+.actionCard {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #eaeaea;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.actionCardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+/* Tarjetas de Descarga */
+.downloadCardsContainer {
+  display: flex;
+  gap: 15px;
+}
+
+.downloadCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 15px 10px;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.downloadCard:hover {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  text-decoration: none;
+  color: #0f172a;
+}
+
+.downloadIcon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.downloadText {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.downloadSubtext {
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+}
+
+/* Input de Fecha (Control Lechero) */
+.dateInputContainer {
+  width: 100%;
+}
+
+.dateInput {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  transition: border-color 0.2s;
+  background-color: #f8f9fa;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: #ffffff;
+}
+
+/* Dropzone (Arrastrar y Soltar) */
+.dropzone {
+  height: 250px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  text-align: center;
+}
+
+.dropzone:hover {
+  border-color: #94a3b8;
+  background-color: #f1f5f9;
+}
+
+.dropzoneIcon {
+  font-size: 48px;
+  color: #94a3b8;
+  margin-bottom: 15px;
+}
+
+.dropzoneText {
+  font-size: 16px;
+  font-weight: 500;
+  color: #334155;
+  margin: 0;
+}
+
+.dropzoneSubtext {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 5px;
+}
+
+.fileSelectedContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+}
+
+.fileName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  background-color: #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.removeFileBtn {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.removeFileBtn:hover {
+  background-color: #dc2626;
+}
+
+/* Botón Principal */
+.primaryButton {
+  width: 100%;
+  padding: 14px 20px;
+  background-color: #0f172a;
+  /* Color principal oscuro estilo Stripe/Github */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background-color 0.2s, transform 0.1s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.primaryButton:hover {
+  background-color: #1e293b;
+}
+
+.primaryButton:active {
+  transform: translateY(1px);
+}
+
+.primaryButton:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Overlay de Carga (Spinner) */
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(2px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.spinnerContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.loadingTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.loadingSubtitle {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Panel Derecho: Resultados */
+.resultsHeader {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.resultsTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Tarjetas de Resumen */
+.summaryCards {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.summaryCard {
+  flex: 1;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.summaryCard.error {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+.summaryCard.success {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.summaryLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.summaryCard.error .summaryLabel {
+  color: #ef4444;
+}
+
+.summaryCard.success .summaryLabel {
+  color: #22c55e;
+}
+
+.summaryValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.summaryCard.error .summaryValue {
+  color: #b91c1c;
+}
+
+.summaryCard.success .summaryValue {
+  color: #15803d;
+}
+
+/* Listas de Errores / Actualizaciones */
+.resultsListsContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+  /* Para que los hijos manejen el scroll */
+}
+
+@media (min-width: 768px) {
+  .resultsListsContainer {
+    flex-direction: row;
+  }
+}
+
+.resultListPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.resultListHeader {
+  padding: 12px 15px;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #ffffff;
+}
+
+.resultListHeader.error {
+  color: #b91c1c;
+}
+
+.resultListHeader.success {
+  color: #15803d;
+}
+
+.resultListContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resultItem {
+  background-color: #ffffff;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #334155;
+  border-left: 4px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.resultItem.error {
+  border-left-color: #ef4444;
+}
+
+.resultItem.success {
+  border-left-color: #22c55e;
+}
+
+/* Estado Vacío */
+.emptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.emptyStateIcon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.emptyStateText {
+  font-size: 15px;
+  font-weight: 500;
+  color: #64748b;
+  max-width: 300px;
+}

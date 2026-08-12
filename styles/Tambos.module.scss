@@ -1,541 +1,311 @@
-/* SE VA A PODER MODIFICAR TODO LO QUE TENGA QUE VER CON EL APARTADO DONDE SELECCIONAS LOS TAMBOS */
+/* =========================================
+   REORGANIZACIÓN UX/UI: LISTADO DE TAMBOS
+   ========================================= */
 
-/* Card donde seleccionas Tambo */
-.card {
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  background-color: #fff;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.cardContent {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  width: 100%;
-  gap: 1rem;
-}
-
-.nombreUbicacion {
+.dashboardContainer {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 0.2rem;
+  gap: 32px;
+  width: 100%;
+  max-width: 1500px; /* Mas ancho para evitar espacios blancos */
+  margin: 0 auto;
+  padding: 32px 24px;
+  background-color: #F5F7FA;
+  min-height: calc(100vh - 64px);
 }
 
-.nombre {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #1f2937; // gris oscuro casi negro (muy legible)
-  letter-spacing: 0.3px;
-  text-transform: capitalize;
-  margin-bottom: 0.2rem;
-  line-height: 1.4;
-}
-
-
-.ubicacion {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #6b7280; // gris elegante
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  letter-spacing: 0.2px;
-}
-
-.ubicacion::before {
-  content: '📍';
-  display: inline-block;
-  margin-right: 0.25rem;
-}
-
-.botonCentro {
-  display: flex;
-  justify-content: center;
-  color: #297fba;
-}
-
-.acciones {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-
-
-.btnIngresar {
-  font-weight: 500;
-  padding: 0.4rem 1rem;
-  border-radius: 8px;
-}
-
-.actions {
-  display: flex;
-  gap: 0.6rem;
-  flex-shrink: 0;
-}
-
-.title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2a2a2a;
-}
-
-.subtitle {
-  font-size: 0.95rem;
-  color: #666;
-}
-
-/// BOTONES INFO, EDITAR, BORRAR Y TOOLTIPS DE LOS MIMOS 
-.acciones {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btnIconoInfo,
-.btnIconoEditar,
-.btnIconoBorrar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4rem;
-  border: none;
-  background-color: transparent;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  font-size: 1.1rem;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.25);
-  }
-}
-
-/* Info: color primario */
-.btnIconoInfo {
-  color: #297fba;
-
-  &:hover {
-    background-color: #17537b;
-  }
-}
-
-/* Editar: color de advertencia suave */
-.btnIconoEditar {
-  color: #4cb151;
-
-  &:hover {
-    background-color: #337a37;
-  }
-}
-
-/* Borrar: color rojo */
-.btnIconoBorrar {
-  color: #b52b39;
-
-  &:hover {
-    background-color: #750e18;
-  }
-}
-
-.tooltipWrapper {
-  position: relative;
-  display: inline-block;
-
-  &:hover .tooltipText {
-    visibility: visible;
-    opacity: 1;
-  }
-}
-
-.tooltipText {
-  visibility: hidden;
-  background-color: #212529;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 4px 8px;
-  position: absolute;
-  z-index: 10;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  white-space: nowrap;
-  font-size: 0.8rem;
-  font-weight: 500;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: #212529 transparent transparent transparent;
-  }
-}
-
-
-
-/* ENCABEZADO TEXTO Y BOTON */
-.encabezado {
-  background-color: #f4f6f8;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
+/* =========================================
+   ENCABEZADO
+========================================= */
+.headerSection {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
+  align-items: flex-start;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #394867; 
+  padding-bottom: 24px;
 
-.titulo h3 {
-  margin: 0;
-  font-weight: 600;
-  font-size: 1.6rem;
-  color: #2b2b2b;
-}
-
-.titulo p {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #666;
-}
-
-/// BOTON CREAR CON USUARIO AUTENTICADO
-.btnNuevoTambo {
-  background-color: #4cb151; // azul profesional 
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.45rem 1.1rem;
-  border: none;
-  border-radius: 8px;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 6px #358e3a;
-
-  &:hover {
-    background-color: #358e3a;
-    box-shadow: 0 3px 8px #2a812f;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: scale(0.98);
-    box-shadow: 0 2px 4px #1f8c25;
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 0.2rem #337a37;
-  }
-}
-
-.nombreTambo {
-  width: 100%;
-  height: 4px;
-}
-
-
-//// BOTON INGRESAR AL TAMBO 
-.botonIngresar {
-  background-color: #297fba; // azul profesional 
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.45rem 1.1rem;
-  border: none;
-  border-radius: 8px;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
-
-  &:hover {
-    background-color: #0b5ed7;
-    box-shadow: 0 3px 8px rgba(13, 110, 253, 0.4);
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: scale(0.98);
-    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.4);
-  }
-}
-
-
-/// BOTON DE CREAR PARA USUARIO SIN TAMBO Y TITULO 
-.tituloEmpty {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.75rem;
-  background: linear-gradient(135deg, #e9f5ff, #d6eaff); // Fondo celeste claro degradado
-  padding: 1.5rem 2rem;
-  border-radius: 1rem;
-  color: #004a9f; // Azul fuerte profesional
-  font-size: 1.8rem;
-  font-weight: 700;
-  box-shadow: 0 6px 18px rgba(0, 123, 255, 0.15);
-  text-align: center;
-  animation: fadeInUp 0.6s ease-out;
-
-  span.emoji {
-    font-size: 2.4rem;
-  }
-}
-
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-
-.btnCrear {
-  background-color: #4cb151; // Azul profesional
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.1rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-  transition: all 0.3s ease;
-
-  svg {
-    margin-right: 0.5rem;
-  }
-
-  &:hover {
-    background-color: #0056b3;
-    box-shadow: 0 6px 16px rgba(0, 86, 179, 0.4);
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: scale(0.98);
-    background-color: #004a9f;
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
-  }
-}
-
-
-/* IMAGENES Y TEXTOS */
-.divider {
-  width: 100vw;
-  margin: 3rem 0;
-  position: relative;
-  text-align: center;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 40%;
-    height: 1px;
-    background-color: #d1d5db; // gris suave para la línea
-  }
-
-  &::before {
-    left: 0;
-  }
-
-  &::after {
-    right: 0;
-  }
-
-  span {
-    display: inline-block;
-    background: inherit;
-    color: #6b7280; // gris moderno
-    font-weight: 500;
-    padding: 0 1rem;
-    font-size: 0.95rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease-in-out;
-
-    &:hover {
-      color: #0d6efd; // azul profesional Bootstrap
-      letter-spacing: 2px;
+  .titleBlock {
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #1F2937;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.02em;
+    }
+    p {
+      color: #6B7280;
+      font-size: 1rem;
+      margin: 0;
     }
   }
 }
 
-
-.benefitsGrid {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 4rem 1rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  grid-auto-flow: dense;
-  gap: 2rem;
-}
-
-.benefitImage {
-  width: 100%;
-  height: auto;
-  border-radius: 6px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.benefitText {
-  background-color: #fff;
-  padding: 2rem 1.5rem;
-  text-align: center;
-  border-radius: 6px;
-  position: relative;
-
-  h5 {
-    color: #297fba;
-    font-weight: 700;
-    margin-bottom: 1rem;
-  }
-
-  p {
-    color: #333;
-    font-size: 0.95rem;
-    line-height: 1.6;
-  }
-}
-
-.benefitText {
-  padding: 1.5rem;
-  border-radius: 12px;
-  color: white;
+.btnPrimary {
+  background-color: #243447;
+  color: #FFFFFF;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-size: 0.95rem;
+
+  &:hover {
+    background-color: #1D2C3A;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
 }
 
-.reportes {
-  background-color: #28a745; // Verde
+/* =========================================
+   GRID DE TAMBOS
+========================================= */
+.tamboGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); /* Columnas levemente mas anchas */
+  gap: 32px; 
+}
 
-  h5 {
-    color: #f4f6f8;
+.tamboCard {
+  background: #FFFFFF;
+  border: 1px solid #394867; 
+  border-radius: 16px; 
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); 
+  transition: all 0.25s ease; 
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
 
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); 
+    transform: translateY(-4px); 
+    border-color: #2E4057; 
+  }
+
+  .cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(57, 72, 103, 0.1); 
+
+    .titleWrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 700; 
+        color: #1F2937;
+      }
+      .location {
+        color: #6B7280;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+    }
+
+    .cardActions {
+      display: flex;
+      gap: 8px; 
+      opacity: 0.5; 
+      transition: opacity 0.25s ease;
+
+      .iconBtn {
+        background: transparent;
+        border: none;
+        color: #4C566A; 
+        padding: 6px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.25s ease;
+        font-size: 1.1rem; 
+
+        &:hover {
+          background: rgba(57, 72, 103, 0.08);
+          color: #243447;
+          transform: scale(1.05); 
+        }
+
+        &.btnDelete:hover {
+          background: rgba(239, 68, 68, 0.1);
+          color: #EF4444;
+        }
+      }
+    }
+  }
+
+  /* Mostrar iconos al cien por ciento en hover */
+  &:hover .cardHeader .cardActions {
+    opacity: 1;
+  }
+
+  .btnIngresar {
+    margin-top: auto;
+    width: 100%;
+    /* Boton con color Azul Acero oscuro para destacar */
+    background: #445D7A; 
+    color: #FFFFFF;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 12px; 
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.25s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(68, 93, 122, 0.3); /* Sombra acorde al color */
+
+    &:hover {
+      background: #2E4057; /* Hover a Azul Petroleo */
+      color: #FFFFFF;
+      box-shadow: 0 6px 16px rgba(46, 64, 87, 0.4);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+/* =========================================
+   MÓDULOS INFERIORES
+========================================= */
+.modulesSection {
+  margin-top: 48px;
+  border-top: 1px solid #394867;
+  padding-top: 32px;
+
+  h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin-bottom: 24px;
+  }
+
+  .modulesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px; 
+  }
+
+  .moduleCard {
+    background: #FFFFFF;
+    border: 1px solid #394867;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s ease;
+
+    &:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      transform: translateY(-4px);
+      border-color: #2E4057;
+    }
+
+    .iconWrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: rgba(57, 72, 103, 0.08); 
+      color: #2E4057; 
+    }
+
+    h5 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1F2937;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #6B7280;
+      line-height: 1.5;
+    }
+  }
+}
+
+/* =========================================
+   EMPTY STATE & LOADING
+========================================= */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  background: #FFFFFF;
+  border: 1px dashed #394867;
+  border-radius: 16px;
+  margin-top: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+
+  .emoji {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin-bottom: 8px;
   }
 
   p {
-    color: #f4f6f8;
-
-  }
-
-}
-
-.control {
-  background-color: #1e7e34; // Verde más oscuro, si preferís otro tono
-
-  h5 {
-    color: #f4f6f8;
-
-  }
-
-  p {
-    color: #f4f6f8;
-
+    color: #6B7280;
+    margin-bottom: 24px;
+    max-width: 400px;
+    font-size: 1rem;
   }
 }
 
-.nutricion {
-  background-color: #297fba; // Azul
-
-  h5 {
-    color: #f4f6f8;
-
-
-  }
-
-  p {
-    color: #f4f6f8;
-
-  }
-}
-
-//// TEXTO DEL LOADER 
 .textoLoader {
   margin-top: 1rem;
   font-size: 1.1rem;
-  font-weight: 500;
-  color: #444;
+  font-weight: 600;
+  color: #1F2937;
   text-align: center;
   letter-spacing: 0.3px;
   animation: fadeIn 0.8s ease-in-out both;
-
-  &::before {
-    content: '🔍 ';
-    font-size: 1.2rem;
-    vertical-align: middle;
-  }
 }
 
-/* Animación suave de entrada */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/// MODAL DE CARGA A LA HORA DE INGRESAR TAMBO 
-// Estilo para el modal de carga (spinner bloqueante)
-.modalCarga {
+.loadingWrapper {
   text-align: center;
   padding: 2rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
-  .spinner-border {
-    width: 3rem;
-    height: 3rem;
-    color: #007bff;
-  }
-
-  p {
-    margin-top: 1.5rem;
-    font-size: 1.1rem;
-    color: #333;
-    font-weight: 500;
-  }
 }
 
-// Estilo adicional para fondo del modal (si querés modificarlo más)
-.modal-backdrop.show {
-  background-color: rgba(0, 0, 0, 0.4);
+.nombreTambo {
+  margin-top: 1.5rem;
+  font-size: 1.15rem;
+  color: #1F2937;
+  font-weight: 600;
 }

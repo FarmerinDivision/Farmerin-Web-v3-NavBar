@@ -7,6 +7,7 @@ import validarCrearParam from '../../validacion/validarCrearParam';
 import { Form, Button, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import { Contenedor, Mensaje, ContenedorSpinner } from '../../components/ui/Elementos';
 import styles from '../../styles/Parametro.module.scss'
+import modalStyles from '../../styles/modalParametro.module.scss'
 
 
 const STATE_INICIAL = {
@@ -243,118 +244,130 @@ const ParametroEdit = ({
           </div>
         </div>
       ) : (
-        <>
-          <Mensaje>
-            <Alert variant="success" show={exito}>{descExito}</Alert>
-            <Alert variant="danger" show={error}>
-              <Alert.Heading>Oops! Se ha producido un error!</Alert.Heading>
-              <p>{descError}</p>
-            </Alert>
-          </Mensaje>
+        <div className={isModal ? 'premium-modal-parametro' : ''}>
+          
+          {/* CUSTOM HEADER INTEGRADO (Solo si es modal, aunque funciona para ambos) */}
+          {isModal && (
+            <div className={modalStyles.header}>
+              <h2 className={modalStyles.title}>{tit}</h2>
+              {onClose && (
+                <button type="button" className={modalStyles.closeButton} onClick={onClose} aria-label="Cerrar">
+                  ✕
+                </button>
+              )}
+            </div>
+          )}
 
-          <Contenedor>
+          <div className={modalStyles.body}>
+            <Mensaje>
+              <Alert variant="success" show={exito}>{descExito}</Alert>
+              <Alert variant="danger" show={error}>
+                <Alert.Heading>Oops! Se ha producido un error!</Alert.Heading>
+                <p>{descError}</p>
+              </Alert>
+            </Mensaje>
+
             <Form onSubmit={handleSubmit}>
-              <Row>
-                <Col xs={12} md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Categoría:</Form.Label>
-                    <Form.Control
-                      as="select"
-                      name="categoria"
-                      value={categoria}
-                      onChange={handleChange}
-                      disabled={!!categoriaFija} // 👈 deshabilita si viene fija
-                    >
-                      <option value="Vaca">Vaca</option>
-                      <option value="Vaquillona">Vaquillona</option>
-                    </Form.Control>
-                  </Form.Group>
-                </Col>
-                <Col xs={12} md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Unidad de Medida:</Form.Label>
-                    <Form.Control as="select" name="um" value={um} onChange={handleChange}>
-                      <option value="Dias Lactancia">Días Lactancia</option>
-                      <option value="Lts. Producidos">Lts. Producidos</option>
-                    </Form.Control>
-                  </Form.Group>
-                </Col>
-                <Col xs={12} md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Condición:</Form.Label>
-                    <Form.Control as="select" name="condicion" value={condicion} onChange={handleChange}>
-                      <option value="entre">Entre</option>
-                      <option value="menor">Menor a</option>
-                      <option value="mayor">Mayor a</option>
-                    </Form.Control>
-                  </Form.Group>
-                </Col>
-              </Row>
+              
+              {/* PRIMERA FILA */}
+              <div className={modalStyles.gridRow}>
+                <div className={modalStyles.formGroup}>
+                  <Form.Label>Categoría</Form.Label>
+                  <Form.Control
+                    as="select"
+                    name="categoria"
+                    value={categoria}
+                    onChange={handleChange}
+                    disabled={!!categoriaFija}
+                  >
+                    <option value="Vaca">Vaca</option>
+                    <option value="Vaquillona">Vaquillona</option>
+                  </Form.Control>
+                </div>
+                
+                <div className={modalStyles.formGroup}>
+                  <Form.Label>Unidad de Medida</Form.Label>
+                  <Form.Control as="select" name="um" value={um} onChange={handleChange}>
+                    <option value="Dias Lactancia">Días Lactancia</option>
+                    <option value="Lts. Producidos">Lts. Producidos</option>
+                  </Form.Control>
+                </div>
 
-              <Row>
-                <Col xs={12} md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Mínimo:</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="min"
-                      min="0"
-                      disabled={condicion === "mayor"}
-                      value={min}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                    />
-                    {errores.min && <Alert variant="danger">{errores.min}</Alert>}
-                  </Form.Group>
-                </Col>
-                <Col xs={12} md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Máximo:</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="max"
-                      min="0"
-                      disabled={condicion === "menor"}
-                      value={max}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                    />
-                    {errores.max && <Alert variant="danger">{errores.max}</Alert>}
-                  </Form.Group>
-                </Col>
-                <Col xs={12} md={4} className="mb-3">
-                  <Form.Group>
-                    <Form.Label>Kgs. Ración:</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="racion"
-                      min="1"
-                      value={racion}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                    />
-                    {errores.racion && <Alert variant="danger">{errores.racion}</Alert>}
-                  </Form.Group>
-                </Col>
-              </Row>
+                <div className={modalStyles.formGroup}>
+                  <Form.Label>Condición</Form.Label>
+                  <Form.Control as="select" name="condicion" value={condicion} onChange={handleChange}>
+                    <option value="entre">Entre</option>
+                    <option value="menor">Menor a</option>
+                    <option value="mayor">Mayor a</option>
+                  </Form.Control>
+                </div>
+              </div>
 
-              <Row className="mt-3">
-                <Col xs={12} className="mb-2">
-                  <Button variant="success" type="submit" block className="w-100">
-                    Guardar
-                  </Button>
-                </Col>
-                {!idParametro && (
-                  <Col xs={12}>
-                    <Button variant="info" block onClick={() => router.push('/parametros')} className="w-100">
-                      Volver
-                    </Button>
-                  </Col>
-                )}
-              </Row>
+              {/* SEGUNDA FILA */}
+              <div className={modalStyles.gridRow}>
+                <div className={modalStyles.formGroup}>
+                  <Form.Label>Mínimo</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="min"
+                    min="0"
+                    disabled={condicion === "mayor"}
+                    value={min}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                  {errores.min && <div className="text-danger small mt-1">{errores.min}</div>}
+                </div>
+
+                <div className={modalStyles.formGroup}>
+                  <Form.Label>Máximo</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="max"
+                    min="0"
+                    disabled={condicion === "menor"}
+                    value={max}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                  {errores.max && <div className="text-danger small mt-1">{errores.max}</div>}
+                </div>
+
+                <div className={modalStyles.formGroup}>
+                  <Form.Label>Kgs. Ración</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="racion"
+                    min="1"
+                    value={racion}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                  {errores.racion && <div className="text-danger small mt-1">{errores.racion}</div>}
+                </div>
+              </div>
+
             </Form>
-          </Contenedor>
-        </>
+          </div>
+
+          {/* FOOTER INTEGRADO */}
+          <div className={modalStyles.footer}>
+            <button 
+              type="button" 
+              className={modalStyles.btnSave} 
+              onClick={handleSubmit} 
+              disabled={procesando}
+            >
+              {procesando && <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />}
+              Guardar
+            </button>
+            {!idParametro && (
+              <Button variant="outline-secondary" block onClick={() => router.push('/parametros')} className="w-100 mt-2">
+                Volver
+              </Button>
+            )}
+          </div>
+        </div>
       )}
     </>
   );

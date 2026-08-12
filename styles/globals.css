@@ -123,3 +123,116 @@ th {
   }
 }
 
+/* ============================================================
+   NUEVO DISEÑO MODAL FICHA
+   Modal centrado 90vw para FichaAnimal.
+   Scoped a .animal-detail-modal — NO afecta ningún otro modal.
+   ============================================================ */
+
+/* NUEVO DISEÑO MODAL FICHA — dialog: 85vw, max 1300px, min 1050px en escritorio */
+.animal-detail-modal,
+.animal-detail-modal-override {
+  width: 85vw !important;
+  max-width: 1300px !important;
+  min-width: 1050px !important;
+  margin: 1.75rem auto !important;
+}
+
+@media (max-width: 1100px) {
+  .animal-detail-modal,
+  .animal-detail-modal-override {
+    width: 95vw !important;
+    min-width: 0 !important;
+  }
+}
+
+/* NUEVO DISEÑO MODAL FICHA — content: alto automático, máx 90vh, ancho 100% */
+.animal-detail-modal .modal-content,
+.animal-detail-modal-override .modal-content {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  max-height: 90vh !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* NUEVO DISEÑO MODAL FICHA — header oscuro */
+.animal-detail-modal .modal-header {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  border-bottom: none;
+  padding: 18px 24px 14px;
+  flex-shrink: 0;
+}
+
+.animal-detail-modal .modal-header .close {
+  color: #fff;
+  opacity: 0.75;
+  text-shadow: none;
+}
+
+.animal-detail-modal .modal-header .close:hover {
+  opacity: 1;
+}
+
+/* NUEVO DISEÑO MODAL FICHA — body: scroll vertical, sin scroll horizontal */
+.animal-detail-modal .modal-body {
+  padding: 0 !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1 1 auto;
+}
+
+/* NUEVO DISEÑO MODAL FICHA — footer */
+.animal-detail-modal .modal-footer {
+  border-top: 1px solid #e8ecf0;
+  padding: 12px 24px;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+/* NUEVO DISEÑO MODAL FICHA — tabs */
+.animal-detail-modal .nav-tabs {
+  border-bottom: 2px solid #e8ecf0;
+  padding: 0 24px;
+  background: #f8fafc;
+}
+
+.animal-detail-modal .nav-tabs .nav-link {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #6b7280;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  padding: 10px 20px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.animal-detail-modal .nav-tabs .nav-link.active {
+  color: #17a2b8;
+  border-bottom-color: #17a2b8;
+  background: transparent;
+}
+
+.animal-detail-modal .tab-content {
+  padding: 0;
+}
+
+/* Modal 90% ancho — usado por ControlLecheroMensual (curva individual) */
+.modal-wrapper-centered {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+}
+
+.modal-90w {
+  max-width: 90vw !important;
+  width: 90vw !important;
+  margin: auto !important;
+}

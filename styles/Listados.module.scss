@@ -1,318 +1,268 @@
-// Listados.module.scss
-.nombreTambo {
-  color: #000; // Texto negro
-  text-decoration: underline;
-  text-decoration-color: #4cb151; // Verde moderno (Tailwind Emerald-500)
-  font-weight: 600;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-.listadosContainer {
-  padding: 30px;
-  background-color: #f5f7fa;
+// --- Layout Base ---
+.pageContainer {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 40px 20px;
+  color: #334155;
 }
 
-.tituloSeccion {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2f3e46;
-  margin-bottom: 20px;
+.contentWrapper {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.botoneraTipo {
-  background-color: #ffffff;
-  padding: 20px;
+// --- Encabezado Global ---
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    font-size: 16px;
+    color: #64748b;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+}
+
+// --- Barra Superior (Filtros y Nuevo) ---
+.topBar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: #ffffff;
+  padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 32px;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
-.selectorTipo {
-  font-size: 16px;
-  border-radius: 8px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  width: 100%;
-  max-width: 300px;
+.filtersWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.botonNuevo {
-  background-color: #1b9c85;
-  color: #ffffff;
+.filtersLabel {
+  font-size: 14px;
   font-weight: 600;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chipsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chip {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+  }
+
+  &.active {
+    background-color: #e6f4ea; // Verde muy suave
+    color: #003703;
+    border-color: #4db150;
+    font-weight: 600;
+  }
+}
+
+.btnNuevo {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.botonNuevo:hover {
-  background-color: #157f6f;
-}
-
-.tablaContainer {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-.tablaListados {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 0;
-}
-
-.tablaListados th,
-.tablaListados td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #e0e0e0;
+  justify-content: center;
+  gap: 8px;
+  background-color: #4db150;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
   font-size: 15px;
-  color: #2f3e46;
-}
-
-.tablaListados th {
-  background-color: #f0f2f5;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(77, 177, 80, 0.2);
+
+  &:hover {
+    background-color: #003703;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 55, 3, 0.2);
+  }
 }
 
-/////////// DETALLE DE LOS BOTONES 
-.tooltipWrapper {
-  position: relative;
-  display: inline-block;
-  margin-right: 8px;
+// --- Grilla de Listados ---
+.gridContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
 }
 
-.tooltipText {
-  visibility: hidden;
-  background-color: #333;
-  color: #fff;
+// --- Card Horizontal ---
+.listCard {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1;
+  }
+}
+
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background-color: #f8fafc;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.cardContent {
+  flex: 1;
+  min-width: 0; // Para text-overflow
+}
+
+.cardType {
   font-size: 12px;
-  text-align: center;
-  padding: 4px 8px;
-  border-radius: 4px;
-  position: absolute;
-  z-index: 10;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+
+.cardDesc {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
   white-space: nowrap;
-  opacity: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+  opacity: 0.7;
   transition: opacity 0.2s;
 }
 
-.tooltipWrapper:hover .tooltipText {
-  visibility: visible;
+.listCard:hover .cardActions {
   opacity: 1;
 }
 
-.btnIconoEditar {
-  background-color: #4cb151;
-  color: white;
+.actionBtn {
+  background: transparent;
   border: none;
-  padding: 0.4rem;
+  padding: 8px;
   border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #64748b;
 
   &:hover {
-    background-color: #337a37;
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+
+  &.deleteBtn:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
   }
 }
 
-.btnIconoEliminar {
-  background-color: #b52b39;
-  color: white;
-  border: none;
-  padding: 0.4rem;
-  border-radius: 6px;
-
-  &:hover {
-    background-color: #750e18;
-  }
-}
-
-///// MODAL 
-.modalContent {
-  background-color: #fff;
-  padding: 25px;
+// --- Empty State ---
+.emptyState {
+  text-align: center;
+  padding: 64px 20px;
+  color: #64748b;
+  background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
+  border: 1px dashed #cbd5e1;
 
-.modalBody {
-  padding-top: 10px;
-}
-
-.formGroup {
-  margin-bottom: 20px;
-
-
-  label {
-    font-weight: 600;
-    margin-bottom: 6px;
-    display: block;
-  }
-
-  input,
-  select {
-    width: 100%;
-    padding: 14px 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
+  p {
+    margin: 0;
     font-size: 16px;
-
-    &:focus {
-      border-color: #1b829b;
-      box-shadow: 0 0 0 2px rgba(27, 130, 155, 0.2);
-    }
   }
 }
 
-.buttonRow {
-  margin-top: 30px;
-}
 
-/* Fondo más tenue detrás del modal */
+// --- Modales Globales (Manteniendo estilos originales adaptados) ---
 .customModal :global(.modal-backdrop) {
   background-color: rgba(0, 0, 0, 0.6);
 }
 
-/* Contenedor principal del modal */
 .customModal :global(.modal-content) {
   border-radius: 16px;
   border: none;
   overflow: hidden;
   background: #ffffff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  animation: modalFadeIn 0.25s ease-out;
 }
 
-/* Animación de entrada */
-@keyframes modalFadeIn {
-  from {
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0px);
-    opacity: 1;
-  }
-}
-
-/* Estilo base de todos los modales */
-.customModal :global(.modal-header) {
-  display: flex;
-  justify-content: center;
-  /* centramos horizontalmente */
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: none;
-}
-
-/* Versión para Nueva Opción con fondo verde tenue */
-.headerNuevo {
-  background-color: #f5f5f5;
-  /* verde claro, suave */
-  color: #333;
-  /* verde oscuro para el texto */
-}
-
-/* Versión para Editar opción (puede quedar como antes o en gris) */
-.headerEditar {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-
-/* Botón Guardar */
 .btnPrimary {
-  background: linear-gradient(135deg, #1f8ef1, #5e72e4);
+  background-color: #4db150;
   border: none;
   border-radius: 8px;
-  padding: 0.6rem 1rem;
-  font-weight: 500;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.btnPrimary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(31, 142, 241, 0.3);
-}
-
-/* Mensajes de alerta */
-.alertCustom {
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.loaderOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.85);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 1050; /* sobre modal-body */
-}
-
-.loaderCircle {
-  border: 5px solid #e0e0e0; /* gris claro */
-  border-top: 5px solid #1f8ef1; /* azul profesional */
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spinLoader 1s linear infinite;
-}
-
-@keyframes spinLoader {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loaderText {
-  margin-top: 1rem;
-  font-size: 1rem;
-  color: #333;
-  font-weight: 500;
-  text-align: center;
-}
-
-.btnNuevaOpcion {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #28a745, #218838); /* verde degradado */
-  border: none;
-  color: #fff;
-  font-weight: 500;
-  font-size: 0.95rem;
   padding: 0.6rem 1.2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.25);
-  transition: all 0.25s ease-in-out;
-}
+  font-weight: 600;
+  transition: all 0.2s ease;
+  color: white;
 
-.btnNuevaOpcion:hover {
-  background: linear-gradient(135deg, #34c759, #28a745);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(40, 167, 69, 0.35);
-}
-
-.btnNuevaOpcion:active {
-  transform: scale(0.97);
-  box-shadow: 0 3px 6px rgba(40, 167, 69, 0.25);
-}
-
-.btnNuevaOpcion svg {
-  flex-shrink: 0;
+  &:hover {
+    background-color: #003703;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 55, 3, 0.2);
+  }
 }

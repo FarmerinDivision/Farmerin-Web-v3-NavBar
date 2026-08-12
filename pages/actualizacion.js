@@ -117,61 +117,62 @@ const Actualizacion = () => {
   const procesando = procesandoAnimales || procesandoERP;
 
   return (
-    <Layout titulo="Actualización Masiva">
-      {procesando ? (
-        <ContenedorSpinner>
-          <div className={styles.contenedorSpinner}>
-            <Spinner animation="border" variant="info" />
-            <div className={styles.mensajeCargando}>Procesando actualización...</div>
-          </div>
-        </ContenedorSpinner>
-      ) : (
-        <>
-          {!tamboSel ? (
-            <div className="container mt-4">
-              <Alert variant="info">Seleccioná un tambo antes de cargar planillas.</Alert>
-              <SelectTambo />
+    <Layout titulo="Centro de Actualizaciones Masivas">
+      <div className={styles.pageContainer}>
+        <div className={styles.contentWrapper}>
+          
+          <header className={styles.header}>
+            <h1>Actualización Masiva</h1>
+            <p>
+              Actualizá la información de tus animales y grupos mediante archivos Excel. 
+              Descargá una plantilla, completala y luego cargala nuevamente para procesar los cambios.
+            </p>
+          </header>
+
+          {procesando ? (
+            <div className={styles.contenedorSpinner}>
+              <Spinner animation="border" style={{ color: '#4db150' }} />
+              <div className={styles.mensajeCargando}>Procesando actualización...</div>
             </div>
           ) : (
-            <div className="container mt-4">
-              <Row>
-                {/* ======== IZQUIERDA: Actualizar Animales ======== */}
-                <Col md={6}>
-                  <div className={styles.sectionBox}>
-                    <h5 className="text-center mb-3">🐄 Actualizar Animales</h5>
+            <>
+              {!tamboSel ? (
+                <Alert variant="info" className="text-center" style={{ maxWidth: '600px', margin: '0 auto' }}>
+                  Seleccioná un tambo en el menú superior antes de cargar planillas.
+                </Alert>
+              ) : (
+                <div className={styles.gridContainer}>
+                  
+                  {/* ======== Módulo Izquierdo: Actualizar Animales ======== */}
+                  <div className={styles.updateCard}>
+                    <h2 className={styles.cardTitle}>
+                      🐄 Actualizar Animales
+                    </h2>
 
-                    {/* 📥 Planillas ejemplo */}
-                    <Botonera>
-                      <div className={styles.descargaWrapper}>
-                        <h6 className={styles.descargaTitulo}>📄 Planillas para animales</h6>
-                        <p className={styles.descargaSubtitulo}>
-                          Descargá un modelo o una plantilla vacía:
-                        </p>
-                        <div className={styles.botonGrupo}>
-                          <a
-                            href="/docs/planilla-modelo-actualizacionMasiva.xlsx"
-                            download
-                            className={styles.btnDescarga}
-                          >
-                            📘 Modelo
-                          </a>
-                          <a
-                            href="/docs/planilla-vacia-actualizacionMasiva.xlsx"
-                            download
-                            className={styles.btnDescarga}
-                          >
-                            📄 Vacía
-                          </a>
-                        </div>
+                    {/* Paso 1: Descargar */}
+                    <div className={styles.stepWrapper}>
+                      <div className={styles.stepHeader}>
+                        <div className={styles.stepNumber}>1</div>
+                        <h3 className={styles.stepTitle}>Descargar plantilla</h3>
                       </div>
-                    </Botonera>
+                      <div className={styles.buttonGroup}>
+                        <a href="/docs/planilla-modelo-actualizacionMasiva.xlsx" download className={styles.btnSecondary}>
+                          📘 Modelo
+                        </a>
+                        <a href="/docs/planilla-vacia-actualizacionMasiva.xlsx" download className={styles.btnSecondary}>
+                          📄 Vacía
+                        </a>
+                      </div>
+                    </div>
 
-                    {/* 📤 Cargar archivo */}
-                    {/* 📤 Cargar archivo Animales con Drag & Drop */}
-                    <Botonera>
-                      <Form onSubmit={handleSubmitAnimales} className="text-center">
-                        {mensajeAnimales && <Alert variant="warning">{mensajeAnimales}</Alert>}
-
+                    {/* Paso 2: Seleccionar */}
+                    <div className={styles.stepWrapper}>
+                      <div className={styles.stepHeader}>
+                        <div className={styles.stepNumber}>2</div>
+                        <h3 className={styles.stepTitle}>Seleccionar archivo</h3>
+                      </div>
+                      
+                      <Form onSubmit={handleSubmitAnimales}>
                         <input
                           id="fileAnimales"
                           ref={inputRefAnimales}
@@ -180,20 +181,8 @@ const Actualizacion = () => {
                           onChange={onFileChangeAnimales}
                           accept=".xlsx,.xls"
                         />
-
                         <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 8,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            border: '2px dashed #ccc',
-                            padding: '1rem',
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            cursor: 'pointer',
-                          }}
+                          className={styles.dragDropZone}
                           onClick={() => inputRefAnimales.current && inputRefAnimales.current.click()}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => {
@@ -206,124 +195,109 @@ const Actualizacion = () => {
                             }
                           }}
                         >
-                          <Button
-                            className={styles.btnSeleccionArchivo}
-                            type="button"
-                          >
-                            📎 Seleccionar o arrastrar archivo
-                          </Button>
-
-                          <div className={styles.nombreArchivo}>{fileNameAnimales}</div>
-
+                          <div className={styles.fileIcon}>📄</div>
+                          <p className={styles.dragDropText}>
+                            Arrastrá tu archivo aquí<br />
+                            o <strong>hacé clic</strong> para seleccionarlo
+                          </p>
                           {fileAnimales && (
-                            <Button variant="danger" onClick={(e) => { e.stopPropagation(); clearFileAnimales(); }}>
-                              Borrar
-                            </Button>
+                            <>
+                              <div className={styles.fileName}>{fileNameAnimales}</div>
+                              <button type="button" className={styles.btnDanger} onClick={(e) => { e.stopPropagation(); clearFileAnimales(); }}>
+                                Borrar archivo
+                              </button>
+                            </>
                           )}
                         </div>
 
-                        <div className="mt-3">
+                        {mensajeAnimales && <Alert variant="warning" className="mt-3 mb-0 text-center">{mensajeAnimales}</Alert>}
+
+                        {/* Paso 3: Procesar */}
+                        <div className={styles.stepWrapper} style={{ marginTop: '32px' }}>
+                          <div className={styles.stepHeader}>
+                            <div className={styles.stepNumber}>3</div>
+                            <h3 className={styles.stepTitle}>Procesar actualización</h3>
+                          </div>
                           <button
-                            className="button-ActMasiva"
                             type="submit"
+                            className={styles.btnPrimary}
                             disabled={!fileAnimales || procesandoAnimales}
                           >
-                            <span className="span-ActMasiva">Cargar Planilla Animales</span>
+                            Actualizar Animales
                           </button>
                         </div>
                       </Form>
-                    </Botonera>
+                    </div>
 
+                    {/* Resultados Animales */}
+                    {(erroresAnimales.length > 0 || actualizadosAnimales.length > 0) && (
+                      <div className={styles.alertasWrapper}>
+                        {erroresAnimales.length > 0 && (
+                          <div className={`${styles.alertaBox} ${styles.errorBox}`}>
+                            <div className={styles.alertaHeader}>❌ Errores encontrados</div>
+                            {erroresAnimales
+                              .slice(0, mostrarMasErroresAnimales ? erroresAnimales.length : 5)
+                              .map((e) => (
+                                <Detalle key={uuidv4()} info={e} />
+                              ))}
+                            {erroresAnimales.length > 5 && (
+                              <button type="button" className={styles.btnVerMas} onClick={() => setMostrarMasErroresAnimales(!mostrarMasErroresAnimales)}>
+                                {mostrarMasErroresAnimales ? 'Ver menos errores' : `Ver ${erroresAnimales.length - 5} más`}
+                              </button>
+                            )}
+                          </div>
+                        )}
 
-                    {/* 🧾 Resultados */}
-                    <Mensaje>
-                      {/* ====== Errores Animales ====== */}
-                      {erroresAnimales.length > 0 && (
-                        <div className={`${styles.alertaBox} ${styles.errorBox}`}>
-                          <div className={styles.alertaHeader}>❌ Errores encontrados</div>
-
-                          {erroresAnimales
-                            .slice(0, mostrarMasErroresAnimales ? erroresAnimales.length : 5)
-                            .map((e) => (
-                              <Detalle key={uuidv4()} info={e} />
-                            ))}
-
-                          {erroresAnimales.length > 5 && (
-                            <button
-                              type="button"
-                              className={styles.btnVerMas}
-                              onClick={() => setMostrarMasErroresAnimales(!mostrarMasErroresAnimales)}
-                            >
-                              {mostrarMasErroresAnimales ? 'Ver menos' : 'Ver más'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* ====== Actualizados Animales ====== */}
-                      {actualizadosAnimales.length > 0 && (
-                        <div className={`${styles.alertaBox} ${styles.successBox}`}>
-                          <div className={styles.alertaHeader}>✅ Actualizaciones realizadas</div>
-
-                          {actualizadosAnimales
-                            .slice(0, mostrarMasActualizadosAnimales ? actualizadosAnimales.length : 5)
-                            .map((a) => (
-                              <Detalle key={uuidv4()} info={a} />
-                            ))}
-
-                          {actualizadosAnimales.length > 5 && (
-                            <button
-                              type="button"
-                              className={styles.btnVerMas}
-                              onClick={() => setMostrarMasActualizadosAnimales(!mostrarMasActualizadosAnimales)}
-                            >
-                              {mostrarMasActualizadosAnimales ? 'Ver menos' : 'Ver más'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                    </Mensaje>
-                  </div>
-                </Col>
-
-                {/* ======== DERECHA: Actualizar ERP/Grupo ======== */}
-                <Col md={6}>
-                  <div className={styles.sectionBox}>
-                    <h5 className="text-center mb-3">🔢 Actualizar ERP / Grupo</h5>
-
-                    {/* 📥 Planillas ejemplo */}
-                    <Botonera>
-                      <div className={styles.descargaWrapper}>
-                        <h6 className={styles.descargaTitulo}>📄 Planillas ERP/Grupo</h6>
-                        <p className={styles.descargaSubtitulo}>
-                          Descargá un modelo o una plantilla vacía:
-                        </p>
-                        <div className={styles.botonGrupo}>
-                          <a
-                            href="/docs/planilla-modelo-actualizacionMasivaErpGrupo.xlsx"
-                            download
-                            className={styles.btnDescarga}
-                          >
-                            📘 Modelo
-                          </a>
-                          <a
-                            href="/docs/planilla-vacia-actualizacionMasivaErpGrupo.xlsx"
-                            download
-                            className={styles.btnDescarga}
-                          >
-                            📄 Vacía
-                          </a>
-                        </div>
+                        {actualizadosAnimales.length > 0 && (
+                          <div className={`${styles.alertaBox} ${styles.successBox}`}>
+                            <div className={styles.alertaHeader}>✅ Actualizaciones realizadas</div>
+                            {actualizadosAnimales
+                              .slice(0, mostrarMasActualizadosAnimales ? actualizadosAnimales.length : 5)
+                              .map((a) => (
+                                <Detalle key={uuidv4()} info={a} />
+                              ))}
+                            {actualizadosAnimales.length > 5 && (
+                              <button type="button" className={styles.btnVerMas} onClick={() => setMostrarMasActualizadosAnimales(!mostrarMasActualizadosAnimales)}>
+                                {mostrarMasActualizadosAnimales ? 'Ver menos' : `Ver ${actualizadosAnimales.length - 5} más`}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </Botonera>
+                    )}
 
-                    {/* 📤 Cargar archivo */}
-                    {/* 📤 Cargar archivo ERP con Drag & Drop */}
-                    <Botonera>
-                      <Form onSubmit={handleSubmitERP} className="text-center">
-                        {mensajeERP && <Alert variant="warning">{mensajeERP}</Alert>}
+                  </div>
 
+                  {/* ======== Módulo Derecho: Actualizar ERP / Grupo ======== */}
+                  <div className={styles.updateCard}>
+                    <h2 className={styles.cardTitle}>
+                      🔢 Actualizar ERP / Grupo
+                    </h2>
+
+                    {/* Paso 1: Descargar */}
+                    <div className={styles.stepWrapper}>
+                      <div className={styles.stepHeader}>
+                        <div className={styles.stepNumber}>1</div>
+                        <h3 className={styles.stepTitle}>Descargar plantilla</h3>
+                      </div>
+                      <div className={styles.buttonGroup}>
+                        <a href="/docs/planilla-modelo-actualizacionMasivaErpGrupo.xlsx" download className={styles.btnSecondary}>
+                          📘 Modelo
+                        </a>
+                        <a href="/docs/planilla-vacia-actualizacionMasivaErpGrupo.xlsx" download className={styles.btnSecondary}>
+                          📄 Vacía
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Paso 2: Seleccionar */}
+                    <div className={styles.stepWrapper}>
+                      <div className={styles.stepHeader}>
+                        <div className={styles.stepNumber}>2</div>
+                        <h3 className={styles.stepTitle}>Seleccionar archivo</h3>
+                      </div>
+                      
+                      <Form onSubmit={handleSubmitERP}>
                         <input
                           id="fileERP"
                           ref={inputRefERP}
@@ -332,20 +306,8 @@ const Actualizacion = () => {
                           onChange={onFileChangeERP}
                           accept=".xlsx,.xls"
                         />
-
                         <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 8,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            border: '2px dashed #ccc',
-                            padding: '1rem',
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            cursor: 'pointer',
-                          }}
+                          className={styles.dragDropZone}
                           onClick={() => inputRefERP.current && inputRefERP.current.click()}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => {
@@ -358,92 +320,86 @@ const Actualizacion = () => {
                             }
                           }}
                         >
-                          <Button className={styles.btnSeleccionArchivo} variant="outline-primary">
-                            📎 Seleccionar o arrastrar archivo
-                          </Button>
-
-                          <div className={styles.nombreArchivo}>{fileNameERP}</div>
-
+                          <div className={styles.fileIcon}>📄</div>
+                          <p className={styles.dragDropText}>
+                            Arrastrá tu archivo aquí<br />
+                            o <strong>hacé clic</strong> para seleccionarlo
+                          </p>
                           {fileERP && (
-                            <Button variant="danger" onClick={(e) => { e.stopPropagation(); clearFileERP(); }}>
-                              Borrar
-                            </Button>
+                            <>
+                              <div className={styles.fileName}>{fileNameERP}</div>
+                              <button type="button" className={styles.btnDanger} onClick={(e) => { e.stopPropagation(); clearFileERP(); }}>
+                                Borrar archivo
+                              </button>
+                            </>
                           )}
                         </div>
 
-                        <div className="mt-3">
+                        {mensajeERP && <Alert variant="warning" className="mt-3 mb-0 text-center">{mensajeERP}</Alert>}
+
+                        {/* Paso 3: Procesar */}
+                        <div className={styles.stepWrapper} style={{ marginTop: '32px' }}>
+                          <div className={styles.stepHeader}>
+                            <div className={styles.stepNumber}>3</div>
+                            <h3 className={styles.stepTitle}>Procesar actualización</h3>
+                          </div>
                           <button
-                            className="button-ActMasiva"
                             type="submit"
+                            className={styles.btnPrimary}
                             disabled={!fileERP || procesandoERP}
                           >
-                            <span className="span-ActMasiva">Cargar Planilla ERP/Grupo</span>
+                            Actualizar ERP / Grupo
                           </button>
                         </div>
                       </Form>
-                    </Botonera>
+                    </div>
 
-                    {/* 🧾 Resultados */}
-                    <Mensaje>
-                      {(erroresERP.length > 0 || actualizadosERP.length > 0) && (
-                        <div className={styles.alertasWrapper}>
+                    {/* Resultados ERP */}
+                    {(erroresERP.length > 0 || actualizadosERP.length > 0) && (
+                      <div className={styles.alertasWrapper}>
+                        {erroresERP.length > 0 && (
+                          <div className={`${styles.alertaBox} ${styles.errorBox}`}>
+                            <div className={styles.alertaHeader}>❌ Errores encontrados</div>
+                            {erroresERP
+                              .slice(0, mostrarMasErroresERP ? erroresERP.length : 5)
+                              .map((e) => (
+                                <Detalle key={uuidv4()} info={e} />
+                              ))}
+                            {erroresERP.length > 5 && (
+                              <button type="button" className={styles.btnVerMas} onClick={() => setMostrarMasErroresERP(!mostrarMasErroresERP)}>
+                                {mostrarMasErroresERP ? 'Ver menos errores' : `Ver ${erroresERP.length - 5} más`}
+                              </button>
+                            )}
+                          </div>
+                        )}
 
-                          {/* ====== Errores ERP ====== */}
-                          {erroresERP.length > 0 && (
-                            <div className={`${styles.alertaBox} ${styles.errorBox}`}>
-                              <div className={styles.alertaHeader}>❌ Errores encontrados</div>
-
-                              {erroresERP
-                                .slice(0, mostrarMasErroresERP ? erroresERP.length : 5)
-                                .map((e) => (
-                                  <Detalle key={uuidv4()} info={e} />
-                                ))}
-
-                              {erroresERP.length > 5 && (
-                                <button
-                                  type="button"
-                                  className={styles.btnVerMas}
-                                  onClick={() => setMostrarMasErroresERP(!mostrarMasErroresERP)}
-                                >
-                                  {mostrarMasErroresERP ? 'Ver menos' : 'Ver más'}
-                                </button>
-                              )}
-                            </div>
-                          )}
-
-                          {/* ====== Actualizados ERP ====== */}
-                          {actualizadosERP.length > 0 && (
-                            <div className={`${styles.alertaBox} ${styles.successBox}`}>
-                              <div className={styles.alertaHeader}>✅ Actualizaciones realizadas</div>
-
-                              {actualizadosERP
-                                .slice(0, mostrarMasActualizadosERP ? actualizadosERP.length : 5)
-                                .map((a) => (
-                                  <Detalle key={uuidv4()} info={a} />
-                                ))}
-
-                              {actualizadosERP.length > 5 && (
-                                <button
-                                  type="button"
-                                  className={styles.btnVerMas}
-                                  onClick={() => setMostrarMasActualizadosERP(!mostrarMasActualizadosERP)}
-                                >
-                                  {mostrarMasActualizadosERP ? 'Ver menos' : 'Ver más'}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </Mensaje>
+                        {actualizadosERP.length > 0 && (
+                          <div className={`${styles.alertaBox} ${styles.successBox}`}>
+                            <div className={styles.alertaHeader}>✅ Actualizaciones realizadas</div>
+                            {actualizadosERP
+                              .slice(0, mostrarMasActualizadosERP ? actualizadosERP.length : 5)
+                              .map((a) => (
+                                <Detalle key={uuidv4()} info={a} />
+                              ))}
+                            {actualizadosERP.length > 5 && (
+                              <button type="button" className={styles.btnVerMas} onClick={() => setMostrarMasActualizadosERP(!mostrarMasActualizadosERP)}>
+                                {mostrarMasActualizadosERP ? 'Ver menos' : `Ver ${actualizadosERP.length - 5} más`}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                   </div>
-                </Col>
-              </Row>
-            </div>
+
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
+
+        </div>
+      </div>
     </Layout>
   );
 };

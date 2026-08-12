@@ -2,8 +2,10 @@ import React, { useContext, useEffect, useState } from 'react';
 import { FirebaseContext } from '../../firebase2';
 import useValidacion from '../../hook/useValidacion';
 import validarCrearAnimal from '../../validacion/validarCrearAnimal';
-import { Form, Button, Row, Col, Spinner, Card, Modal } from 'react-bootstrap';
+import { Form, Spinner, Modal, Alert, Button } from 'react-bootstrap';
 import { format } from 'date-fns';
+import { RiCloseLine, RiInformationLine, RiPulseLine, RiHeartPulseLine, RiChat1Line } from 'react-icons/ri';
+import styles from '../../styles/formularioAnimal.module.scss';
 
 const hoy = format(Date.now(), 'yyyy-MM-dd');
 
@@ -37,16 +39,47 @@ const STATE_INICIAL = {
 const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess }) => {
   const { firebase, usuario, tamboSel } = useContext(FirebaseContext);
   const [procesando, setProcesando] = useState(false);
-  const [mensajeError, setMensajeError] = useState('');
+  const [serverErrors, setServerErrors] = useState({});
+  const [globalError, setGlobalError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
 
   const {
     valores,
-    errores,
+    errores, // Mantenemos errores de useValidacion por compatibilidad
     handleSubmit,
     handleChange,
     guardarValores
   } = useValidacion(STATE_INICIAL, validarCrearAnimal, modo === 'alta' ? altaAnimal : editarAnimal);
+
+  // Evaluamos las validaciones en tiempo real para la interfaz visual
+  const erroresRealtime = validarCrearAnimal(valores);
+  
+  if (valores.estpro === 'En Ordeñe' && !valores.fparto) {
+    erroresRealtime.fparto = "Atención: Recuerde que debe ingresar la fecha del último parto.";
+  }
+  if (valores.estrep === 'preñada' && !valores.fservicio) {
+    erroresRealtime.fservicio = "Atención: Recuerde que debe ingresar la fecha del último servicio.";
+  }
+  if (valores.grupo === '' || valores.grupo === null || isNaN(valores.grupo)) {
+    erroresRealtime.grupo = "El campo 'Grupo' es obligatorio y debe ser numérico.";
+  }
+
+  // Consolidamos todos los errores
+  const todosLosErrores = { ...errores, ...erroresRealtime, ...serverErrors };
+  const hayErrores = Object.keys(todosLosErrores).length > 0;
+
+  const handleCustomChange = (e) => {
+    handleChange(e);
+    const { name } = e.target;
+    if (serverErrors[name]) {
+      setServerErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+    if (globalError) setGlobalError('');
+  };
 
   useEffect(() => {
     if (modo === 'alta') {
@@ -69,10 +102,10 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
       if (doc.exists) {
         guardarValores(doc.data());
       } else {
-        setMensajeError("El animal no existe.");
+        setGlobalError("El animal no existe.");
       }
     } catch (e) {
-      setMensajeError("Error al cargar el animal.");
+      setGlobalError("Error al cargar el animal.");
       console.error(e);
     } finally {
       setProcesando(false);
@@ -88,7 +121,8 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
 
   async function altaAnimal() {
     setProcesando(true);
-    setMensajeError('');
+    setGlobalError('');
+    setServerErrors({});
     setMensajeExito('');
 
     try {
@@ -112,17 +146,34 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
           .where('fbaja', '==', '')
           .get();
 
-        if (!erpSnap.empty) throw new Error("El eRP ya está asociado a otro animal.");
+        if (!rpSnap.empty) throw new Error("El eRP ya está asociado a otro animal.");
       }
 
       // 👉 Crear el animal en Firebase
-      await firebase.db.collection('animal').add(valores);
+      const docRef = await firebase.db.collection('animal').add(valores);
+
+      const detalle = "RP: " + valores.rp + (valores.erp ? " - eRP: " + valores.erp : "");
+      await firebase.db.collection('animal').doc(docRef.id).collection('eventos').add({
+        fecha: firebase.fechaTimeStamp(valores.ingreso),
+        tipo: 'Alta',
+        detalle: detalle,
+        usuario: usuario.displayName,
+        tambo: tamboSel.id,
+      });
 
       // ✅ Mostrar el modal de éxito inmediatamente
       setMensajeExito("✅ Animal dado de alta con éxito.");
 
     } catch (e) {
-      setMensajeError(e.message);
+      if (e.message.includes("RP ya está asociado")) {
+        setServerErrors(prev => ({ ...prev, rp: e.message }));
+      } else if (e.message.includes("eRP ya está asociado")) {
+        setServerErrors(prev => ({ ...prev, erp: e.message }));
+      } else if (e.message.includes("Grupo")) {
+        setServerErrors(prev => ({ ...prev, grupo: e.message }));
+      } else {
+        setGlobalError(e.message);
+      }
     } finally {
       setProcesando(false);
     }
@@ -131,7 +182,8 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
 
   async function editarAnimal() {
     setProcesando(true);
-    setMensajeError('');
+    setGlobalError('');
+    setServerErrors({});
     setMensajeExito('');
     try {
       if (!usuario) throw new Error("No autorizado");
@@ -157,7 +209,7 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
           .where('fbaja', '==', '')
           .get();
 
-        if (!erpSnap.empty) {
+        if (!rpSnap.empty) {
           const duplicado = erpSnap.docs.find(doc => doc.id !== animalId);
           if (duplicado) throw new Error("El eRP ya está asociado a otro animal.");
         }
@@ -167,7 +219,15 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
       setMensajeExito("✅ Animal editado con éxito.");
       if (onSuccess) onSuccess();
     } catch (e) {
-      setMensajeError(e.message);
+      if (e.message.includes("RP ya está asociado")) {
+        setServerErrors(prev => ({ ...prev, rp: e.message }));
+      } else if (e.message.includes("eRP ya está asociado")) {
+        setServerErrors(prev => ({ ...prev, erp: e.message }));
+      } else if (e.message.includes("Grupo")) {
+        setServerErrors(prev => ({ ...prev, grupo: e.message }));
+      } else {
+        setGlobalError(e.message);
+      }
     } finally {
       setProcesando(false);
     }
@@ -175,139 +235,194 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
 
   const {
     ingreso, rp, erp, lactancia, estpro, estrep, categoria,
-    fservicio, fparto, uc, racion, observaciones, fracion,
+    fservicio, fparto, uc, racion, observaciones,
     grupo
   } = valores;
 
   return (
-    <Form onSubmit={handleSubmit}>
-
-      {procesando && <Spinner animation="border" className="mb-3" />}
-
-      <Row>
-        <Col md={6}>
-          <Form.Group><Form.Label>Tambo</Form.Label>
-            <Form.Control type="text" value={tamboSel?.nombre || ''} readOnly />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group><Form.Label>Ingreso</Form.Label>
-            <Form.Control type="date" name="ingreso" value={ingreso} onChange={handleChange} max={hoy} />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col md={6}>
-          <Form.Group><Form.Label>RP (caravana)</Form.Label>
-            <Form.Control name="rp" value={rp} onChange={handleChange} required isInvalid={!!errores.rp} />
-            <Form.Control.Feedback type="invalid">{errores.rp}</Form.Control.Feedback>
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group><Form.Label>eRP (botón electrónico)</Form.Label>
-            <Form.Control name="erp" value={erp} onChange={handleChange} isInvalid={!!errores.erp} />
-            <Form.Control.Feedback type="invalid">{errores.erp}</Form.Control.Feedback>
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col md={6}>
-          <Form.Group><Form.Label>Lactancia</Form.Label>
-            <Form.Control type="number" name="lactancia" value={lactancia} onChange={handleChange} />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group><Form.Label>Categoría</Form.Label>
-            <Form.Control name="categoria" value={categoria} readOnly />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col md={6}>
-          <Form.Group><Form.Label>Estado Productivo</Form.Label>
-            <Form.Control as="select" name="estpro" value={estpro} onChange={handleChange}>
-              <option value="seca">Seca</option>
-              <option value="En Ordeñe">En Ordeñe</option>
-            </Form.Control>
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group><Form.Label>Estado Reproductivo</Form.Label>
-            <Form.Control as="select" name="estrep" value={estrep} onChange={handleChange}>
-              <option value="vacia">Vacía</option>
-              <option value="preñada">Preñada</option>
-            </Form.Control>
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col md={6}>
-          <Form.Group><Form.Label>Último Servicio</Form.Label>
-            <Form.Control type="date" name="fservicio" value={fservicio} onChange={handleChange} max={hoy} />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group><Form.Label>Último Parto</Form.Label>
-            <Form.Control type="date" name="fparto" value={fparto} onChange={handleChange} max={hoy} />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col md={6}>
-          <Form.Group><Form.Label>Último Control (Lts)</Form.Label>
-            <Form.Control type="number" step="any" name="uc" value={uc} onChange={handleChange} />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group><Form.Label>Ración (Kgs)</Form.Label>
-            <Form.Control type="number" step="any" name="racion" value={racion} onChange={handleChange} />
-          </Form.Group>
-        </Col>
-      </Row>
-
-      {/* ✅ Grupo obligatorio y numérico */}
-      <Row>
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Grupo</Form.Label>
-            <Form.Control
-              type="number"
-              name="grupo"
-              value={grupo}
-              onChange={handleChange}
-              min="0"
-              step="1"
-              required
-              placeholder="Ej: 5"
-            />
-            <Form.Text className="text-muted">
-              Número de grupo (solo valores numéricos).
-            </Form.Text>
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Form.Group>
-        <Form.Label>Observaciones</Form.Label>
-        <Form.Control as="textarea" rows={2} name="observaciones" value={observaciones} onChange={handleChange} />
-      </Form.Group>
-
-      <div className="text-end mt-4">
+    <div className={styles.formContainer}>
+      
+      {/* HEADER INTEGRADO */}
+      <div className={styles.customHeader}>
+        <div className={styles.headerTexts}>
+          <h2 className={styles.mainTitle}>
+            🐄 {modo === 'alta' ? 'Alta de Animal' : 'Editar Animal'}
+          </h2>
+          <p className={styles.subTitle}>
+            {modo === 'alta' ? 'Registrar un nuevo animal dentro del tambo' : 'Modificar los datos del animal seleccionado'}
+          </p>
+        </div>
         {onCancel && (
-          <Button variant="secondary" className="me-2" onClick={onCancel}>
-            Cancelar
-          </Button>
+          <button type="button" className={styles.closeButton} onClick={onCancel} aria-label="Cerrar">
+            <RiCloseLine size={24} />
+          </button>
         )}
-        <Button type="submit" variant="success" disabled={procesando}>
-          {modo === 'alta' ? 'Guardar' : 'Actualizar'}
-        </Button>
       </div>
-      {/* ✅ MODAL DE ÉXITO */}
+
+      <Form onSubmit={handleSubmit} className={styles.formBody}>
+
+        {globalError && (
+          <Alert variant="danger" className="mb-4 text-center fw-bold">
+            ⚠️ {globalError}
+          </Alert>
+        )}
+
+        {procesando && (
+          <div className="text-center mb-4">
+            <Spinner animation="border" variant="primary" />
+          </div>
+        )}
+
+        <div className={styles.grid4Cols}>
+          
+          {/* Card 1: Información General (1 col) */}
+          <div className={styles.cardSection}>
+            <div className={styles.cardTitle}>
+              <RiInformationLine size={16} /> Info. General
+            </div>
+            <div className={styles.cardInnerGrid1Col}>
+              <div className={styles.formGroup}>
+                <Form.Label>Tambo</Form.Label>
+                <Form.Control type="text" value={tamboSel?.nombre || ''} readOnly />
+              </div>
+              <div className={styles.formGroup}>
+                <Form.Label>Ingreso</Form.Label>
+                <Form.Control type="date" name="ingreso" value={ingreso} onChange={handleCustomChange} max={hoy} />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Información Productiva (1 col) */}
+          <div className={styles.cardSection}>
+            <div className={styles.cardTitle}>
+              <RiPulseLine size={16} /> Productiva
+            </div>
+            <div className={styles.cardInnerGrid1Col}>
+              <div className={styles.formGroup}>
+                <Form.Label>Categoría</Form.Label>
+                <Form.Control name="categoria" value={categoria} readOnly />
+              </div>
+              <div className={styles.formGroup}>
+                <Form.Label>Lactancia</Form.Label>
+                <Form.Control type="number" name="lactancia" value={lactancia} onChange={handleCustomChange} min="0" />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Estado (1 col) */}
+          <div className={styles.cardSection}>
+            <div className={styles.cardTitle}>
+              <RiHeartPulseLine size={16} /> Estado
+            </div>
+            <div className={styles.cardInnerGrid1Col}>
+              <div className={styles.formGroup}>
+                <Form.Label>Estado Prod.</Form.Label>
+                <Form.Control as="select" name="estpro" value={estpro} onChange={handleCustomChange}>
+                  <option value="seca">Seca</option>
+                  <option value="En Ordeñe">En Ordeñe</option>
+                </Form.Control>
+              </div>
+              <div className={styles.formGroup}>
+                <Form.Label>Últ. Control (Lts)</Form.Label>
+                <Form.Control type="number" step="any" name="uc" value={uc} onChange={handleCustomChange} isInvalid={!!todosLosErrores.uc} />
+                {todosLosErrores.uc && <div className="invalid-feedback d-block m-0 mt-1">{todosLosErrores.uc}</div>}
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Reproducción (1 col) */}
+          <div className={styles.cardSection}>
+            <div className={styles.cardTitle}>
+              <RiHeartPulseLine size={16} /> Reproducción
+            </div>
+            <div className={styles.cardInnerGrid1Col}>
+              <div className={styles.formGroup}>
+                <Form.Label>Estado Reprod.</Form.Label>
+                <Form.Control as="select" name="estrep" value={estrep} onChange={handleCustomChange}>
+                  <option value="vacia">Vacía</option>
+                  <option value="preñada">Preñada</option>
+                </Form.Control>
+              </div>
+              <div className={styles.formGroup}>
+                <Form.Label>Último Parto</Form.Label>
+                <Form.Control type="date" name="fparto" value={fparto} onChange={handleCustomChange} max={hoy} isInvalid={!!todosLosErrores.fparto} />
+                {todosLosErrores.fparto && <div className="invalid-feedback d-block m-0 mt-1">{todosLosErrores.fparto}</div>}
+              </div>
+              <div className={styles.formGroup}>
+                <Form.Label>Últ. Servicio</Form.Label>
+                <Form.Control type="date" name="fservicio" value={fservicio} onChange={handleCustomChange} max={hoy} isInvalid={!!todosLosErrores.fservicio} />
+                {todosLosErrores.fservicio && <div className="invalid-feedback d-block m-0 mt-1">{todosLosErrores.fservicio}</div>}
+              </div>
+            </div>
+          </div>
+
+          {/* Card 5: Identificación (2 cols) */}
+          <div className={`${styles.cardSection} ${styles.colSpan2}`}>
+            <div className={styles.cardTitle}>
+              <RiInformationLine size={16} /> Identificación
+            </div>
+            <div className={styles.cardInnerGrid}>
+              <div className={styles.formGroup}>
+                <Form.Label>RP (caravana)</Form.Label>
+                <Form.Control name="rp" value={rp} onChange={handleCustomChange} required isInvalid={!!todosLosErrores.rp} placeholder="Ej: 1540" />
+                {todosLosErrores.rp && <div className="invalid-feedback d-block m-0">{todosLosErrores.rp}</div>}
+              </div>
+              <div className={styles.formGroup}>
+                <Form.Label>eRP (botón)</Form.Label>
+                <Form.Control name="erp" value={erp} onChange={handleCustomChange} isInvalid={!!todosLosErrores.erp} placeholder="Opcional" />
+                {todosLosErrores.erp && <div className="invalid-feedback d-block m-0">{todosLosErrores.erp}</div>}
+              </div>
+            </div>
+          </div>
+
+          {/* Card 6: Alimentación (2 cols) */}
+          <div className={`${styles.cardSection} ${styles.colSpan2}`}>
+            <div className={styles.cardTitle}>
+              <RiInformationLine size={16} /> Alimentación
+            </div>
+            <div className={styles.cardInnerGrid}>
+              <div className={styles.formGroup}>
+                <Form.Label>Grupo</Form.Label>
+                <Form.Control type="number" name="grupo" value={grupo} onChange={handleCustomChange} min="0" step="1" required isInvalid={!!todosLosErrores.grupo} placeholder="Ej: 5" />
+                {todosLosErrores.grupo ? (
+                  <div className="invalid-feedback d-block m-0">{todosLosErrores.grupo}</div>
+                ) : (
+                  <span className={styles.helpText}>Número identificador del grupo alimenticio.</span>
+                )}
+              </div>
+              <div className={styles.formGroup}>
+                <Form.Label>Ración (Kgs)</Form.Label>
+                <Form.Control type="number" step="any" name="racion" value={racion} onChange={handleCustomChange} min="0" />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 7: Observaciones (4 cols) */}
+          <div className={`${styles.cardSection} ${styles.colSpan4}`}>
+            <div className={styles.cardTitle}>
+              <RiChat1Line size={16} /> Observaciones
+            </div>
+            <div className={styles.formGroup}>
+              <Form.Control as="textarea" rows={3} name="observaciones" value={observaciones} onChange={handleCustomChange} placeholder="Ingrese cualquier observación, condición física o nota relevante sobre el animal..." />
+            </div>
+          </div>
+
+        </div>
+      </Form>
+      
+      {/* FOOTER INTEGRADO */}
+      <div className={styles.footer}>
+        {onCancel && (
+          <button type="button" className={styles.btnCancel} onClick={onCancel}>
+            Cancelar
+          </button>
+        )}
+        <button type="button" className={styles.btnSave} onClick={handleSubmit} disabled={procesando || hayErrores}>
+          {procesando && <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />}
+          {modo === 'alta' ? 'Guardar Animal' : 'Actualizar Animal'}
+        </button>
+      </div>
+
       {/* ✅ MODAL DE ÉXITO */}
       <Modal
         show={!!mensajeExito}
@@ -342,39 +457,7 @@ const FormularioAnimal = ({ modo = 'alta', animalId = null, onCancel, onSuccess 
         </Modal.Footer>
       </Modal>
 
-      {/* ⚠️ MODAL DE ERROR */}
-      <Modal
-        show={!!mensajeError}
-        onHide={() => setMensajeError('')}
-        centered
-        backdrop="static"
-        keyboard={false}
-        className="modal-error"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title className="w-100 text-center fs-4 fw-bold">
-            ⚠️ Error
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p className="fs-5 mb-3">{mensajeError}</p>
-          <p className="opacity-75">
-            Verificá los datos ingresados o intentá nuevamente.
-          </p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="light"
-            className="text-danger fw-semibold px-4"
-            onClick={() => setMensajeError('')}
-          >
-            Cerrar
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-
-    </Form>
+    </div>
   );
 };
 

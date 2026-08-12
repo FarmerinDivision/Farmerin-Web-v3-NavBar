@@ -1,17 +1,28 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
-import { Botonera, Mensaje, ContenedorSpinner, Contenedor } from '../components/ui/Elementos';
 import Layout from '../components/layout/layout';
 import DetalleProduccion from '../components/layout/detalleProduccion';
 import SelectTambo from '../components/layout/selectTambo';
-import StickyTable from 'react-sticky-table-thead';
-import { Button, Form, Row, Col, Alert, Spinner, Table, ButtonGroup } from 'react-bootstrap';
-import { RiSearchLine } from 'react-icons/ri';
+import { Button, Spinner } from 'react-bootstrap';
+import { RiSearchLine, RiFileExcel2Line } from 'react-icons/ri';
 import { format, subDays } from 'date-fns';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import GraficoProduccion from '../components/layout/GraficoProduccion';
 import styles from '../styles/Produccion.module.scss';
+
+// Tooltip 100% CSS — fondo negro, texto blanco, flecha abajo
+const ThTooltip = ({ label, texto }) => (
+  <span style={{ position: 'relative', display: 'inline-block' }} className="th-tooltip-wrapper">
+    <span style={{ cursor: 'default', textDecoration: 'underline dotted', textUnderlineOffset: '3px' }}>
+      {label}
+    </span>
+    <span className="th-tooltip-box">
+      {texto}
+      <span className="th-tooltip-arrow" />
+    </span>
+  </span>
+);
 
 const Produccion = () => {
   const { firebase, tamboSel } = useContext(FirebaseContext);
@@ -265,101 +276,108 @@ const Produccion = () => {
 
 
   return (
-    <Layout titulo="Producción">
-      <Botonera>
-        <Form onSubmit={(e) => { e.preventDefault(); handleSubmit(valores); }}>
-          <Row className={styles.RepoProduFiltros}>
-            <Col lg>
-              <Form.Label>Ver Producción desde:</Form.Label>
-              <ButtonGroup className={styles.RepoProduBotonera}>
-                <div className={styles.RepoProduTooltip}>
-                  <Button
-                    className={`${styles.produccionBtn} ${valores.tipoFecha === 'ud' ? 'activo' : ''}`}
-                    variant="info"
-                    onClick={() => realizarBusqueda('ud')}
-                  >
-                    1 DÍA
-                  </Button>
-                  <span className={styles.RepoProduTooltipText}>Último día</span>
-                </div>
-                <div className={styles.RepoProduTooltip}>
-                  <Button className={`${styles.produccionBtn}
-                  ${valores.tipoFecha === 'mv' ? 'activo' : ''}`}
-                    variant="info"
-                    onClick={() => realizarBusqueda('mv')}>
-                    MES EN CURSO
-                  </Button>
-                  <span className={styles.RepoProduTooltipText}>Mes actual</span>
-                </div>
-                <div className={styles.RepoProduTooltip}>
-                  <Button
-                    className={`${styles.produccionBtn} ${valores.tipoFecha === 'ma' ? 'activo' : ''}`}
-                    variant="info"
-                    onClick={() => realizarBusqueda('ma')}
-                  >
-                    MES ANTERIOR
-                  </Button>
-                  <span className={styles.RepoProduTooltipText}>Mes anterior</span>
-                </div>
-                <div className={styles.RepoProduTooltip}>
-                  <Button
-                    className={`${styles.produccionBtn} ${valores.tipoFecha === 'ef' ? 'activo' : ''}`}
-                    variant="info"
-                    onClick={() => setValores({ ...valores, tipoFecha: 'ef' })}
-                  >
-                    POR FECHA
-                  </Button>
-                  <span className={styles.RepoProduTooltipText}>Selecciona un rango</span>
-                </div>
-              </ButtonGroup>
-            </Col>
+    <Layout titulo="Producción" noStickyHeader={true}>
 
+      {/* Header Sección */}
+      <div className={styles.header}>
+        <h1>Reporte de Producción</h1>
+        <p>Visualice y exporte los datos de producción registrados según período.</p>
+      </div>
+
+      <div className={styles.filterCard}>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(valores); }}>
+          <div className={styles.filterRow}>
+
+            {/* Fechas Rápidas */}
+            <div className={styles.filterGroup} style={{ flex: '0 0 auto', width: '350px' }}>
+              <label>Período Rápido</label>
+              <div className={styles.segmentedControl}>
+                <button
+                  type="button"
+                  className={valores.tipoFecha === 'ud' ? styles.active : ''}
+                  onClick={() => realizarBusqueda('ud')}
+                >
+                  Hoy
+                </button>
+                <button
+                  type="button"
+                  className={valores.tipoFecha === 'mv' ? styles.active : ''}
+                  onClick={() => realizarBusqueda('mv')}
+                >
+                  Mes Actual
+                </button>
+                <button
+                  type="button"
+                  className={valores.tipoFecha === 'ma' ? styles.active : ''}
+                  onClick={() => realizarBusqueda('ma')}
+                >
+                  Mes Anterior
+                </button>
+                <button
+                  type="button"
+                  className={valores.tipoFecha === 'ef' ? styles.active : ''}
+                  onClick={() => setValores({ ...valores, tipoFecha: 'ef' })}
+                >
+                  Rango
+                </button>
+              </div>
+            </div>
+
+            {/* Rango Personalizado */}
             {valores.tipoFecha === 'ef' && (
               <>
-                <Col lg>
-                  <Form.Label>Inicio</Form.Label>
-                  <Form.Control type="date" name="fini" value={valores.fini} onChange={handleChange} required />
-                </Col>
-                <Col lg>
-                  <Form.Label>Fin</Form.Label>
-                  <Form.Control type="date" name="ffin" value={valores.ffin} onChange={handleChange} required />
-                </Col>
+                <div className={styles.filterGroup}>
+                  <label>Fecha Inicio</label>
+                  <input type="date" name="fini" value={valores.fini} onChange={handleChange} required />
+                </div>
+                <div className={styles.filterGroup}>
+                  <label>Fecha Fin</label>
+                  <input type="date" name="ffin" value={valores.ffin} onChange={handleChange} required />
+                </div>
               </>
             )}
 
-            <Col lg className={styles.RepoProduAcciones}>
-              <Button variant="info" type="submit" block>
-                <RiSearchLine size={22} /> Buscar
-              </Button>
-              <Button variant="success" block onClick={exportToExcel}>
-                Descargar Excel
-              </Button>
-            </Col>
-          </Row>
-        </Form>
-      </Botonera>
+            {/* Acciones */}
+            <div className={styles.actionsArea}>
+              <button type="button" className={styles.btnSecondary} onClick={exportToExcel}>
+                <RiFileExcel2Line />
+                Exportar Excel
+              </button>
+              <button type="submit" className={styles.btnPrimary}>
+                <RiSearchLine />
+                Buscar Reporte
+              </button>
+            </div>
+
+          </div>
+        </form>
+      </div>
 
       {procesando ? (
-        <div className={styles.spinnerOverlay}>
-          <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem' }} />
-          <div className={styles.spinnerText}>Procesando datos de producción...</div>
+        <div className={styles.loadingOverlay}>
+          <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem', color: '#17A2B8' }} />
+          <div className={styles.loadingText}>Procesando datos de producción...</div>
         </div>
       ) : tamboSel ? (
         producciones.length === 0 ? (
-          <Mensaje>
-            <div className={styles.mensajeCaja}>
-              <h2 className={styles.tituloSinResultados}>Sin resultados</h2>
-              <p className={styles.textoSecundario}>
-                Presione el rango de fecha que quiere mostrar para ver los resultados
-              </p>
-            </div>
-          </Mensaje>
+          <div className={styles.emptyState}>
+            <svg className={styles.illustration} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#E9ECEF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 13V13.01" stroke="#E9ECEF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 7V10" stroke="#E9ECEF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <h2>No se encontraron registros</h2>
+            <p>Ajuste el período seleccionado o el rango de fechas para visualizar información.</p>
+            <button className={styles.btnSecondary} onClick={() => realizarBusqueda('mv')} style={{ marginTop: '16px' }}>
+              Restablecer filtros
+            </button>
+          </div>
         ) : (
-          <Contenedor className={styles.RepoProduWrapper}>
-            {/* Encabezado fijo */}
-            <div className={styles.RepoProduEncabezado}>
-              <div className={styles.RepoProduTopbar}>
-                <div className={styles.RepoProduResumen}>
+          <>
+            {/* Resumen de totales */}
+            <div className={styles.filterCard} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: '#343A40', alignItems: 'center' }}>
                   <span><strong>Total Producido:</strong> {formatMiles(totales.produccion)}</span>
                   <span><strong>Total Descarte:</strong> {formatMiles(totales.descarte)}</span>
                   <span><strong>Total Guachera:</strong> {formatMiles(totales.guachera)}</span>
@@ -367,42 +385,42 @@ const Produccion = () => {
                   <span><strong>Total Prom. Individual:</strong> {typeof totales.promedioIndividual === 'number'
                     ? totales.promedioIndividual.toFixed(1)
                     : '-'}</span>
+                  <span><strong>Datos de tambo:</strong> <strong><span style={{ fontSize: '20px', textDecoration: 'underline', textDecorationColor: '#28a745', textDecorationThickness: '5px' }}>{tamboSel?.nombre || '-'}</span></strong></span>
                 </div>
-
-                <div className={styles.RepoProduTopbarRight}>
+                <div>
                   <Button
-                    className={styles.RepoProduGrafico}
                     onClick={() => setMostrarGrafico(!mostrarGrafico)}
                     variant="dark"
+                    style={{ fontSize: '13px', padding: '6px 12px' }}
                   >
                     {mostrarGrafico ? 'Ocultar gráfico' : 'Ver gráfico prod. individual'}
                   </Button>
                 </div>
               </div>
-
               {mostrarGrafico && (
-                <GraficoProduccion
-                  data={producciones}
-                  promedioTotal={totales.promedioIndividual}
-                />
+                <div style={{ marginTop: '12px' }}>
+                  <GraficoProduccion
+                    data={producciones}
+                    promedioTotal={totales.promedioIndividual}
+                  />
+                </div>
               )}
             </div>
 
-            {/* Tabla con scroll */}
-            <div className={styles.RepoProduTablaWrapper}>
-              <Table bordered hover className={styles.RepoProduTabla}>
-
+            {/* Tabla moderna */}
+            <div className={styles.modernTableContainer}>
+              <table className={styles.modernTable}>
                 <thead>
                   <tr>
                     <th>Fecha</th>
-                    <th>Prod. M</th>
-                    <th>Prod. T</th>
+                    <th><ThTooltip label="Prod. M" texto="Producción Mañana" /></th>
+                    <th><ThTooltip label="Prod. T" texto="Producción Tarde" /></th>
                     <th>Producción</th>
-                    <th>Desc. M</th>
-                    <th>Desc. T</th>
+                    <th><ThTooltip label="Desc. M" texto="Descarte Mañana" /></th>
+                    <th><ThTooltip label="Desc. T" texto="Descarte Tarde" /></th>
                     <th>Descarte</th>
-                    <th>Guach. M</th>
-                    <th>Guach. T</th>
+                    <th><ThTooltip label="Guach. M" texto="Guachera Mañana" /></th>
+                    <th><ThTooltip label="Guach. T" texto="Guachera Tarde" /></th>
                     <th>Guachera</th>
                     <th>Entregados</th>
                     <th>Vacas en Ordeñe</th>
@@ -417,9 +435,9 @@ const Produccion = () => {
                     <DetalleProduccion key={p.id} prod={p} />
                   ))}
                 </tbody>
-              </Table>
+              </table>
             </div>
-          </Contenedor>
+          </>
         )
       ) : (
         <SelectTambo />

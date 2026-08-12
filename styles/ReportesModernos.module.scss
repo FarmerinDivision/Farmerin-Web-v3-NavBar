@@ -1,0 +1,408 @@
+/* ==============================================================
+   ReportesModernos.module.scss
+   Diseño UX/UI Avanzado para Reporte Dirsa y Control Lechero
+   ============================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.reporteRoot {
+  font-family: 'Inter', sans-serif;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+  color: #1f2937;
+  background-color: #f9fafb; /* Fondo muy claro */
+  min-height: calc(100vh - 64px);
+
+  /* Reset de Bootstrap nativo que pueda interferir */
+  select, input, button {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* ==================
+   ENCABEZADO
+================== */
+.headerTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.02em;
+}
+
+.headerSubtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+}
+
+/* ==================
+   TOOLBAR (FILTROS)
+================== */
+.toolbarCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.toolbarRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end; /* Alinea los inputs y botones abajo */
+  gap: 16px;
+  width: 100%;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
+    margin: 0;
+  }
+
+  select, input[type="date"] {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    color: #111827;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    min-width: 140px;
+
+    &:hover {
+      border-color: #9ca3af;
+    }
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      background-color: #fff;
+    }
+  }
+}
+
+/* Segmented Control (Mes Actual, Mes Anterior, Rango) */
+.segmentedControl {
+  display: inline-flex;
+  background-color: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+  height: 40px;
+  
+  button {
+    background: transparent;
+    border: none;
+    padding: 0 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #6b7280;
+    border-radius: 6px;
+    transition: all 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      color: #374151;
+    }
+
+    &.active {
+      background: #ffffff;
+      color: #111827;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+  }
+}
+
+/* ==================
+   BOTONES
+================== */
+.actionsArea {
+  display: flex;
+  gap: 12px;
+  margin-left: auto; /* Empuja a la derecha */
+}
+
+.btnPrimary {
+  height: 40px;
+  background-color: #111827; /* Azul oscuro/Negro corporativo */
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 20px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+
+  &:hover {
+    background-color: #374151;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+}
+
+.btnSecondary {
+  height: 40px;
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+  }
+}
+
+/* ==================
+   KPI GRID (Tarjetas)
+================== */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.kpiCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+  }
+
+  .kpiIcon {
+    width: 48px;
+    height: 48px;
+    background-color: #f3f4f6;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #3b82f6; /* Azul primario */
+  }
+
+  .kpiContent {
+    display: flex;
+    flex-direction: column;
+
+    .kpiLabel {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .kpiValue {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1;
+    }
+  }
+}
+
+/* ==================
+   TABLA MODERNA
+================== */
+.tableCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden; /* Cortar bordes para la tabla */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.modernTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+
+  th {
+    background-color: #f9fafb;
+    padding: 12px 24px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+
+    .thContent {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+
+  .sortableTh {
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+      color: #111827;
+    }
+  }
+
+  .sortIcon {
+    opacity: 0.5;
+  }
+
+  td {
+    padding: 14px 24px;
+    font-size: 0.9rem;
+    color: #111827;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+  }
+
+  tbody tr {
+    transition: background-color 0.15s;
+
+    &:hover {
+      background-color: #f9fafb;
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+  }
+}
+
+/* ==================
+   BADGES & CHIPS
+================== */
+.litrosBadge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #eff6ff; /* Azul muy claro */
+  color: #1d4ed8; /* Azul intenso */
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.vistoBadge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #dcfce7;
+  color: #166534;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #166534;
+    margin-right: 6px;
+  }
+}
+
+/* ==================
+   LOADING & EMPTY
+================== */
+.loadingOverlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  color: #6b7280;
+
+  .loadingText {
+    margin-top: 16px;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  
+  .emoji {
+    font-size: 3rem;
+    margin-bottom: 16px;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 8px;
+  }
+  
+  p {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+}
+
+.tableToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e7eb;
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+  }
+}

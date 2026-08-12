@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import styles from '../../styles/Sidebar.module.scss';
 import { FirebaseContext } from '../../firebase2';
@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateValor } from '../../redux/valorSlice';
 import { useAdmin } from '../utils/AdminContext';
 
-const NavBar = () => {
+const NavBar = ({ noStickyHeader }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleMobileMenu = () => setMenuOpen(!menuOpen);
   const { usuario, firebase, tambos, guardarTamboSel, tamboSel, porc } = useContext(FirebaseContext);
@@ -23,6 +23,60 @@ const NavBar = () => {
   const dispatch = useDispatch();
   const valor = useSelector((state) => state.valor);
   const { isAdminMode } = useAdmin();
+  const router = useRouter();
+
+  const navRef = useRef(null);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [activeSubDropdown, setActiveSubDropdown] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (navRef.current && !navRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+        setActiveSubDropdown(null);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setActiveDropdown(null);
+        setActiveSubDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const toggleDropdown = (menuName) => {
+    if (activeDropdown === menuName) {
+      setActiveDropdown(null);
+      setActiveSubDropdown(null);
+    } else {
+      setActiveDropdown(menuName);
+      setActiveSubDropdown(null);
+    }
+  };
+
+  const toggleSubDropdown = (e, subMenuName) => {
+    e.stopPropagation();
+    if (activeSubDropdown === subMenuName) {
+      setActiveSubDropdown(null);
+    } else {
+      setActiveSubDropdown(subMenuName);
+    }
+  };
+
+  const closeMenus = () => {
+    setActiveDropdown(null);
+    setActiveSubDropdown(null);
+    setMenuOpen(false);
+  };
 
   useEffect(() => {
     if (porc !== undefined) {
@@ -182,7 +236,7 @@ const NavBar = () => {
 
 
   return (
-    <header className={styles.navbar}>
+    <header className={styles.navbar} ref={navRef}>
       <div className={styles.navContainer}>
         <div className={styles.logo}>
           <Link href="/">
@@ -198,89 +252,163 @@ const NavBar = () => {
         </button>
 
         <nav className={`${styles.navLinks} ${menuOpen ? styles.active : ''}`}>
-          <Link href="/"><span>Tambos</span></Link>
-          <Link href="/animales"><span>Animales</span></Link>
+          <Link href="/"><span onClick={closeMenus}>Tambos</span></Link>
+          <Link href="/animales"><span onClick={closeMenus}>Animales</span></Link>
 
           {isAdminMode && (
             <div className={styles.dropdown}>
-              <button className={styles.dropbtn}>Administrador</button>
-              <div className={styles.dropdownContent}>
-                <Link href="/MOTIVODEBAJA"><span>Herramientas Administrativas</span></Link>
-                <Link href="/migrarEvento"><span>Migrar Evento</span></Link>
-                <Link href="/EncontrarERP"><span>Encontrar ERP</span></Link>
-                <Link href="/CambioRodeo"><span>Cambio Rodeo</span></Link>
-                <Link href="/CambioAseca"><span>Cambio a Seca</span></Link>
-                <Link href="/CambioEvento"><span>Cambio Evento</span></Link>
-                <Link href="/busquedaNuevaFuncion"><span>Cambio de Fracion a TimeStamp</span></Link>
-                <Link href="/BotonAgregar"><span>Boton Agregar Campo</span></Link>
-                <Link href="/agregarIDTAMBO"><span>Agregar ID Tambo a Eventos</span></Link>
-                <Link href="/colocarTemperatura"><span>Colocar Temperatura</span></Link>
-                <Link href="/AgregarCAanimal"><span>Agregar CA a Animales</span></Link>
-              </div>
+              <button
+                className={`${styles.dropbtn} ${activeDropdown === 'admin' ? styles.activeBtn : ''}`}
+                onClick={() => toggleDropdown('admin')}
+                aria-expanded={activeDropdown === 'admin'}
+                aria-haspopup="true"
+              >
+                Administrador
+                <span className={styles.arrow}>▼</span>
+              </button>
+              {activeDropdown === 'admin' && (
+                <div className={styles.dropdownContent}>
+                  <Link href="/MOTIVODEBAJA"><span onClick={closeMenus}>Herramientas Administrativas</span></Link>
+                  <Link href="/migrarEvento"><span onClick={closeMenus}>Migrar Evento</span></Link>
+                  <Link href="/EncontrarERP"><span onClick={closeMenus}>Encontrar ERP</span></Link>
+                  <Link href="/CambioRodeo"><span onClick={closeMenus}>Cambio Rodeo</span></Link>
+                  <Link href="/CambioAseca"><span onClick={closeMenus}>Cambio a Seca</span></Link>
+                  <Link href="/CambioEvento"><span onClick={closeMenus}>Cambio Evento</span></Link>
+                  <Link href="/busquedaNuevaFuncion"><span onClick={closeMenus}>Cambio de Fracion a TimeStamp</span></Link>
+                  <Link href="/BotonAgregar"><span onClick={closeMenus}>Boton Agregar Campo</span></Link>
+                  <Link href="/agregarIDTAMBO"><span onClick={closeMenus}>Agregar ID Tambo a Eventos</span></Link>
+                  <Link href="/colocarTemperatura"><span onClick={closeMenus}>Colocar Temperatura</span></Link>
+                  <Link href="/AgregarCAanimal"><span onClick={closeMenus}>Agregar CA a Animales</span></Link>
+                </div>
+              )}
             </div>
           )}
 
           <div className={styles.dropdown}>
-            <button className={styles.dropbtn}>Nutrición</button>
+            <button
+              className={`${styles.dropbtn} ${activeDropdown === 'nutricion' ? styles.activeBtn : ''}`}
+              onClick={() => toggleDropdown('nutricion')}
+              aria-expanded={activeDropdown === 'nutricion'}
+              aria-haspopup="true"
+            >
+              Nutrición
+              <span className={styles.arrow}>▼</span>
+            </button>
 
-            <div className={styles.dropdownContent}>
+            {activeDropdown === 'nutricion' && (
+              <div className={styles.dropdownContent}>
+                <Link href="/parametros"><span onClick={closeMenus}>Parámetros</span></Link>
+                <Link href="/control"><span onClick={closeMenus}>Control</span></Link>
 
-              <Link href="/parametros"><span>Parámetros</span></Link>
-              <Link href="/control"><span>Control</span></Link>
+                {/* SUBMENÚ LATERAL Control Lechero */}
+                <div className={styles.subDropdown}>
+                  <button
+                    className={`${styles.subDropbtn} ${activeSubDropdown === 'controlLechero' ? styles.activeBtn : ''}`}
+                    onClick={(e) => toggleSubDropdown(e, 'controlLechero')}
+                    aria-expanded={activeSubDropdown === 'controlLechero'}
+                    aria-haspopup="true"
+                  >
+                    Control Lechero
+                    <span className={styles.arrow}>▼</span>
+                  </button>
 
-              {/* SUBMENÚ LATERAL Control Lechero */}
-              <div className={styles.subDropdown}>
-                <span className={styles.subDropbtn}>Control Lechero</span>
-
-                <div className={styles.subDropdownContent}>
-                  <Link href="/controlLechero"><span>Cargar Control Lechero</span></Link>
-                  <Link href="/ControlLecheroMensual"><span>Reporte Control Lechero</span></Link>
+                  {activeSubDropdown === 'controlLechero' && (
+                    <div className={styles.subDropdownContent}>
+                      <Link href="/controlLechero"><span onClick={closeMenus}>Cargar Control Lechero</span></Link>
+                      <Link href="/ControlLecheroMensual"><span onClick={closeMenus}>Reporte Control Lechero</span></Link>
+                    </div>
+                  )}
                 </div>
+
               </div>
-
-            </div>
-          </div>
-
-
-
-          <div className={styles.dropdown}>
-            <button className={styles.dropbtn}>Reportes</button>
-            <div className={styles.dropdownContent}>
-              <Link href="/gralAnimales"><span>Gral. Animales</span></Link>
-              <Link href="/produccion"><span>Producción</span></Link>
-              <Link href="/parteDiario"><span>Parte Diario</span></Link>
-              <Link href="/recepciones"><span>Recepciones</span></Link>
-            </div>
+            )}
           </div>
 
           <div className={styles.dropdown}>
-            <button className={styles.dropbtn}>Herramientas</button>
-            <div className={styles.dropdownContent}>
-              <Link href="/monitor"><span>Monitor de Ingreso</span></Link>
-              <Link href="/raciones"><span>Control de Ingreso</span></Link>
-              <Link href="/IngresosTurnos"><span>Control de Turnos</span></Link>
-            </div>
+            <button
+              className={`${styles.dropbtn} ${activeDropdown === 'reportes' ? styles.activeBtn : ''}`}
+              onClick={() => toggleDropdown('reportes')}
+              aria-expanded={activeDropdown === 'reportes'}
+              aria-haspopup="true"
+            >
+              Reportes
+              <span className={styles.arrow}>▼</span>
+            </button>
+
+            {activeDropdown === 'reportes' && (
+              <div className={styles.dropdownContent}>
+                <Link href="/gralAnimales"><span onClick={closeMenus}>Gral. Animales</span></Link>
+                <Link href="/produccion"><span onClick={closeMenus}>Producción</span></Link>
+                <Link href="/parteDiario"><span onClick={closeMenus}>Parte Diario</span></Link>
+                <Link href="/recepciones"><span onClick={closeMenus}>Recepciones</span></Link>
+                <Link href="/GestionDeRemitos"><span onClick={closeMenus}>Gestion de Remitos</span></Link>
+              </div>
+            )}
           </div>
 
           <div className={styles.dropdown}>
-            <button className={styles.dropbtn}>Configuración</button>
-            <div className={styles.dropdownContent}>
-              <Link href="/listados"><span>Listados</span></Link>
-              <Link href="/altaMasiva"><span>Alta Masiva</span></Link>
-              <Link href="/actualizacion"><span>Actualización Masiva</span></Link>
-            </div>
+            <button
+              className={`${styles.dropbtn} ${activeDropdown === 'herramientas' ? styles.activeBtn : ''}`}
+              onClick={() => toggleDropdown('herramientas')}
+              aria-expanded={activeDropdown === 'herramientas'}
+              aria-haspopup="true"
+            >
+              Herramientas
+              <span className={styles.arrow}>▼</span>
+            </button>
+
+            {activeDropdown === 'herramientas' && (
+              <div className={styles.dropdownContent}>
+                <Link href="/monitor"><span onClick={closeMenus}>Monitor de Ingreso</span></Link>
+                <Link href="/raciones"><span onClick={closeMenus}>Control de Ingreso</span></Link>
+                <Link href="/IngresosTurnos"><span onClick={closeMenus}>Control de Turnos</span></Link>
+              </div>
+            )}
           </div>
+
           <div className={styles.dropdown}>
-            <button className={styles.dropbtn}>Dirsa</button>
-            <div className={styles.dropdownContent}>
-              <Link href="/dirsa"><span>Cargar eventos</span></Link>
-              <Link href="/ProductividadMensualDirsa"><span>Reporte de producción</span></Link>
-              <Link href="/reporteDirsa"><span>Reporte de eventos</span></Link>
-            </div>
+            <button
+              className={`${styles.dropbtn} ${activeDropdown === 'configuracion' ? styles.activeBtn : ''}`}
+              onClick={() => toggleDropdown('configuracion')}
+              aria-expanded={activeDropdown === 'configuracion'}
+              aria-haspopup="true"
+            >
+              Configuración
+              <span className={styles.arrow}>▼</span>
+            </button>
+
+            {activeDropdown === 'configuracion' && (
+              <div className={styles.dropdownContent}>
+                <Link href="/listados"><span onClick={closeMenus}>Listados</span></Link>
+                <Link href="/altaMasiva"><span onClick={closeMenus}>Alta Masiva</span></Link>
+                <Link href="/actualizacion"><span onClick={closeMenus}>Actualización Masiva</span></Link>
+              </div>
+            )}
           </div>
-          <Link href="/ayuda"><span>Ayuda</span></Link>
+
+          <div className={styles.dropdown}>
+            <button
+              className={`${styles.dropbtn} ${activeDropdown === 'dirsa' ? styles.activeBtn : ''}`}
+              onClick={() => toggleDropdown('dirsa')}
+              aria-expanded={activeDropdown === 'dirsa'}
+              aria-haspopup="true"
+            >
+              Dirsa
+              <span className={styles.arrow}>▼</span>
+            </button>
+
+            {activeDropdown === 'dirsa' && (
+              <div className={styles.dropdownContent}>
+                <Link href="/dirsa"><span onClick={closeMenus}>Cargar eventos</span></Link>
+                <Link href="/ProductividadMensualDirsa"><span onClick={closeMenus}>Reporte de producción</span></Link>
+                <Link href="/reporteDirsa"><span onClick={closeMenus}>Reporte de eventos</span></Link>
+              </div>
+            )}
+          </div>
+
+          <Link href="/ayuda"><span onClick={closeMenus}>Ayuda</span></Link>
           <Link href="/perfilFarmerin">
-            <span style={{ position: "relative", display: "inline-block" }}>
+            <span onClick={closeMenus} style={{ position: "relative", display: "inline-block" }}>
               Mi Farmerin - {tamboSel.nombre}
               {ultimoCambio && !ultimoCambio.visto && (
                 <Badge

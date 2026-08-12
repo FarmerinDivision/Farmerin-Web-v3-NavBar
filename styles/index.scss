@@ -11,7 +11,7 @@ $icon-size: 35px;
 
 
 #__next {
-  height: 100%;
+  min-height: 100vh;
 }
 
 .app {
@@ -132,7 +132,6 @@ $icon-size: 35px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
     background-color: whitesmoke;
 
     header {
@@ -143,9 +142,6 @@ $icon-size: 35px;
       justify-content: space-between;
       height: 5rem;
       width: 100%;
-      position: fixed;
-      top: 0;
-      z-index: 1;
       background-color: #212f49; //#5b5d5f 
       border: 0;
       box-shadow: 0 2px 2px 0 rgba(60, 75, 100, .14), 0 3px 1px -2px rgba(60, 75, 100, .12), 0 1px 5px 0 rgba(60, 75, 100, .2);
@@ -2103,7 +2099,7 @@ button.btn-info:hover {
   /* Asegura que esté encima de otros elementos */
 }
 
-.modal-content {
+.modal-overlay .modal-content {
   background-color: #fff;
   padding: 20px;
   border-radius: 10px;

@@ -1,17 +1,21 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
-import { Botonera, Mensaje, ContenedorSpinner, Contenedor } from '../components/ui/Elementos';
 import Layout from '../components/layout/layout';
 import SelectTambo from '../components/layout/selectTambo';
-import StickyTable from "react-sticky-table-thead";
 import DetalleEvento from '../components/layout/detalleEvento';
-import { Button, Form, Row, Col, Alert, Spinner, Table, ButtonGroup, Modal } from 'react-bootstrap';
+import { Alert, Modal } from 'react-bootstrap';
 import { RiSearchLine, RiFileExcel2Fill } from 'react-icons/ri';
-import { format, subDays, addDays } from 'date-fns'
-import ReactExport from "react-export-excel";
+import { format, subDays } from 'date-fns';
+import ReactExport from "../components/utils/ExcelExport";
 import { FaSort } from 'react-icons/fa';
-import styles from '../styles/Dirsa.module.scss'
+import styles from '../styles/ReportesModernos.module.scss';
 
+const Loader = () => (
+  <div className={styles.loadingOverlay}>
+    <div className="spinner-border text-info" role="status" style={{ width: '3rem', height: '3rem' }}></div>
+    <div className={styles.loadingText}>Procesando datos del reporte Dirsa...</div>
+  </div>
+);
 
 const ReporteDirsa = () => {
 
@@ -25,7 +29,7 @@ const ReporteDirsa = () => {
 
   const [eventos, guardarEventos] = useState([]);
   const [procesando, guardarProcesando] = useState(false);
-  const { fini, ffin, inicio, fin, visto, tipo, tipoFecha } = valores;
+  const { fini, ffin, visto, tipo, tipoFecha } = valores;
   const { firebase, tamboSel, usuario } = useContext(FirebaseContext);
   const [orderRp, guardarOrderRp] = useState('asc');
   const [orderFecha, guardarOrderFecha] = useState('asc');
@@ -38,7 +42,6 @@ const ReporteDirsa = () => {
   const ExcelSheet = ReactExport.ExcelFile.ExcelSheet;
   const ExcelColumn = ReactExport.ExcelFile.ExcelColumn;
 
-  // Generar nombre de archivo Excel dinámico con fecha/filtros
   const excelFilename = (() => {
     try {
       const hoy = format(Date.now(), 'yyyy-MM-dd');
@@ -67,37 +70,24 @@ const ReporteDirsa = () => {
   })();
 
   useEffect(() => {
+    if (tamboSel) buscarAnimales();
+  }, [tamboSel]);
 
-    if (tamboSel) {
-      buscarAnimales()
-    }
-  }, [tamboSel])
   useEffect(() => {
-
-    if (tamboSel) {
-      buscarAnimales()
-    }
-  }, [])
+    if (tamboSel) buscarAnimales();
+  }, []);
 
   function buscarAnimales() {
     try {
-
-      firebase.db.collection('animal').where('idtambo', '==', tamboSel.id).get().then(snapshotAnimal);
+      firebase.db.collection('animal').where('idtambo', '==', tamboSel?.id).get().then(snapshotAnimal);
     } catch (error) {
       setMensajeAlert(error.message);
       setShowAlert(true);
-
     }
-
   }
-  function snapshotAnimal(snapshot) {
-    const an = snapshot.docs.map(doc => {
-      return {
-        id: doc.id,
-        ...doc.data()
-      }
-    })
 
+  function snapshotAnimal(snapshot) {
+    const an = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     guardarAnimales(an);
   }
 
@@ -105,13 +95,10 @@ const ReporteDirsa = () => {
     return new Promise(res => setTimeout(res, delay));
   }
 
-
-
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, overrideTipoFecha = null) => {
+    if (e) e.preventDefault();
     guardarProcesando(true);
-    guardarEventos([]); // limpiamos los eventos antes de la búsqueda
+    guardarEventos([]);
 
     let iniciob, finb;
     let inicioAux;
@@ -119,25 +106,27 @@ const ReporteDirsa = () => {
     finAux = finAux + 'T21:59:00';
     let ff = valores.ffin + 'T21:59:00';
 
-    if (tipoFecha === "ef") {
+    const activeTipoFecha = overrideTipoFecha || tipoFecha;
+
+    if (activeTipoFecha === "ef") {
       iniciob = firebase.fechaTimeStamp(valores.fini);
       finb = firebase.fechaTimeStamp(ff);
     }
 
-    if (tipoFecha === "ud") {
+    if (activeTipoFecha === "ud") {
       inicioAux = subDays(Date.now(), 1);
       inicioAux = format(inicioAux, 'yyyy-MM-dd');
       iniciob = firebase.fechaTimeStamp(inicioAux);
       finb = firebase.fechaTimeStamp(finAux);
     }
 
-    if (tipoFecha === "mv") {
+    if (activeTipoFecha === "mv") {
       const primerDiaMes = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
       iniciob = firebase.fechaTimeStamp(primerDiaMes);
       finb = firebase.fechaTimeStamp(ff);
     }
 
-    if (tipoFecha === "ma") {
+    if (activeTipoFecha === "ma") {
       const actual = new Date();
       const primerDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth() - 1, 1);
       const ultimoDiaMesAnterior = new Date(actual.getFullYear(), actual.getMonth(), 0);
@@ -145,31 +134,26 @@ const ReporteDirsa = () => {
       finb = firebase.fechaTimeStamp(format(ultimoDiaMesAnterior, 'yyyy-MM-dd') + 'T21:59:00');
     }
 
-    // Ejecutamos la búsqueda de eventos por animal
     animales.forEach(a => {
       buscarEventos(a, iniciob, finb);
     });
 
-    // Esperamos a que se completen las búsquedas (espera artificial)
     await timeout(3000);
-
-    // Eliminar duplicados antes de guardar
     guardarEventos(eventosPrevios => eliminarEventosDuplicados(eventosPrevios));
-
     guardarProcesando(false);
-
   };
 
-
   const handleChange = e => {
-    e.preventDefault();
+    if (e.preventDefault) e.preventDefault();
     guardarValores({
       ...valores,
       [e.target.name]: e.target.value
     });
 
+    if (e.target.name === 'tipoFecha' && (e.target.value === 'ud' || e.target.value === 'mv' || e.target.value === 'ma')) {
+      setTimeout(() => handleSubmit(null, e.target.value), 0);
+    }
   }
-
 
   function buscarEventos(an, iniciob, finb) {
     try {
@@ -177,33 +161,17 @@ const ReporteDirsa = () => {
         .where('fecha', '>=', iniciob)
         .where('fecha', '<=', finb);
 
-      /* 
-      SE COMENTA EL FILTRADO EN CONSULTA PORQUE REQUIERE ÍNDICES COMPUESTOS 
-      Y FALLA SI NO ESTÁN CREADOS. EL FILTRADO SE HACE AHORA EN EL CLIENTE.
-      
-      // Filtro de visto
-      if (visto !== 'todos') {
-        if (visto === 'true') query = query.where('vistoUsuario', 'array-contains', usuario.uid);
-      }
-
-      // Filtro de tipo de evento
-      if (tipo !== 'todos') {
-        query = query.where('tipo', '==', tipo);
-      }
-      */
-
       function snapshotEventos(snapshot) {
         const nuevosEventos = [];
 
         snapshot.docs.forEach(doc => {
           const data = doc.data();
 
-          // ❌ Excluir eventos de Control Lechero
           if (
             data.tipo === 'Control Lechero' ||
             data.tipo === 'Control Lechero mediante planilla Dirsa'
           ) {
-            return; // salta este evento
+            return;
           }
 
           let fevento;
@@ -229,17 +197,12 @@ const ReporteDirsa = () => {
             ...data
           };
 
-          // ✅ Filtrar solo eventos cuyo campo usuario contenga " - Dirsa"
           if (typeof e.usuario === 'string' && e.usuario.includes(' - Dirsa')) {
-            
-            // ✅ Filtro por tipo de evento (Cliente)
             const coincideTipo = tipo === 'todos' || e.tipo === tipo;
-            
-            // ✅ Filtro por estado (Visto / Pendiente) (Cliente)
             const esVisto = e.vistoUsuario && e.vistoUsuario.indexOf(usuario.uid) !== -1;
-            const coincideVisto = 
-              visto === 'todos' || 
-              (visto === 'true' && esVisto) || 
+            const coincideVisto =
+              visto === 'todos' ||
+              (visto === 'true' && esVisto) ||
               (visto === 'false' && !esVisto);
 
             if (coincideTipo && coincideVisto) {
@@ -248,7 +211,6 @@ const ReporteDirsa = () => {
           }
         });
 
-        // Fusionar con eventos actuales y eliminar duplicados
         guardarEventos(eventosPrevios => {
           const todos = [...eventosPrevios, ...nuevosEventos];
           return eliminarEventosDuplicados(todos);
@@ -262,8 +224,6 @@ const ReporteDirsa = () => {
       setShowAlert(true);
     }
   }
-
-
 
   const handleClickRP = e => {
     e.preventDefault();
@@ -290,6 +250,7 @@ const ReporteDirsa = () => {
       guardarEventos(b);
     }
   }
+
   const handleClickEvento = e => {
     e.preventDefault();
     if (orderEvento == 'asc') {
@@ -303,13 +264,10 @@ const ReporteDirsa = () => {
     }
   }
 
-  /* ELIMINAR DUPLICADOS */
   function eliminarEventosDuplicados(eventos) {
     const mapa = new Map();
-
     eventos.forEach(evento => {
       let fechaMillis;
-
       if (evento.fecha?.toDate) {
         fechaMillis = evento.fecha.toDate().setHours(0, 0, 0, 0);
       } else if (evento.fecha instanceof Date) {
@@ -326,17 +284,21 @@ const ReporteDirsa = () => {
           fechaMillis = evento.fevento;
         }
       }
-
       const clave = `${fechaMillis}-${evento.rp}-${evento.tipo}`;
-
       if (!mapa.has(clave)) {
         mapa.set(clave, evento);
       }
     });
-
     return Array.from(mapa.values());
   }
 
+  const totalEventos = eventos.length;
+  const eventosVistos = eventos.filter(e => e.vistoUsuario && e.vistoUsuario.indexOf(usuario?.uid) !== -1).length;
+  const eventosPendientes = totalEventos - eventosVistos;
+
+  if (!tamboSel) {
+    return <Layout titulo="Reporte Dirsa" style={{ paddingTop: 0 }}><SelectTambo /></Layout>;
+  }
 
   return (
     <Layout titulo="Reporte de eventos" style={{ paddingTop: 0 }}>
@@ -349,103 +311,143 @@ const ReporteDirsa = () => {
         </Modal.Body>
       </Modal>
 
-      <Botonera>
-        <h2 className={styles.tituloDirsa}>
-          Reporte de Eventos <u>Dirsa</u>
-        </h2>
+      <div className={styles.reporteRoot}>
 
-        <Form onSubmit={handleSubmit}>
-          <Row style={{ alignItems: 'center' }}>
-            <Col>
-              <Form.Label>Ver Reporte de Evento desde:</Form.Label>
-              <br />
-              <ButtonGroup className={styles.botoneraAccionesMF}>
-                <div className={styles.parteTooltip}>
-                  <Button
-                    className={`${styles.parteBtn} ${valores.tipoFecha === 'mv' ? 'activo' : ''
-                      }`}
-                    variant="info"
-                    name="tipoFecha"
-                    value="mv"
-                    onClick={handleChange}
-                  >
-                    MES EN CURSO
-                  </Button>
-                  <span className={styles.parteTooltipText}>Mes en curso</span>
-                </div>
-                <div className={styles.parteTooltip}>
-                  <Button
-                    className={`${styles.parteBtn} ${valores.tipoFecha === 'ma' ? 'activo' : ''
-                      }`}
-                    variant="info"
-                    name="tipoFecha"
-                    value="ma"
-                    onClick={handleChange}
-                  >
-                    MES ANTERIOR
-                  </Button>
-                  <span className={styles.parteTooltipText}>Mes anterior</span>
-                </div>
-                <div className={styles.parteTooltip}>
-                  <Button
-                    className={`${styles.parteBtn} ${valores.tipoFecha === 'ef' ? 'activo' : ''
-                      }`}
-                    variant="info"
-                    name="tipoFecha"
-                    value="ef"
-                    onClick={handleChange}
-                  >
-                    POR FECHA
-                  </Button>
-                  <span className={styles.parteTooltipText}>Selecciona un rango de fechas</span>
-                </div>
-              </ButtonGroup>
-            </Col>
+        {/* ENCABEZADO */}
+        <h1 className={styles.headerTitle}>Reporte de Eventos Dirsa</h1>
+        <p className={styles.headerSubtitle}>Visualice y exporte los eventos registrados específicamente para Dirsa.</p>
+
+        {/* TOOLBAR HORIZONTAL */}
+        <div className={styles.toolbarCard}>
+          <form onSubmit={handleSubmit} className={styles.toolbarRow}>
+
+            <div className={styles.filterGroup}>
+              <label>Período Rápido</label>
+              <div className={styles.segmentedControl}>
+                <button
+                  type="button"
+                  name="tipoFecha"
+                  value="mv"
+                  className={valores.tipoFecha === 'mv' ? styles.active : ''}
+                  onClick={(e) => {
+                    const fakeEvent = { target: { name: 'tipoFecha', value: 'mv' }, preventDefault: () => { } };
+                    handleChange(fakeEvent);
+                  }}
+                >Mes Actual</button>
+                <button
+                  type="button"
+                  name="tipoFecha"
+                  value="ma"
+                  className={valores.tipoFecha === 'ma' ? styles.active : ''}
+                  onClick={(e) => {
+                    const fakeEvent = { target: { name: 'tipoFecha', value: 'ma' }, preventDefault: () => { } };
+                    handleChange(fakeEvent);
+                  }}
+                >Mes Anterior</button>
+                <button
+                  type="button"
+                  name="tipoFecha"
+                  value="ef"
+                  className={valores.tipoFecha === 'ef' ? styles.active : ''}
+                  onClick={(e) => {
+                    const fakeEvent = { target: { name: 'tipoFecha', value: 'ef' }, preventDefault: () => { } };
+                    handleChange(fakeEvent);
+                  }}
+                >Rango</button>
+              </div>
+            </div>
 
             {valores.tipoFecha === 'ef' && (
               <>
-                <Col>
-                  <Form.Group>
-                    <Form.Label>Inicio</Form.Label>
-                    <Form.Control
-                      type="date"
-                      id="fini"
-                      name="fini"
-                      value={fini}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group>
-                    <Form.Label>Fin</Form.Label>
-                    <Form.Control
-                      type="date"
-                      id="ffin"
-                      name="ffin"
-                      value={ffin}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
+                <div className={styles.filterGroup}>
+                  <label>Desde</label>
+                  <input type="date" name="fini" value={fini} onChange={handleChange} required />
+                </div>
+                <div className={styles.filterGroup}>
+                  <label>Hasta</label>
+                  <input type="date" name="ffin" value={ffin} onChange={handleChange} required />
+                </div>
               </>
             )}
 
-            <Col>
-              <div className={styles.botoneraAcciones}>
-                <div className={styles.tooltipExcel}>
-                  <Button type="submit" className={styles.btnBuscar}>
-                    <RiSearchLine size={22} /> Buscar
-                    <span className={styles.tooltipExcelText}>Buscar resultados</span>
-                  </Button>
+            <div className={styles.filterGroup}>
+              <label>Estado</label>
+              <select name="visto" value={visto} onChange={handleChange}>
+                <option value="todos">Todos</option>
+                <option value="false">Pendientes</option>
+                <option value="true">Vistos</option>
+              </select>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label>Evento</label>
+              <select name="tipo" value={tipo} onChange={handleChange}>
+                <option value="todos">Todos</option>
+                <option value="Aborto">Aborto</option>
+                <option value="Alta">Alta</option>
+                <option value="Baja">Baja</option>
+                <option value="Celo">Celo</option>
+                <option value="Parto">Parto</option>
+                <option value="Secado">Secado</option>
+                <option value="Servicio">Servicio</option>
+                <option value="Tacto">Tacto</option>
+                <option value="Tratamiento">Tratamiento</option>
+              </select>
+            </div>
+
+            <div className={styles.actionsArea}>
+              <button type="submit" className={styles.btnPrimary}>
+                <RiSearchLine size={18} />
+                Buscar
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        {procesando ? (
+          <Loader />
+        ) : (
+          eventos.length === 0 ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emoji}>📋</div>
+              <h2>No se encontraron registros</h2>
+              <p>Ajuste el período seleccionado o el rango de fechas para visualizar información.</p>
+            </div>
+          ) : (
+            <>
+              {/* KPI GRID */}
+              <div className={styles.kpiGrid}>
+                <div className={styles.kpiCard}>
+                  <div className={styles.kpiIcon}>📊</div>
+                  <div className={styles.kpiContent}>
+                    <span className={styles.kpiLabel}>Total Eventos</span>
+                    <span className={styles.kpiValue}>{totalEventos}</span>
+                  </div>
                 </div>
-                <div className={styles.tooltipExcel}>
+                <div className={styles.kpiCard}>
+                  <div className={styles.kpiIcon}>⏳</div>
+                  <div className={styles.kpiContent}>
+                    <span className={styles.kpiLabel}>Pendientes</span>
+                    <span className={styles.kpiValue} style={{ color: '#d97706' }}>{eventosPendientes}</span>
+                  </div>
+                </div>
+                <div className={styles.kpiCard}>
+                  <div className={styles.kpiIcon}>✅</div>
+                  <div className={styles.kpiContent}>
+                    <span className={styles.kpiLabel}>Vistos</span>
+                    <span className={styles.kpiValue} style={{ color: '#059669' }}>{eventosVistos}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.tableCard}>
+                <div className={styles.tableToolbar}>
+                  <h3>Resultados — {totalEventos} eventos encontrados</h3>
                   <ExcelFile
                     element={
-                      <button type="button" className={styles.btnExcel}>
-                        <RiFileExcel2Fill size={22} /> Exportar Excel
+                      <button type="button" className={styles.btnSecondary}>
+                        <RiFileExcel2Fill /> Descargar Excel
                       </button>
                     }
                     filename={excelFilename}
@@ -459,90 +461,47 @@ const ReporteDirsa = () => {
                       <ExcelColumn label="Usuario" value="usuario" />
                     </ExcelSheet>
                   </ExcelFile>
+                </div>
 
-                  <span className={styles.tooltipExcelText}>Descargar planilla de Excel</span>
+                <div className={styles.tableWrapper}>
+                  <table className={styles.modernTable}>
+                    <thead>
+                      <tr>
+                        <th onClick={handleClickFecha} style={{ cursor: 'pointer' }}>
+                          <div className={styles.thContent}>Fecha <FaSort size={13} color="#9ca3af" /></div>
+                        </th>
+                        <th onClick={handleClickRP} style={{ cursor: 'pointer' }}>
+                          <div className={styles.thContent}>RP <FaSort size={13} color="#9ca3af" /></div>
+                        </th>
+                        <th onClick={handleClickEvento} style={{ cursor: 'pointer' }}>
+                          <div className={styles.thContent}>Evento <FaSort size={13} color="#9ca3af" /></div>
+                        </th>
+                        <th>Detalle</th>
+                        <th>eRP</th>
+                        <th>Usuario</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {eventos.map(e => {
+                        const isVisto = e.vistoUsuario && e.vistoUsuario.indexOf(usuario.uid) !== -1;
+                        return (
+                          <DetalleEvento
+                            key={e.id}
+                            evento={e}
+                            eventos={eventos}
+                            guardarEventos={guardarEventos}
+                          />
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-
-
-            </Col>
-          </Row>
-
-          <Row>
-            <Col>
-              <Form.Group>
-                <Form.Label>Estado</Form.Label>
-                <Form.Control as="select" id="visto" name="visto" value={visto} onChange={handleChange}>
-                  <option value="todos">Todos</option>
-                  <option value="false">Pendientes</option>
-                  <option value="true">Vistos</option>
-                </Form.Control>
-              </Form.Group>
-            </Col>
-
-            <Col>
-              <Form.Group>
-                <Form.Label>Evento</Form.Label>
-                <Form.Control as="select" id="tipo" name="tipo" value={tipo} onChange={handleChange}>
-                  <option value="todos">Todos</option>
-                  <option value="Aborto">Aborto</option>
-                  <option value="Alta">Alta</option>
-                  <option value="Baja">Baja</option>
-                  <option value="Celo">Celo</option>
-                  <option value="Parto">Parto</option>
-                  <option value="Secado">Secado</option>
-                  <option value="Servicio">Servicio</option>
-                  <option value="Tacto">Tacto</option>
-                  <option value="Tratamiento">Tratamiento</option>
-                </Form.Control>
-              </Form.Group>
-            </Col>
-          </Row>
-        </Form>
-      </Botonera>
-
-      {procesando ? (
-        <div className={styles.spinnerOverlay}>
-          <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem' }} />
-          <div className={styles.spinnerText}>Procesando datos del parte diario...</div>
-        </div>
-      ) : tamboSel ? (
-        eventos.length === 0 ? (
-          <Mensaje>
-            <div className={styles.mensajeCaja}>
-              <h2 className={styles.tituloSinResultados}>Sin resultados</h2>
-              <p className={styles.textoSecundario}>
-                Presione el rango de fecha que desea mostrar para ver los resultados.
-              </p>
-            </div>
-          </Mensaje>
-        ) : (
-          <Contenedor>
-            <StickyTable height={450}>
-              <Table responsive>
-                <thead>
-                  <tr>
-                    <th onClick={handleClickFecha}>Fecha <FaSort size={15} /></th>
-                    <th onClick={handleClickRP}>RP <FaSort size={15} /></th>
-                    <th onClick={handleClickEvento}>Evento <FaSort size={15} /></th>
-                    <th>Detalle</th>
-                    <th>eRP</th>
-                    <th>Usuario</th>
-                    <th>Visto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {eventos.map(e => (
-                    <DetalleEvento key={e.id} evento={e} eventos={eventos} guardarEventos={guardarEventos} />
-                  ))}
-                </tbody>
-              </Table>
-            </StickyTable>
-          </Contenedor>
-        )
-      ) : (
-        <SelectTambo />
-      )}
+            </>
+          )
+        )}
+      </div>
     </Layout>
   );
 };

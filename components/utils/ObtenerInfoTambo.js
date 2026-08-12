@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Button, Modal, Row, Col, Form, Spinner, Alert, Table } from 'react-bootstrap';
+import { Modal, Spinner, Alert, Table } from 'react-bootstrap';
 import { RiAddBoxLine } from 'react-icons/ri';
 import { format } from 'date-fns';
 import { GiInfo } from 'react-icons/gi';
 import DetalleHorario from '../layout/detalleHorario';
+import styles from '../../styles/Control.module.scss';
 
 const InformacionTambo = ({ tambo = {}, fetch }) => {
   const { id, nombre, ubicacion, turnos, bajadas, tolvas, link } = tambo || {};
@@ -57,66 +58,141 @@ const InformacionTambo = ({ tambo = {}, fetch }) => {
             </button>
           </div>
           {/* Contenedor del formulario */}
-          {showData && (
-            <div className="lista-horarios-perfil">
-              <Modal.Title className="modal-title-horarios">
-                <p style={{ fontSize: '1.2rem' }}>
-                  <strong>Tambo {nombre}</strong>
-                  <button onClick={handleClose} className="close-button-perfil">X</button>
-                </p>
+          <Modal show={showData} onHide={handleClose} size="lg" centered>
+            <Modal.Header
+              closeButton
+              className="border-0 pb-0"
+            >
+              <Modal.Title>
+
+                <strong>Información del Tambo {nombre}</strong>
+
               </Modal.Title>
-              <Row>
-                <Col><strong>Ubicación: {ubicacion}</strong></Col>
-              </Row>
-              <Row className="text-center-horarios">
-                <p className="text-center-horarios-p">
-                  <Col><span className="text-center-horarios-span">Turnos: {turnos}</span></Col>
-                  <Col><span className="text-center-horarios-span">Bajadas: {bajadas}</span></Col>
-                  <Col><span className="text-center-horarios-span">Kgs. Tolvas: {tolvas}</span></Col>
-                </p>
-              </Row>
-              <Row>
-                <Col>
-                  <Form.Control
-                    type="date"
-                    id="fecha"
-                    name="fecha"
-                    value={fecha}
-                    onChange={handleChange}
-                    required
-                  />
-                </Col>
-                <Col>
-                  <div className="modal-horarios-container">
-                    <button className="green-btn-horarios" variant="success" onClick={buscarHorarios}>Ver Horarios</button>
+            </Modal.Header>
+            <Modal.Body>
+
+              <div className={styles.tamboDashboard}>
+
+                {/* Encabezado */}
+
+                <div className={styles.tamboHeader}>
+
+                  <div>
+                    <h3>{nombre}</h3>
+                    <span className="ubicacion">
+                      📍 {ubicacion}
+                    </span>
                   </div>
-                </Col>
-              </Row>
-              {/* Aquí se mostrarán los resultados */}
-              {estadoApi === 'buscando' ? (
-                <Spinner animation="border" variant="info" />
-              ) : estadoApi === 'error' ? (
-                <Alert variant="danger">No se puede acceder al tambo</Alert>
-              ) : estadoApi === 'resultados' && (horarios && horarios.length === 0) ? (
-                <Alert variant="success">No hay resultados para la fecha seleccionada</Alert>
-              ) : estadoApi === 'resultados' && horarios && (
-                <Table responsive>
-                  <thead>
-                    <tr>
-                      <th>Turno</th>
-                      <th>Inicio</th>
-                      <th>Fin</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {horarios.map(h => (
-                      <DetalleHorario key={h.id} horario={h} />
-                    ))}
-                  </tbody>
-                </Table>
-              )}
-            </div>
-          )}
+
+                </div>
+
+
+                {/* Cards */}
+
+                <div className={styles.row}>
+
+                  <div className={styles.infoCard}>
+                    <small>Turnos</small>
+                    <h1>{turnos}</h1>
+                  </div>
+
+                  <div className={styles.infoCard}>
+                    <small>Bajadas</small>
+                    <h1>{bajadas}</h1>
+                  </div>
+
+                  <div className={styles.infoCard}>
+                    <small>Kg. Tolvas</small>
+                    <h1>{tolvas}</h1>
+                  </div>
+
+                </div>
+
+
+                <div className={styles.buscarCard}>
+
+                  <h5>Consultar horarios</h5>
+
+                  <div className={styles.buscarRow}>
+
+                    <div className={styles.buscarFechaGroup}>
+                      <label>Fecha</label>
+                      <input
+                        type="date"
+                        value={fecha}
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    <button
+                      className={styles.btnConsultar}
+                      onClick={buscarHorarios}
+                    >
+                      🔍 Ver horarios
+                    </button>
+
+                  </div>
+
+                </div>
+
+
+                {/* Resultados */}
+
+                <div className={styles.mt4}>
+
+                  {estadoApi === 'buscando' && (
+                    <div className={styles.textCenter}>
+                      <Spinner animation="border" />
+                    </div>
+                  )}
+
+                  {estadoApi === 'error' && (
+                    <Alert variant={styles.alertDanger}>
+                      No se puede acceder al tambo.
+                    </Alert>
+                  )}
+
+                  {estadoApi === 'resultados' && horarios && (
+                    <div className={styles.tablaCard}>
+
+                      <h5 className={styles.mb3}>
+                        Horarios
+                      </h5>
+
+                      <Table hover responsive className={styles.table}>
+
+                        <thead>
+
+                          <tr className={styles.tr}>
+                            <th>Turno</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                          </tr>
+
+                        </thead>
+
+                        <tbody className={styles.tbody} style={{ background: 'white' }} >
+
+                          {horarios.map(h => (
+                            <DetalleHorario
+                              key={h.id}
+                              horario={h}
+                            />
+                          ))}
+
+                        </tbody>
+
+                      </Table>
+
+                    </div>
+                  )}
+
+                </div>
+
+              </div>
+
+            </Modal.Body>
+          </Modal>
         </div>
       ) : (
         <Alert variant="warning">Información del tambo no disponible</Alert>

@@ -8,7 +8,7 @@ import readXlsxFile from 'read-excel-file'
 import Detalle from '../components/layout/detalle';
 import { v4 as uuidv4 } from 'uuid';
 import SelectTambo from '../components/layout/selectTambo';
-import styles from '../styles/ControlLecheroFarmerin.module.scss';
+import styles from '../styles/UploadLayout.module.scss';
 
 const ControlLechero = () => {
 
@@ -124,7 +124,7 @@ const ControlLechero = () => {
                   tipo: 'Control Lechero',
                   detalle: detalle,
                   usuario: usuario.displayName,
-                  tambo: tamboSel.id,
+                  idtambo: tamboSel.id,
                 })
                 let act = "Fila N°: " + a.fila + " / eRP: " + a.erp + " - Lts: " + litros;
                 guardarActualizados(actualizados => [...actualizados, act]);
@@ -175,194 +175,161 @@ const ControlLechero = () => {
 
   return (
     <Layout titulo="Control Lechero">
-      <>
-        {procesando ? (
-          <ContenedorSpinner>
-            <div className={styles.contenedorSpinner}>
-              <Spinner animation="border" variant="info" />
-              <div className={styles.mensajeCargando}>Procesando control lechero, por favor espere...</div>
+      {tamboSel ? (
+        <div className={styles.mainContainer}>
+          {/* Panel Izquierdo: Acciones */}
+          <div className={styles.leftPanel}>
+            <div className={styles.actionCard}>
+              <h1 className={styles.pageTitle}>Control Lechero</h1>
+              <p className={styles.pageSubtitle}>Importe los litros desde una planilla Excel.</p>
+
+              <div className={styles.actionCardTitle}>Plantillas</div>
+              <div className={styles.downloadCardsContainer}>
+                <a href="/docs/planilla-modelo-controlLec.xlsx" download className={styles.downloadCard}>
+                  <div className={styles.downloadIcon}>📄</div>
+                  <div className={styles.downloadText}>Modelo</div>
+                  <div className={styles.downloadSubtext}>Descargar ejemplo</div>
+                </a>
+                <a href="/docs/planilla-vacia-controlLec.xlsx" download className={styles.downloadCard}>
+                  <div className={styles.downloadIcon}>📄</div>
+                  <div className={styles.downloadText}>Vacía</div>
+                  <div className={styles.downloadSubtext}>Descargar plantilla</div>
+                </a>
+              </div>
             </div>
-          </ContenedorSpinner>
-        ) : (
-          <Botonera>
-            <Row className="justify-content-center mt-3">
-              <Col xs={12} md={6}>
-                <div className={styles.descargaWrapper}>
-                  <h6 className={styles.descargaTitulo}>📥 Descargas útiles para Control Lechero</h6>
-                  <p className={styles.descargaSubtitulo}>
-                    Estas planillas te ayudarán a cargar correctamente los datos. Elegí una según lo que necesites:
-                  </p>
-                  <div className={styles.botonGrupo}>
-                    <div className={styles.tooltipWrapper}>
-                      <a
-                        href="/docs/planilla-modelo-controlLec.xlsx"
-                        download
-                        className={styles.btnDescarga}
-                      >
-                        📄 Modelo
-                      </a>
-                      <span className={styles.tooltipText}>Contiene un ejemplo completo para guiarte en la carga.</span>
-                    </div>
 
-                    <div className={styles.tooltipWrapper}>
-                      <a
-                        href="/docs/planilla-vacia-controlLec.xlsx"
-                        download
-                        className={styles.btnDescarga}
-                      >
-                        📄 Vacía
-                      </a>
-                      <span className={styles.tooltipText}>Plantilla en blanco lista para completar.</span>
+            <div className={styles.actionCard}>
+              <div className={styles.actionCardTitle}>Fecha del Control</div>
+              <div className={styles.dateInputContainer}>
+                <Form.Control
+                  type="date"
+                  id="fecha"
+                  name="fecha"
+                  value={fecha}
+                  onChange={handleChange}
+                  required
+                  className={styles.dateInput}
+                />
+              </div>
+            </div>
+
+            <div className={styles.actionCard}>
+              <div className={styles.actionCardTitle}>Cargar Archivo</div>
+              <Form onSubmit={handleSubmit}>
+                <div
+                  className={styles.dropzone}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onClick={() => !file && document.getElementById('archivoExcel').click()}
+                >
+                  {!file ? (
+                    <>
+                      <div className={styles.dropzoneIcon}>☁️</div>
+                      <p className={styles.dropzoneText}>Arrastre aquí su archivo Excel</p>
+                      <p className={styles.dropzoneSubtext}>o haga click para seleccionarlo</p>
+                    </>
+                  ) : (
+                    <div className={styles.fileSelectedContainer}>
+                      <div className={styles.fileName}>
+                        <span>✔️</span> {file.name}
+                      </div>
+                      <button type="button" className={styles.removeFileBtn} onClick={(e) => { e.stopPropagation(); clearFile(); }}>
+                        Eliminar archivo
+                      </button>
                     </div>
-                  </div>
+                  )}
+                  <input
+                    id="archivoExcel"
+                    type="file"
+                    style={{ display: 'none' }}
+                    onChange={onFileChange}
+                    accept=".xlsx, .xls"
+                  />
                 </div>
-              </Col>
-            </Row>
 
+                <button
+                  className={styles.primaryButton}
+                  type="submit"
+                  disabled={!file || procesando}
+                  style={{ marginTop: '15px' }}
+                >
+                  🚀 Cargar Control Lechero
+                </button>
+              </Form>
+            </div>
 
-            <Form onSubmit={handleSubmit}>
-              <Row className="justify-content-center">
-                <Col xs={12} md={6}>
-                  <div className={styles.calendarioControlLechero}>
-                    <Form.Control
-                      type="date"
-                      id="fecha"
-                      name="fecha"
-                      value={fecha}
-                      onChange={handleChange}
-                      required
-                      className={styles.headerControlLechero}
-                    />
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="justify-content-center" style={{ marginTop: '20px' }}>
-                <Col xs={12} md={6}>
-                  <div
-                    className={styles.containerControlLechero}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    <div
-                      className={styles.headerControlLechero}
-                      onClick={() => document.getElementById('archivoExcel').click()}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M7 10V9C7 6.23858 9.23858 4 12 4C14.7614 4 17 6.23858 17 9V10C19.2091 10 21 11.7909 21 14C21 15.4806 20.1956 16.8084 19 17.5M7 10C4.79086 10 3 11.7909 3 14C3 15.4806 3.8044 16.8084 5 17.5M7 10C7.43285 10 7.84965 10.0688 8.24006 10.1959M12 12V21M12 12L15 15M12 12L9 15"
-                          stroke="#000000"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <p>Presiona aca y carga el archivo de control lechero</p>
-                    </div>
-                    <label htmlFor="archivoExcel" className={styles.footerControlLechero}>
-                      <svg
-                        fill="#000000"
-                        viewBox="0 0 32 32"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M15.331 6H8.5v20h15V14.154h-8.169z"></path>
-                        <path d="M18.153 6h-.009v5.342H23.5v-.002z"></path>
-                      </svg>
-                      <p>{file ? file.name : 'Ningun archivo seleccionado'}</p>
-                      {file && (
-                        <Button
-                          variant="danger"
-                          onClick={clearFile}
-                          style={{ marginLeft: '10px' }}
-                        >
-                          Borrar
-                        </Button>
-                      )}
-                    </label>
-                    <input
-                      id="archivoExcel"
-                      type="file"
-                      style={{ display: 'none' }}
-                      onChange={onFileChange}
-                    />
-                  </div>
-                </Col>
-              </Row>
-
-              <Row className="justify-content-center" style={{ marginTop: '20px' }}>
-                <Col xs={12} md={6}>
-                  <button className={styles.buttonControlLechero} type="submit" block="true">
-                    <span className={styles.spanControlLechero}>Cargar Control Lechero</span>
-                    <svg
-                      className={styles.svgControlLechero}
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 74 74"
-                      height="34"
-                      width="34"
-                    >
-                      <circle
-                        className={styles.circleControlLechero}
-                        strokeWidth="3"
-                        stroke="white"
-                        r="35.5"
-                        cy="37"
-                        cx="37"
-                      ></circle>
-                      <path
-                        className={styles.path - ControlLechero}
-                        fill="white"
-                        d="M25 35.5C24.1716 35.5 23.5 36.1716 23.5 37C23.5 37.8284 24.1716 38.5 25 38.5V35.5ZM49.0607 38.0607C49.6464 37.4749 49.6464 36.5251 49.0607 35.9393L39.5147 26.3934C38.9289 25.8076 37.9792 25.8076 37.3934 26.3934C36.8076 26.9792 36.8076 27.9289 37.3934 28.5147L45.8787 37L37.3934 45.4853C36.8076 46.0711 36.8076 47.0208 37.3934 47.6066C37.9792 48.1924 38.9289 48.1924 39.5147 47.6066L49.0607 38.0607ZM25 38.5L48 38.5V35.5L25 35.5V38.5Z"
-                      ></path>
-                    </svg>
-                  </button>
-                </Col>
-              </Row>
-            </Form>
-          </Botonera>
-        )}
-
-        {tamboSel ? (
-          <Mensaje>
-            {(errores.length !== 0 || actualizados.length !== 0) && (
-              <div className={styles.alertasWrapper}>
-                {errores.length !== 0 && (
-                  <div className={`${styles.alertaBox} ${styles.errorBox}`}>
-                    <div className={styles.alertaHeader}>
-                      ❌ Errores encontrados
-                    </div>
-                    <div className={styles.alertaContenido}>
-                      {errores.map((a) => (
-                        <Detalle key={uuidv4()} info={a} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {actualizados.length !== 0 && (
-                  <div className={`${styles.alertaBox} ${styles.successBox}`}>
-                    <div className={styles.alertaHeader}>
-                      ✅ Actualizaciones realizadas
-                    </div>
-                    <div className={styles.alertaContenido}>
-                      {actualizados.map((a) => (
-                        <Detalle key={uuidv4()} info={a} />
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {/* Overlay de procesamiento */}
+            {procesando && (
+              <div className={styles.loadingOverlay}>
+                <div className={styles.spinnerContainer}>
+                  <Spinner animation="border" variant="primary" />
+                  <div className={styles.loadingTitle}>Procesando archivo...</div>
+                  <div className={styles.loadingSubtitle}>No cierre esta ventana.</div>
+                </div>
               </div>
             )}
+          </div>
 
-          </Mensaje>
-        ) : (
-          <SelectTambo />
-        )}
-      </>
+          {/* Panel Derecho: Resultados */}
+          <div className={styles.rightPanel}>
+            <h2 className={styles.resultsTitle}>Resultado de la carga</h2>
+            <div className={styles.resultsHeader}></div>
+
+            {errores.length === 0 && actualizados.length === 0 && !procesando ? (
+              <div className={styles.emptyState}>
+                <div className={styles.emptyStateIcon}>📄</div>
+                <div className={styles.emptyStateText}>Todavía no se realizaron cargas. Los resultados aparecerán aquí.</div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.summaryCards}>
+                  <div className={`${styles.summaryCard} ${styles.error}`}>
+                    <div className={styles.summaryLabel}>Errores</div>
+                    <div className={styles.summaryValue}>{errores.length}</div>
+                  </div>
+                  <div className={`${styles.summaryCard} ${styles.success}`}>
+                    <div className={styles.summaryLabel}>Correctos</div>
+                    <div className={styles.summaryValue}>{actualizados.length}</div>
+                  </div>
+                  <div className={styles.summaryCard}>
+                    <div className={styles.summaryLabel}>Total</div>
+                    <div className={styles.summaryValue}>{errores.length + actualizados.length}</div>
+                  </div>
+                </div>
+
+                <div className={styles.resultsListsContainer}>
+                  {errores.length > 0 && (
+                    <div className={styles.resultListPanel}>
+                      <div className={`${styles.resultListHeader} ${styles.error}`}>Errores ({errores.length})</div>
+                      <div className={styles.resultListContent}>
+                        {errores.map((e) => (
+                          <div key={uuidv4()} className={`${styles.resultItem} ${styles.error}`}>
+                            <Detalle info={e} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {actualizados.length > 0 && (
+                    <div className={styles.resultListPanel}>
+                      <div className={`${styles.resultListHeader} ${styles.success}`}>Actualizaciones ({actualizados.length})</div>
+                      <div className={styles.resultListContent}>
+                        {actualizados.map((a) => (
+                          <div key={uuidv4()} className={`${styles.resultItem} ${styles.success}`}>
+                            <Detalle info={a} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : (
+        <SelectTambo />
+      )}
     </Layout>
   );
 

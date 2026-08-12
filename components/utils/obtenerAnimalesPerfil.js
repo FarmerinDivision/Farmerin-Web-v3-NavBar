@@ -2,22 +2,9 @@ import React, { useContext, useState } from 'react';
 import { FirebaseContext } from '../../firebase2';
 import { AiFillAlert } from 'react-icons/ai';
 import { GiCow, GiInfo } from 'react-icons/gi';
+import styles from '../../styles/perfilFarmerin.module.scss';
 
-const Modal = ({ show, onClose, title, children }) => {
-    if (!show) return null;
-
-    return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <h2>{title}</h2>
-                <div>{children}</div>
-                <button className="close-modal-button" onClick={onClose}>
-                    Cerrar
-                </button>
-            </div>
-        </div>
-    );
-};
+import { Modal as BootstrapModal, Button } from 'react-bootstrap';
 
 export const ObtenerAnimalesPerfilForm = () => {
     const { firebase, tamboSel } = useContext(FirebaseContext);
@@ -32,7 +19,7 @@ export const ObtenerAnimalesPerfilForm = () => {
     const [mostrarLista, setMostrarLista] = useState(false);
     const [showVacasModal, setShowVacasModal] = useState(false);
     const [showVaquillonasModal, setShowVaquillonasModal] = useState(false);
- 
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -51,19 +38,19 @@ export const ObtenerAnimalesPerfilForm = () => {
             setVacasSecas(vacasData.filter((vaca) => vaca.estpro === 'seca').length);
 
             const vaquillonasSnapshot = await firebase.db
-            .collection('animal')
-            .where('idtambo', '==', tamboSel.id)
-            .where('categoria', '==', 'Vaquillona')
-            .where('mbaja', '==', '')
-            .get();
+                .collection('animal')
+                .where('idtambo', '==', tamboSel.id)
+                .where('categoria', '==', 'Vaquillona')
+                .where('mbaja', '==', '')
+                .get();
             const vaquillonasData = vaquillonasSnapshot.docs.map((doc) => doc.data());
-            console.log('VAQUILLONAS',vaquillonasData);            
+            console.log('VAQUILLONAS', vaquillonasData);
             setVaquillonas(vaquillonasData.length);
             setVaquillonasEnOrdeñe(vaquillonasData.filter((vaquillona) => vaquillona.estpro === 'En Ordeñe').length);
             setVaquillonasSecas(vaquillonasData.filter((vaquillona) => vaquillona.estpro === 'seca').length);
             setCrias(vaquillonasData.filter((vaquillona) => vaquillona.estpro === 'cria').length);
 
-        
+
         } catch (error) {
             console.log(error);
         }
@@ -71,7 +58,7 @@ export const ObtenerAnimalesPerfilForm = () => {
         setMostrarLista(true);
     };
 
- 
+
     return (
         <div className="card-fondoBotones">
             <form className="animales-form" onSubmit={handleSubmit}>
@@ -84,85 +71,126 @@ export const ObtenerAnimalesPerfilForm = () => {
                         <span className="obtener-animales-button__text">Obtener Animales</span>
                     </div>
                 </button>
-                {mostrarLista && (
-                    <div className="animales-list-container">
-                        <h1 className="tituloAnimales">
-                            Total de Animales: {vacas + vaquillonas} 
-                            <span className="AdverPerfil">
-                                <div className="tooltip-container">
-                                    <div className="icon-tooltip">
-                                        <GiInfo size={20} />
-                                    </div>
-                                    <div className="tooltip" style={{ fontSize: '18px' }}>
-                                        <p>Advertencia: El número final de animales incluye únicamente Vacas y Vaquillonas; las Crías no están contempladas</p>
-                                    </div>
-                                </div>
-                            </span>
-                        </h1>
-                        {/* Mover el bloque de botones aquí */}
-                        <button className="listasAnimalesVacas-button" onClick={() => setShowVacasModal(true)}>
-                            <div className="svg-wrapper-1">
-                                <div className="svg-wrapper">
-                                    <svg
-                                        height="24"
-                                        width="24"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path d="M0 0h24v24H0z" fill="none"></path>
-                                        <path
-                                            d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"
-                                            fill="currentColor"
-                                        ></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <span>Lista de Vacas</span>
-                        </button>
-                        <button className="listasAnimalesVaquillonas-button" onClick={() => setShowVaquillonasModal(true)}>
-                            <div className="svg-wrapper-1">
-                                <div className="svg-wrapper">
-                                    <svg
-                                        height="24"
-                                        width="24"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path d="M0 0h24v24H0z" fill="none"></path>
-                                        <path
-                                            d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"
-                                            fill="currentColor"
-                                        ></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <span>Lista de Vaquillonas</span>
-                        </button>
-                        <button className="listasAnimalesCerrar-button" onClick={() => setMostrarLista(false)}>
-                            <span>Cerrar Listas</span>
-                        </button>
-                    </div>
-                )}
             </form>
+            <BootstrapModal show={mostrarLista} onHide={() => setMostrarLista(false)} centered size="md">
+                <BootstrapModal.Header closeButton>
+                    <BootstrapModal.Title>Animales del Tambo</BootstrapModal.Title>
+                </BootstrapModal.Header>
+                <BootstrapModal.Body>
+                    <div className={styles.perfilModal}>
 
-          <Modal show={showVacasModal} onClose={() => setShowVacasModal(false)} title="Lista de Vacas">
-            <div className="listaPerfil">
-             
-             <p>Vacas: {vacas}</p>
-             <p>Vacas en Ordeñe: {vacasEnOrdeñe}</p>
-             <p>Vacas Secas: {vacasSecas}</p>
-            </div>
-           </Modal>
+                        <div className={styles.perfilResumen}>
 
-          <Modal show={showVaquillonasModal} onClose={() => setShowVaquillonasModal(false)} title="Lista de Vaquillonas">
-            <div className="listaPerfil">
-             
-             <p>Vaquillonas: {vaquillonas}</p>
-             <p>Vaquillonas en Ordeñe: {vaquillonasEnOrdeñe}</p>
-             <p>Vaquillonas Secas: {vaquillonasSecas}</p>
-             <p>Crias: {crias}</p>               
-            </div>
-           </Modal>
+                            <div className={styles.perfilIcono}>
+                                <GiCow />
+                            </div>
+
+                            <div className={styles.perfilTotal}>
+
+                                <span>Total de Animales</span>
+
+                                <h1>{vacas + vaquillonas}</h1>
+
+                            </div>
+
+                            <GiInfo className={styles.perfilInfo} />
+
+                        </div>
+
+                        <h6 className={styles.perfilSubtitulo}>
+
+                            VER LISTADOS
+
+                        </h6>
+
+                        <div
+                            className={styles.perfilCard}
+                            onClick={() => setShowVacasModal(true)}
+                        >
+
+                            <div>
+
+                                <h5>Lista de Vacas</h5>
+
+                                <small>Ver todas las vacas registradas</small>
+
+                            </div>
+
+                            <div className={styles.perfilArrow}>
+                                →
+                            </div>
+
+                        </div>
+
+                        <div
+                            className={styles.perfilCard}
+                            onClick={() => setShowVaquillonasModal(true)}
+                        >
+
+                            <div>
+
+                                <h5>Lista de Vaquillonas</h5>
+
+                                <small>Ver todas las vaquillonas registradas</small>
+
+                            </div>
+                            <div className={styles.perfilArrow}>
+                                →
+                            </div>
+
+                        </div>
+
+                    </div>
+                </BootstrapModal.Body>
+            </BootstrapModal>
+
+            <BootstrapModal show={showVacasModal} onHide={() => setShowVacasModal(false)} centered>
+                <BootstrapModal.Header closeButton>
+                    <BootstrapModal.Title>Lista de Vacas</BootstrapModal.Title>
+                </BootstrapModal.Header>
+                <BootstrapModal.Body>
+                    <div className={styles.listaPerfil}>
+                        <p>
+                            <strong>Vacas</strong>
+                            <span>{vacas}</span>
+                        </p>
+                        <p>
+                            <strong>Vacas en Ordeñe</strong>
+                            <span>{vacasEnOrdeñe}</span>
+                        </p>
+                        <p>
+                            <strong>Vacas Secas</strong>
+                            <span>{vacasSecas}</span>
+                        </p>
+                    </div>
+                </BootstrapModal.Body>
+            </BootstrapModal>
+
+            <BootstrapModal show={showVaquillonasModal} onHide={() => setShowVaquillonasModal(false)} centered>
+                <BootstrapModal.Header closeButton>
+                    <BootstrapModal.Title>Lista de Vaquillonas</BootstrapModal.Title>
+                </BootstrapModal.Header>
+                <BootstrapModal.Body>
+                    <div className={styles.listaPerfil}>
+                        <p>
+                            <strong>Vaquillonas</strong>
+                            <span>{vaquillonas}</span>
+                        </p>
+                        <p>
+                            <strong>Vaquillonas en Ordeñe</strong>
+                            <span>{vaquillonasEnOrdeñe}</span>
+                        </p>
+                        <p>
+                            <strong>Vaquillonas Secas</strong>
+                            <span>{vaquillonasSecas}</span>
+                        </p>
+                        <p>
+                            <strong>Crias</strong>
+                            <span>{crias}</span>
+                        </p>
+                    </div>
+                </BootstrapModal.Body>
+            </BootstrapModal>
         </div>
     );
 };

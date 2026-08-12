@@ -74,6 +74,13 @@ const procesarParto = async (evento, tamboSel, firebase, usuario) => {
     const madreRef = firebase.db.collection("animal").doc(madreDoc.id);
     const madreData = madreDoc.data();
 
+    // VALIDACIÓN IDTAMBO: verificar que el animal pertenece al tambo correcto antes de cualquier modificación
+    if (String(madreData?.idtambo) !== String(tamboSel.id)) {
+      throw new Error(
+        `El RP ${rpMadre} pertenece a otro tambo (${madreData?.idtambo}). No se puede registrar el parto.`
+      ); // NUEVO: bloquea update de madre, creación de crías y registro de evento
+    }
+
     console.log("👩‍🍼 Madre encontrada:", madreData);
 
     // ✅ Actualizar madre

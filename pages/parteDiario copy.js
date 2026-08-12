@@ -9,7 +9,7 @@ import DetalleEvento from '../components/layout/detalleEvento';
 import { Button, Form, Row, Col, Alert, Spinner, Table, ButtonGroup } from 'react-bootstrap';
 import { RiSearchLine } from 'react-icons/ri';
 import { format, subDays, addDays } from 'date-fns'
-import ReactExport from "react-export-excel";
+import ReactExport from "../components/utils/ExcelExport";
 import { FaSort } from 'react-icons/fa';
 
 const ParteDiario = () => {

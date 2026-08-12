@@ -166,6 +166,13 @@ export async function subirControlLechero(data, tamboSel, setErrores, setActuali
                     const animalData = doc.data();
                     const erp = animalData?.erp || null;
 
+                    // VALIDACIÓN IDTAMBO: segunda verificación de seguridad antes de modificar el animal
+                    if (String(animalData?.idtambo) !== String(tamboSel.id)) {
+                        console.warn(`🚫 SEGURIDAD: RP '${rp}' pertenece al tambo '${animalData?.idtambo}', no al tambo '${tamboSel.id}'. Operación bloqueada.`);
+                        setErrores(prev => [...prev, `⛔ RP ${rp} pertenece a otro tambo (${animalData?.idtambo}). No se modificó.`]);
+                        return; // NUEVO: bloquear update, evento, uc, ca y fuc
+                    }
+
                     await firebase.db.collection('animal').doc(doc.id).collection('eventos').add({
                         fecha: fechaEvento,
                         tipo: 'Control Lechero mediante planilla Dirsa',
