@@ -190,6 +190,7 @@ const DetalleParametro = ({ idTambo, groupId, categoria, porcentaje, allowCreate
                                  onUpdate={handleUpdate}
                                  groupId={groupId}
                                  categoria={categoria}
+                                 onParametroChange={handleUpdate}
                               />
                            ))}
                         </tbody>

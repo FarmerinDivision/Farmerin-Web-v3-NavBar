@@ -933,7 +933,7 @@ $repo-produ-viewport-offset: 14rem;
 .thTooltipWrapper {
   position: relative;
   display: inline-block;
-  cursor: pointer;
+  cursor: default;
   text-align: center;
 
   &:hover .thTooltipText {
@@ -957,21 +957,38 @@ $repo-produ-viewport-offset: 14rem;
 
 .thTooltipText {
   visibility: hidden;
-  width: 220px;
-  background-color: #00111c;
-  color: #fff;
+  width: max-content;
+  max-width: 220px;
+  background-color: #1f2937;
+  color: #ffffff;
   text-align: center;
-  padding: 5px;
+  padding: 6px 10px;
   border-radius: 6px;
   position: absolute;
-  bottom: -35px;
+  top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
   white-space: nowrap;
-  z-index: 10;
+  z-index: 100;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #1f2937 transparent;
+  }
 }
 
 /* === TABLA MODERNA (mismo estilo que Animales) === */

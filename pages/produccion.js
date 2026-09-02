@@ -11,15 +11,14 @@ import { saveAs } from "file-saver";
 import GraficoProduccion from '../components/layout/GraficoProduccion';
 import styles from '../styles/Produccion.module.scss';
 
-// Tooltip 100% CSS — fondo negro, texto blanco, flecha abajo
-const ThTooltip = ({ label, texto }) => (
-  <span style={{ position: 'relative', display: 'inline-block' }} className="th-tooltip-wrapper">
+// Tooltip 100% CSS — fondo negro, texto blanco
+const ThTooltip = ({ label, tooltip, texto }) => (
+  <span className={styles.thTooltipWrapper}>
     <span style={{ cursor: 'default', textDecoration: 'underline dotted', textUnderlineOffset: '3px' }}>
       {label}
     </span>
-    <span className="th-tooltip-box">
-      {texto}
-      <span className="th-tooltip-arrow" />
+    <span className={styles.thTooltipText}>
+      {tooltip || texto}
     </span>
   </span>
 );
@@ -413,14 +412,14 @@ const Produccion = () => {
                 <thead>
                   <tr>
                     <th>Fecha</th>
-                    <th><ThTooltip label="Prod. M" texto="Producción Mañana" /></th>
-                    <th><ThTooltip label="Prod. T" texto="Producción Tarde" /></th>
+                    <th><ThTooltip label="PROD. M" tooltip="Producción Mañana" /></th>
+                    <th><ThTooltip label="PROD. T" tooltip="Producción Tarde" /></th>
                     <th>Producción</th>
-                    <th><ThTooltip label="Desc. M" texto="Descarte Mañana" /></th>
-                    <th><ThTooltip label="Desc. T" texto="Descarte Tarde" /></th>
+                    <th><ThTooltip label="DESC. M" tooltip="Descarte Mañana" /></th>
+                    <th><ThTooltip label="DESC. T" tooltip="Descarte Tarde" /></th>
                     <th>Descarte</th>
-                    <th><ThTooltip label="Guach. M" texto="Guachera Mañana" /></th>
-                    <th><ThTooltip label="Guach. T" texto="Guachera Tarde" /></th>
+                    <th><ThTooltip label="GUACH. M" tooltip="Guachera Mañana" /></th>
+                    <th><ThTooltip label="GUACH. T" tooltip="Guachera Tarde" /></th>
                     <th>Guachera</th>
                     <th>Entregados</th>
                     <th>Vacas en Ordeñe</th>

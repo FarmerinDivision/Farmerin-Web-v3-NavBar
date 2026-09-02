@@ -1,0 +1,540 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+// ——— Variables de diseño Farmerin ———
+$color-primary: #4db150;
+$color-primary-dark: #003703;
+$color-primary-darker: #002202;
+$color-text-dark: #0f172a;
+$color-text-muted: #64748b;
+$color-bg: #f8fafc;
+$color-surface: #ffffff;
+$color-border: #e2e8f0;
+$font-family: 'Inter', sans-serif;
+
+// ——— Animaciones ———
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba($color-primary, 0.35); }
+  50% { box-shadow: 0 0 0 18px rgba($color-primary, 0); }
+}
+
+// ——— Contenedor de página ———
+.pageContainer {
+  font-family: $font-family;
+  background-color: $color-bg;
+  min-height: 100vh;
+  color: $color-text-dark;
+}
+
+// ——— Botón Volver ———
+.backBar {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 20px 0;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: $color-text-muted;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    color: $color-primary-dark;
+    background: rgba($color-primary, 0.08);
+    text-decoration: none;
+  }
+
+  svg {
+    font-size: 13px;
+  }
+}
+
+// ——— HERO ———
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 80px 20px 60px;
+  text-align: center;
+  background: linear-gradient(160deg, #f0fdf0 0%, $color-bg 50%, #ecfdf5 100%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba($color-primary, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -80px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba($color-primary, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  animation: fadeInUp 0.7s ease-out;
+}
+
+.heroIconWrapper {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 32px;
+  animation: float 4s ease-in-out infinite;
+  
+  // Agregar una sombra sutil directamente a la imagen para que resalte
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.1));
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 28px;
+  }
+}
+
+.heroBadge {
+  display: inline-block;
+  background: rgba($color-primary, 0.1);
+  color: $color-primary-dark;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  letter-spacing: 0.02em;
+}
+
+.heroTitle {
+  font-size: 42px;
+  font-weight: 800;
+  color: $color-text-dark;
+  margin-bottom: 16px;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+
+  span {
+    color: $color-primary;
+  }
+}
+
+.heroSubtitle {
+  font-size: 20px;
+  font-weight: 500;
+  color: $color-text-muted;
+  margin-bottom: 20px;
+}
+
+.heroText {
+  font-size: 16px;
+  color: $color-text-muted;
+  line-height: 1.7;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+// ——— SECCIONES ———
+.section {
+  padding: 64px 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.sectionTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: $color-text-dark;
+  text-align: center;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.sectionDesc {
+  font-size: 16px;
+  color: $color-text-muted;
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto 48px;
+  line-height: 1.6;
+}
+
+// ——— TARJETAS DE FUNCIONALIDADES ———
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.featureCard {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+    border-color: $color-primary;
+
+    .featureIconWrapper {
+      background: linear-gradient(135deg, $color-primary 0%, darken($color-primary, 8%) 100%);
+      color: #ffffff;
+    }
+  }
+}
+
+.featureIconWrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background-color: #f0fdf0;
+  color: $color-primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin: 0 auto 20px;
+  transition: all 0.3s ease;
+}
+
+.featureTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: $color-text-dark;
+  margin-bottom: 8px;
+}
+
+.featureDesc {
+  font-size: 14px;
+  color: $color-text-muted;
+  line-height: 1.6;
+  margin: 0;
+}
+
+// ——— ¿QUÉ ES? ———
+.whatIsSection {
+  background: $color-surface;
+  border-top: 1px solid $color-border;
+  border-bottom: 1px solid $color-border;
+}
+
+.whatIsContent {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.whatIsText {
+  font-size: 17px;
+  color: $color-text-muted;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.whatIsHighlight {
+  color: $color-primary-dark;
+  font-weight: 600;
+}
+
+// ——— T.I.O. MEANING SECTION ———
+.tioGrid {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+  margin-top: 40px;
+
+  @media (max-width: 992px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+}
+
+.tioCard {
+  flex: 1;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 20px;
+  padding: 40px 24px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 24px 48px -12px rgba($color-primary-dark, 0.15);
+    border-color: rgba($color-primary, 0.5);
+
+    .tioLetter {
+      transform: scale(1.1);
+      color: $color-primary-dark;
+    }
+  }
+}
+
+.tioLetter {
+  font-size: 72px;
+  font-weight: 800;
+  color: $color-primary;
+  line-height: 1;
+  margin-bottom: 8px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tioIcon {
+  font-size: 28px;
+  color: $color-primary-dark;
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+.tioTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: $color-text-dark;
+  margin-bottom: 16px;
+}
+
+.tioDesc {
+  font-size: 15px;
+  color: $color-text-muted;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.tioConnector {
+  width: 40px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    right: -10px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, $color-border 20%, $color-border 80%, transparent);
+    z-index: 1;
+  }
+
+  @media (max-width: 992px) {
+    width: 2px;
+    height: 40px;
+    
+    &::after {
+      top: -10px;
+      bottom: -10px;
+      left: 50%;
+      right: auto;
+      width: 2px;
+      height: auto;
+      background: linear-gradient(180deg, transparent, $color-border 20%, $color-border 80%, transparent);
+    }
+  }
+}
+
+.tioFooter {
+  text-align: center;
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1px solid rgba($color-border, 0.5);
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.tioFooterText {
+  font-size: 20px;
+  font-weight: 500;
+  color: $color-text-muted;
+  margin-bottom: 8px;
+}
+
+.tioFooterHighlight {
+  font-size: 36px;
+  font-weight: 800;
+  color: $color-primary-dark;
+  margin: 0;
+  background: linear-gradient(135deg, $color-primary-dark 0%, $color-primary 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+// ——— CTA ———
+.ctaSection {
+  background: linear-gradient(160deg, $color-primary-dark 0%, darken($color-primary-dark, 4%) 100%);
+  padding: 72px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    pointer-events: none;
+  }
+}
+
+.ctaContent {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.ctaTitle {
+  font-size: 30px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.ctaText {
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 36px;
+  background: $color-primary;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  box-shadow: 0 8px 24px -6px rgba($color-primary, 0.45);
+
+  &:hover {
+    background: lighten($color-primary, 5%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px -6px rgba($color-primary, 0.55);
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    font-size: 18px;
+  }
+}
+
+// ——— RESPONSIVE ———
+@media (max-width: 768px) {
+  .hero {
+    padding: 56px 16px 40px;
+  }
+
+  .heroIconWrapper {
+    width: 80px;
+    height: 80px;
+    font-size: 36px;
+    border-radius: 22px;
+    margin-bottom: 24px;
+  }
+
+  .heroTitle {
+    font-size: 30px;
+  }
+
+  .heroSubtitle {
+    font-size: 17px;
+  }
+
+  .heroText {
+    font-size: 15px;
+  }
+
+  .section {
+    padding: 48px 16px;
+  }
+
+  .sectionTitle {
+    font-size: 24px;
+  }
+
+  .ctaSection {
+    padding: 56px 16px;
+  }
+
+  .ctaTitle {
+    font-size: 24px;
+  }
+}

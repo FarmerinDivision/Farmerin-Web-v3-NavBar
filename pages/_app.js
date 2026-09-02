@@ -14,6 +14,10 @@ import store from '../redux/store';
 // ✅ Importá tu nuevo contexto
 import { NotificacionesProvider } from '../components/utils/NotificationsProvider';
 import { AdminProvider } from '../components/utils/AdminContext';
+import { AssistantProvider } from '../components/assistant/AssistantContext';
+import AssistantWidget from '../components/assistant/AssistantWidget';
+
+const BOT_ENABLED = true;
 
 function MyApp(props) {
   const usuario = useAutenticacion();
@@ -49,10 +53,13 @@ function MyApp(props) {
             setPorc,
           }}
         >
-          {/* ✅ Envolvés todo con el proveedor de notificaciones */}
+          {/* ✅ Envolvés todo con los proveedores de notificaciones */}
           <NotificacionesProvider>
             <AdminProvider>
-              <Component {...pageProps} />
+              <AssistantProvider>
+                <Component {...pageProps} />
+                {BOT_ENABLED && <AssistantWidget />}
+              </AssistantProvider>
             </AdminProvider>
           </NotificacionesProvider>
         </FirebaseContext.Provider>

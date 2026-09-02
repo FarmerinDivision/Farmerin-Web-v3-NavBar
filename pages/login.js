@@ -102,9 +102,16 @@ const Login = () => {
       setShowLoader(false);
     };
 
+    const handleOpenForgotPassword = () => {
+      setShowForgotPassword(true);
+    };
+
     Router.events.on('routeChangeComplete', handleRouteChangeComplete);
+    window.addEventListener('openForgotPasswordModal', handleOpenForgotPassword);
+
     return () => {
       Router.events.off('routeChangeComplete', handleRouteChangeComplete);
+      window.removeEventListener('openForgotPasswordModal', handleOpenForgotPassword);
     };
   }, []);
 
@@ -197,7 +204,7 @@ const Login = () => {
             <div className={styles.loginRegisterCard}>
               ¿Olvidaste tu contraseña?
               <button type="button" onClick={() => setShowForgotPassword(true)} className={styles.forgotLink}>
-                Recuperar o Cambiar
+                Sí, la olvidé
               </button>
             </div>
 

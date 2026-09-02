@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaPhone, FaWhatsapp, FaEnvelope, FaYoutube, FaInstagram, FaFacebook, FaGlobe, FaMapMarkerAlt, FaLocationArrow } from 'react-icons/fa';
+import { FaPhone, FaWhatsapp, FaEnvelope, FaYoutube, FaInstagram, FaFacebook, FaGlobe, FaMapMarkerAlt, FaLocationArrow, FaRobot, FaArrowRight } from 'react-icons/fa';
+import Link from 'next/link';
 import Layout from '../components/layout/layout';
 import styles from '../styles/Ayuda.module.scss';
 
@@ -55,7 +56,7 @@ const Ayuda = () => {
               <h2><FaGlobe style={{ color: '#0f172a' }} /> Redes Sociales</h2>
               <div className={styles.cardsGrid}>
 
-                <a href="https://www.youtube.com/@farmerin8076/videos" target="_blank" rel="noopener noreferrer" className={styles.contactCard}>
+                <a href="https://youtube.com/@farmerindivision?si=foTWbbjvTPuQniY4" target="_blank" rel="noopener noreferrer" className={styles.contactCard}>
                   <div className={styles.iconWrapper}><FaYoutube /></div>
                   <div className={styles.cardContent}>
                     <span className={styles.cardTitle}>YouTube</span>
@@ -90,6 +91,20 @@ const Ayuda = () => {
                 </a>
 
               </div>
+
+              {/* Tarjeta Farmerin T.I.O. — ancho completo debajo de la grilla */}
+              <Link href="/farmerin-tio" >
+                <a className={`${styles.contactCard} ${styles.fullWidthCard}`}>
+                  <div className={styles.iconWrapper}>
+                    <img src="/t.i.o_icono_ayuda_2.png" alt="Farmerin T.I.O." />
+                  </div>
+                  <div className={styles.cardContent}>
+                    <span className={styles.cardTitle}>Farmerin T.I.O.</span>
+                    <p className={styles.cardDesc}>Conocé a tu asistente</p>
+                  </div>
+                  <FaArrowRight className={styles.cardArrow} />
+                </a>
+              </Link>
             </section>
           </div>
 

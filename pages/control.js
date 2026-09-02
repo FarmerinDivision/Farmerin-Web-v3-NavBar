@@ -21,8 +21,11 @@ import { saveAs } from "file-saver";
 // Control
 
 const Control = () => {
-    //states de ordenamiento
+    // states de ordenamiento y búsqueda
     const [animales, guardarAnimales] = useState([]);
+    const [searchRP, setSearchRP] = useState('');
+    //states de ordenamiento
+
     const [promAct, guardarPromAct] = useState(0);
     const [promSug, guardarPromSug] = useState(0);
     const [promLac, guardarPromLac] = useState(0);
@@ -709,133 +712,146 @@ const Control = () => {
                     </div>
                 ) : (
                     <div className={styles.pageContent}>
-                        {/* Header del módulo */}
-                        <div className={styles.moduleHeader}>
-                            <div className={styles.moduleHeaderMain}>
-                                <h1 className={styles.moduleTitle}>Control de Alimentación</h1>
-                                <p className={styles.moduleSubtitle}>
-                                    Estado nutricional del rodeo según los parámetros configurados.
-                                </p>
+                        <div className={styles.controlLayout}>
+                            {/* COLUMNA IZQUIERDA: CONTROL, INDICADORES, RESUMEN NUTRICIONAL Y ACCIONES */}
+                            <div className={styles.controlSidebar}>
+                                <div className={styles.sidebarHeader}>
+                                    <h1>Control de Alimentación</h1>
+                                </div>
+                                {/* Campo de búsqueda por RP */}
+                                <div className={styles.sidebarSearch}>
+                                    <h2 className={styles.sidebarSectionTitle}>Buscar por RP</h2>
+                                    <input type="text" placeholder="Buscar por RP..." value={searchRP} onChange={e => setSearchRP(e.target.value)} />
+                                </div>
+
+                                {tamboSel && (
+                                    <>
+                                        {/* INDICADORES */}
+                                        <div className={styles.sidebarSection}>
+                                            <div className={styles.sidebarIndicators}>
+                                                <div className={styles.statCard}>
+                                                    <span className={styles.statLabel}>Total animales</span>
+                                                    <span className={styles.statValue}>{animales.length}</span>
+                                                </div>
+                                                <div className={styles.statCard}>
+                                                    <span className={styles.statLabel}>Animales Automáticos</span>
+                                                    <span className={`${styles.statValue} ${styles.statValueAuto}`}>{totalAutomaticos}</span>
+                                                </div>
+                                                <div className={styles.statCard}>
+                                                    <span className={styles.statLabel}>Animales Manuales</span>
+                                                    <span className={`${styles.statValue} ${styles.statValueManual}`}>{totalManuales}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className={styles.sidebarDivider} />
+
+                                        {/* RESUMEN NUTRICIONAL */}
+                                        <div className={styles.sidebarSection}>
+                                            <h2 className={styles.sidebarSectionTitle}>Resumen Nutricional</h2>
+                                            <div className={styles.sidebarNutricionalList}>
+                                                <div className={styles.nutricionalItem}>
+                                                    <span className={styles.nutricionalLabel}>Ración Actual Promedio</span>
+                                                    <span className={styles.nutricionalValue}>{promRacMod} kg</span>
+                                                </div>
+                                                <div className={styles.nutricionalItem}>
+                                                    <span className={styles.nutricionalLabel}>Ración Sugerida Promedio</span>
+                                                    <span className={styles.nutricionalValue}>{promSug} kg</span>
+                                                </div>
+                                                <div className={styles.nutricionalItem}>
+                                                    <span className={styles.nutricionalLabel}>Promedio Días Lactancia</span>
+                                                    <span className={styles.nutricionalValue}>{promLac} días</span>
+                                                </div>
+                                                <div className={styles.nutricionalItem}>
+                                                    <span className={styles.nutricionalLabel}>Producción Promedio (Último Control)</span>
+                                                    <span className={styles.nutricionalValue}>{promUC} L</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className={styles.sidebarDivider} />
+
+                                        {/* ACCIONES */}
+                                        <div className={styles.sidebarSection}>
+                                            <h2 className={styles.sidebarSectionTitle}>Acciones</h2>
+                                            <div className={styles.sidebarActions}>
+                                                <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowConfirmModal(true)}>
+                                                    <RiFilter3Line size={14} /> Aplicar ración objetivo
+                                                </button>
+                                                <div className={styles.sidebarActionsRow}>
+                                                    <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowInfoModal(true)}>
+                                                        <RiInformationLine size={13} /> Info
+                                                    </button>
+                                                    <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowRodeoModal(true)}>
+                                                        <GiCow size={13} /> Rodeos ({Object.keys(rodeos).length})
+                                                    </button>
+                                                    <button type="button" className={styles.btnHeaderPrimary} onClick={descargarExcel}>
+                                                        <RiFileExcel2Fill size={13} /> Exportar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
-                            <div className={styles.moduleHeaderActions}>
-                                <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowConfirmModal(true)}>
-                                    <RiFilter3Line size={16} /> Aplicar ración objetivo
-                                </button>
-                                <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowInfoModal(true)}>
-                                    <RiInformationLine size={16} /> Info
-                                </button>
-                                <button type="button" className={styles.btnHeaderSecondary} onClick={() => setShowRodeoModal(true)}>
-                                    <GiCow size={16} /> Rodeos ({Object.keys(rodeos).length})
-                                </button>
-                                <button type="button" className={styles.btnHeaderPrimary} onClick={descargarExcel}>
-                                    <RiFileExcel2Fill size={16} /> Exportar
-                                </button>
+
+                            {/* COLUMNA DERECHA: LISTA DE ANIMALES EXACTAMENTE IGUAL */}
+                            <div className={styles.controlMain}>
+                                {showManualAlert && (
+                                    <Alert variant="warning" onClose={() => setShowManualAlert(false)} dismissible>
+                                        <strong>⚠ Atención:</strong> Hay animales con ración configurada manualmente.
+                                        <br />
+                                        <strong>RP afectados:</strong> {animalesManual.map(a => a.rp).join(", ")}
+                                    </Alert>
+                                )}
+
+                                {tamboSel ? (
+                                    animales.length === 0 ? (
+                                        <Mensaje>
+                                            <div className={styles.mensajeCaja}>
+                                                <h2 className={styles.tituloSinResultados}>No se encontraron resultados</h2>
+                                            </div>
+                                        </Mensaje>
+                                    ) : (
+                                        <div className={styles.tableContainer}>
+                                            <table className={styles.controlTable}>
+                                                <thead>
+                                                    <tr>
+                                                        <th className={styles.thAnimal} onClick={handleClickRP}>
+                                                            Animal <FaSort size={10} className={styles.sortIcon} />
+                                                        </th>
+                                                        <th className={styles.thAlimentacion} onClick={handleClickRac}>
+                                                            Racion <FaSort size={10} className={styles.sortIcon} />
+                                                        </th>
+                                                        <th className={styles.thDecision} onClick={handleClickCriterio} style={{ cursor: 'pointer' }}>
+                                                            Decisión <FaSort size={10} className={styles.sortIcon} />
+                                                        </th>
+                                                        <th className={styles.thEstado} onClick={handleClickRacManual}>
+                                                            Estado <FaSort size={10} className={styles.sortIcon} />
+                                                        </th>
+                                                        <th className={styles.thAcciones}>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {animales.filter(a => a.rp?.toString().toLowerCase().includes(searchRP.toLowerCase())).map((a) => (
+                                                        <DetalleControl
+                                                            key={a.id}
+                                                            animal={a}
+                                                            animales={animales}
+                                                            guardarAnimales={guardarAnimales}
+                                                            racionModificada={a.racionModificada}
+                                                            parametrosFlat={parametrosFlat}
+                                                        />
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )
+                                ) : (
+                                    <SelectTambo />
+                                )}
                             </div>
                         </div>
-
-                        {tamboSel && animales.length > 0 && (
-                            <>
-                                <div className={styles.dashboardGrid}>
-                                    <div className={styles.statCard}>
-                                        <span className={styles.statLabel}>Total animales</span>
-                                        <span className={styles.statValue}>{animales.length}</span>
-                                    </div>
-                                    <div className={styles.statCard}>
-                                        <span className={styles.statLabel}>Animales Automáticos</span>
-                                        <span className={`${styles.statValue} ${styles.statValueAuto}`}>{totalAutomaticos}</span>
-                                    </div>
-                                    <div className={styles.statCard}>
-                                        <span className={styles.statLabel}>Animales Manuales</span>
-                                        <span className={`${styles.statValue} ${styles.statValueManual}`}>{totalManuales}</span>
-                                    </div>
-                                    {/*  <div className={styles.statCard}>
-                                        <span className={styles.statLabel}>Diferencia promedio de ración</span>
-                                        <span className={styles.statValue}>{diffPromedio} kg</span>
-                                    </div>*/}
-                                </div>
-
-                                <div className={styles.nutricionalBlock}>
-                                    <h2 className={styles.nutricionalTitle}>Resumen Nutricional</h2>
-                                    <div className={styles.nutricionalGrid}>
-                                        <div className={styles.nutricionalItem}>
-                                            <span className={styles.nutricionalLabel}>Ración Actual Promedio</span>
-                                            <span className={styles.nutricionalValue}>{promRacMod} kg</span>
-                                        </div>
-                                        <div className={styles.nutricionalItem}>
-                                            <span className={styles.nutricionalLabel}>Ración Sugerida Promedio</span>
-                                            <span className={styles.nutricionalValue}>{promSug} kg</span>
-                                        </div>
-                                        {/*  <div className={styles.nutricionalItem}>
-                                            <span className={styles.nutricionalLabel}>Diferencia Promedio</span>
-                                            <span className={styles.nutricionalValue}>{diffPromedio} kg</span>
-                                        </div>*/}
-                                        <div className={styles.nutricionalItem}>
-                                            <span className={styles.nutricionalLabel}>Promedio Días Lactancia</span>
-                                            <span className={styles.nutricionalValue}>{promLac} días</span>
-                                        </div>
-                                        <div className={styles.nutricionalItem}>
-                                            <span className={styles.nutricionalLabel}>Producción Promedio (Último Control)</span>
-                                            <span className={styles.nutricionalValue}>{promUC} L</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                        {showManualAlert && (
-                            <Alert variant="warning" onClose={() => setShowManualAlert(false)} dismissible>
-                                <strong>⚠ Atención:</strong> Hay animales con ración configurada manualmente.
-                                <br />
-                                <strong>RP afectados:</strong> {animalesManual.map(a => a.rp).join(", ")}
-                            </Alert>
-                        )}
-
-
-                        {tamboSel ? (
-                            animales.length === 0 ? (
-                                <Mensaje>
-                                    <div className={styles.mensajeCaja}>
-                                        <h2 className={styles.tituloSinResultados}>No se encontraron resultados</h2>
-                                    </div>
-                                </Mensaje>
-                            ) : (
-                                <div className={styles.tableContainer}>
-                                    <table className={styles.controlTable}>
-                                        <thead>
-                                            <tr>
-                                                <th className={styles.thAnimal} onClick={handleClickRP}>
-                                                    Animal <FaSort size={10} className={styles.sortIcon} />
-                                                </th>
-                                                <th className={styles.thAlimentacion} onClick={handleClickRac}>
-                                                    Racion <FaSort size={10} className={styles.sortIcon} />
-                                                </th>
-                                                <th className={styles.thDecision} onClick={handleClickCriterio} style={{ cursor: 'pointer' }}>
-                                                    Decisión <FaSort size={10} className={styles.sortIcon} />
-                                                </th>
-                                                <th className={styles.thEstado} onClick={handleClickRacManual}>
-                                                    Estado <FaSort size={10} className={styles.sortIcon} />
-                                                </th>
-                                                <th className={styles.thAcciones}>Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {animales.map((a) => (
-                                                <DetalleControl
-                                                    key={a.id}
-                                                    animal={a}
-                                                    animales={animales}
-                                                    guardarAnimales={guardarAnimales}
-                                                    racionModificada={a.racionModificada}
-                                                    parametrosFlat={parametrosFlat}
-                                                />
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )
-                        ) : (
-                            <SelectTambo />
-                        )}
 
                         {/* ✅ CONTENEDOR FLEX PARA MOSTRAR LOS DOS MODALES UNO AL LADO DEL OTRO */}
                         {(showModal || showManualModal) && (

@@ -154,6 +154,35 @@
   }
 }
 
+// Flecha de navegación dentro de la tarjeta
+.cardArrow {
+  margin-left: auto;
+  font-size: 18px;
+  color: #94a3b8;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.contactCard:hover .cardArrow {
+  color: #4db150;
+  transform: translateX(4px);
+}
+
+// Tarjeta Farmerin T.I.O. — en hover: borde blanco + ícono blanco sobre verde
+.fullWidthCard {
+  margin-top: 8px;
+
+  &:hover {
+    .iconWrapper {
+      border: 2px solid #ffffff; // borde blanco alrededor del contenedor
+
+      img {
+        filter: brightness(0) invert(1); // ícono blanco sobre fondo verde (igual que WhatsApp)
+      }
+    }
+  }
+}
+
 
 
 // --- MAPA ---

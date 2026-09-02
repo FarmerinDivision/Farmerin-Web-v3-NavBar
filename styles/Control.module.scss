@@ -3,9 +3,170 @@
    ========================================= */
 
 .pageContent {
-  max-width: 1440px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 8px 80px;
+  padding: 0 16px 60px;
+}
+
+/* ---- Layout 2 Columnas ---- */
+.controlLayout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* PANEL IZQUIERDO: ancho fijo compacto */
+.controlSidebar {
+  flex: 0 0 280px;
+  width: 280px;
+  min-width: 260px;
+  max-width: 300px;
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-right: 2px solid #F3F4F6;
+  border-radius: 10px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: sticky;
+  top: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* COLUMNA DERECHA: todo el espacio */
+.controlMain {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Sidebar: Header --- */
+.sidebarHeader {
+  padding-bottom: 10px;
+  margin-bottom: 2px;
+
+  h1 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 2px;
+  }
+
+  p {
+    display: none; /* subtitle hidden for compactness */
+  }
+}
+
+/* --- Sidebar: Secciones genéricas --- */
+.sidebarSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+}
+
+.sidebarSectionTitle {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 4px;
+}
+
+.sidebarDivider {
+  height: 1px;
+  background-color: #F3F4F6;
+  margin: 0;
+}
+
+/* --- Indicadores: bloque compacto en fila --- */
+.sidebarIndicators {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .statCard {
+    flex: 1;
+    padding: 8px 6px;
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid #E5E7EB;
+    box-shadow: none;
+    background: transparent;
+    text-align: center;
+    gap: 2px;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    &:hover {
+      box-shadow: none;
+      background: #F3F4F6;
+    }
+  }
+}
+
+/* --- Resumen Nutricional: grilla 2×2 --- */
+.sidebarNutricionalList {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 10px 8px;
+}
+
+/* --- Acciones: botón principal + fila de secundarios --- */
+.sidebarSearch {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  width: 100%;
+  input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+}
+
+.sidebarActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  /* primer botón (Aplicar ración) = primario grande */
+  button:first-child {
+    width: 100%;
+    justify-content: center;
+    font-size: 12px;
+    padding: 9px 10px;
+  }
+
+  /* fila secundaria: Info + Rodeos + Exportar */
+  .sidebarActionsRow {
+    display: flex;
+    gap: 6px;
+
+    button {
+      flex: 1;
+      justify-content: center;
+      font-size: 11px;
+      padding: 7px 6px;
+      white-space: nowrap;
+    }
+  }
 }
 
 /* ---- Header del módulo ---- */
@@ -105,15 +266,16 @@
 }
 
 .statLabel {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
-  color: #6B7280;
+  color: #9CA3AF;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.2;
 }
 
 .statValue {
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #111827;
   letter-spacing: -0.02em;
@@ -155,18 +317,20 @@
 .nutricionalItem {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  padding: 4px 4px;
 }
 
 .nutricionalLabel {
-  font-size: 12px;
+  font-size: 10px;
   color: #9CA3AF;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .nutricionalValue {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 0.925rem;
+  font-weight: 700;
   color: #111827;
 }
 
@@ -176,9 +340,9 @@
   border: 1px solid #E5E7EB;
   border-radius: 12px;
   overflow: auto;
-  max-height: calc(100vh - 50px);
-  margin-bottom: 60px;
-  padding: 12px 8px 16px;
+  max-height: calc(100vh - 40px);
+  margin-bottom: 40px;
+  padding: 8px 6px 12px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: #D1D5DB #F9FAFB;
@@ -678,6 +842,36 @@
 }
 
 /* ---- Responsive ---- */
+@media (max-width: 992px) {
+  .controlLayout {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .controlSidebar {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+    min-width: unset;
+    position: static;
+    padding: 12px;
+  }
+
+  .sidebarIndicators {
+    .statCard {
+      padding: 6px 4px;
+    }
+  }
+
+  .sidebarActions {
+    .sidebarActionsRow {
+      button {
+        padding: 7px 8px;
+      }
+    }
+  }
+}
+
 @media (max-width: 1200px) {
   .dashboardGrid {
     grid-template-columns: repeat(2, 1fr);
