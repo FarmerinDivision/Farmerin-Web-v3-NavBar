@@ -159,13 +159,7 @@ export default async function handler(req, res) {
         ]
       }, context));
     }
-    // ──────────────────────────────────────────────────────────────────────e', type: 'support' }
-        ]
-      }, context));
-    }
     // ──────────────────────────────────────────────────────────────────────
-
-    const intentResult = analyzeIntent(resolvedQuery, context);
 
     // 0a. Reiniciar Preguntas intent
     if (intentResult.intent === 'reiniciar_preguntas') {
