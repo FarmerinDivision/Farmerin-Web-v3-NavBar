@@ -16,7 +16,7 @@ const PerfilCambiarRacion = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const allowedTamboId = "jGWqeJjPAW3yJtAZpKJr";
+
 
   const baseFunctionUrl = "https://us-central1-farmerin-navarro.cloudfunctions.net/setRacion";
 
@@ -26,15 +26,19 @@ const PerfilCambiarRacion = () => {
         setLoading(true);
         setError(null);
         try {
+          if (!tamboSel?.id) {
+            throw new Error("No se encontró el ID del tambo seleccionado.");
+          }
           const response = await fetch(`${baseFunctionUrl}?idtambo=${tamboSel.id}`);
           if (!response.ok) {
-            throw new Error("Error al obtener los datos de ración desde el servidor");
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || "Error al obtener los datos de ración desde el servidor");
           }
           const data = await response.json();
-          
-          const valEst = data.racion_estandar || "";
-          const valMan = data.racion_manual || "";
-          
+
+          const valEst = data.racion_estandar ?? "";
+          const valMan = data.racion_manual ?? "";
+
           setRacion(valEst);
           setRacionManual(valMan);
           setOriginalRacion(valEst);
@@ -55,6 +59,19 @@ const PerfilCambiarRacion = () => {
     e.preventDefault();
     if (!tamboSel || !racion) return;
 
+    // Validar que los valores sean números válidos antes de enviar
+    const racionNum = parseFloat(racion);
+    const racionManualNum = parseFloat(racionManual);
+
+    if (isNaN(racionNum) || racionNum < 0) {
+      setError("La ración estándar debe ser un número válido mayor o igual a 0.");
+      return;
+    }
+    if (tamboSel.version === 1 && racionManual !== "" && (isNaN(racionManualNum) || racionManualNum < 0)) {
+      setError("La ración manual debe ser un número válido mayor o igual a 0.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -62,40 +79,77 @@ const PerfilCambiarRacion = () => {
     try {
       // Función auxiliar para actualizar un parámetro individual
       const updateParam = async (nombre, valor) => {
+        const numValor = parseFloat(valor);
+        if (isNaN(numValor)) {
+          throw new Error(`El valor para ${nombre} no es un número válido.`);
+        }
+        const body = {
+          idtambo: tamboSel.id,
+          valor: numValor,
+          nombre: nombre,
+        };
+        console.log(`[setRacion] POST ${nombre}:`, body);
         const response = await fetch(baseFunctionUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            idtambo: tamboSel.id,
-            valor: parseFloat(valor),
-            nombre: nombre,
-          }),
+          body: JSON.stringify(body),
         });
 
         if (!response.ok) {
-          throw new Error(`Error al actualizar ${nombre}`);
+          const errorText = await response.text().catch(() => null);
+          let errorMsg = `Error ${response.status} al actualizar ${nombre}`;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMsg = errorData?.error || errorData?.message || errorMsg;
+          } catch (_) {
+            if (errorText) errorMsg += `: ${errorText}`;
+          }
+          console.error(`[setRacion] Error en ${nombre}:`, errorText);
+          throw new Error(errorMsg);
         }
         return await response.json();
       };
 
+      // Normalizamos para comparar como números evitando falsos negativos por tipo string vs number
+      const originalRacionNum = parseFloat(originalRacion);
+      const originalRacionManualNum = parseFloat(originalRacionManual);
+
       // Actualizamos ración estándar si cambió
-      if (racion !== originalRacion) {
-        await updateParam("racion_estandar", racion);
+      let lastData = null;
+      if (racionNum !== originalRacionNum) {
+        lastData = await updateParam("racion_estandar", racionNum);
       }
 
       // Actualizamos ración manual si cambió y es versión 1
-      if (tamboSel.version === 1 && racionManual !== originalRacionManual) {
-        await updateParam("racion_manual", racionManual);
+      if (tamboSel.version === 1 && racionManualNum !== originalRacionManualNum) {
+        lastData = await updateParam("racion_manual", racionManualNum);
+      }
+
+      // Si ningún valor cambió, igual mostramos éxito
+      if (!lastData) {
+        setSuccess(true);
+        setTimeout(() => { handleClose(); }, 2000);
+        return;
+      }
+
+      // Actualizar estados con los valores reales devueltos por setRacion
+      const newEst = lastData.racion_estandar ?? "";
+      const newMan = lastData.racion_manual ?? "";
+      setRacion(newEst);
+      setOriginalRacion(newEst);
+      if (tamboSel.version === 1) {
+        setRacionManual(newMan);
+        setOriginalRacionManual(newMan);
       }
 
       setSuccess(true);
-      // Opcional: Cerrar modal después de unos segundos
       setTimeout(() => {
         handleClose();
       }, 2000);
     } catch (err) {
+      console.error("[setRacion] Error general:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -115,11 +169,7 @@ const PerfilCambiarRacion = () => {
 
   const handleOpen = () => {
     if (!tamboSel) return;
-    if (tamboSel.id === allowedTamboId) {
-      setShowModal(true);
-      return;
-    }
-    setShowConstruccionModal(true);
+    setShowModal(true);
   };
 
   return (
@@ -147,9 +197,9 @@ const PerfilCambiarRacion = () => {
         </div>
       </div>
 
-      <Modal 
-        show={showModal} 
-        onHide={handleClose} 
+      <Modal
+        show={showModal}
+        onHide={handleClose}
         centered
         dialogClassName={modalStyles.premiumModalTambo}
         backdropClassName={modalStyles.premiumBackdropTambo}
@@ -242,17 +292,17 @@ const PerfilCambiarRacion = () => {
             )}
 
             <div className={modalStyles.footer} style={{ marginTop: '24px', padding: '0', borderTop: 'none', backgroundColor: 'transparent' }}>
-              <button 
-                type="button" 
-                className={modalStyles.btnSecondary} 
+              <button
+                type="button"
+                className={modalStyles.btnSecondary}
                 onClick={handleClose}
                 disabled={loading || success}
               >
                 Cancelar
               </button>
-              <button 
-                type="submit" 
-                className={modalStyles.btnPrimary} 
+              <button
+                type="submit"
+                className={modalStyles.btnPrimary}
                 disabled={loading || !racion || (tamboSel?.version === 1 && !racionManual) || success}
               >
                 {loading ? (

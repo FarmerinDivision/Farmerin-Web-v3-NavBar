@@ -39,6 +39,26 @@ const Produccion = () => {
     tipoFecha: 'ud'
   });
 
+  useEffect(() => {
+    const handleOpenDetalleFecha = (e) => {
+      if (e.detail?.date) {
+        const dateIso = e.detail.date;
+        const nuevosValores = {
+          fini: dateIso,
+          ffin: dateIso,
+          inicio: firebase.fechaTimeStamp(dateIso),
+          fin: firebase.fechaTimeStamp(dateIso + 'T23:59:59'),
+          tipoFecha: 'ef'
+        };
+        setValores(nuevosValores);
+        handleSubmit(nuevosValores);
+        setMostrarGrafico(true);
+      }
+    };
+    window.addEventListener('openDetalleProduccionFecha', handleOpenDetalleFecha);
+    return () => window.removeEventListener('openDetalleProduccionFecha', handleOpenDetalleFecha);
+  }, []);
+
   const realizarBusqueda = (tipo) => {
     let nuevosValores = { ...valores, tipoFecha: tipo };
 

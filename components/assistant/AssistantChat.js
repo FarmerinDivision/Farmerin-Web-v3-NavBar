@@ -11,7 +11,8 @@ const AssistantChat = () => {
     sendMessage,
     handleNavigate,
     resetChat,
-    setIsSupportModalOpen
+    setIsSupportModalOpen,
+    setSelectedFichaAnimal
   } = useAssistant();
 
   const chatEndRef = useRef(null);
@@ -46,6 +47,18 @@ const AssistantChat = () => {
                           handleNavigate(action.path);
                         } else if (action.type === 'support') {
                           setIsSupportModalOpen(true);
+                        } else if (action.type === 'ver_ficha') {
+                          if (action.animal) {
+                            setSelectedFichaAnimal(action.animal);
+                          }
+                        } else if (action.type === 'ver_curva') {
+                          if (typeof window !== 'undefined' && action.animalId) {
+                            window.dispatchEvent(new CustomEvent('openCurvaModal', { detail: { animalId: action.animalId } }));
+                          }
+                        } else if (action.type === 'ver_detalle_produccion_fecha') {
+                          if (typeof window !== 'undefined' && action.date) {
+                            window.dispatchEvent(new CustomEvent('openDetalleProduccionFecha', { detail: { date: action.date } }));
+                          }
                         } else if (action.type === 'reset_login' || action.label === 'Reiniciar preguntas' || action.label === 'Volver al inicio') {
                           resetChat();
                         } else if (action.type === 'forgot_password') {

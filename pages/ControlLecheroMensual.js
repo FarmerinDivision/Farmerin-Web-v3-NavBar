@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
 import { Form, Row, Col, Modal } from 'react-bootstrap';
@@ -42,6 +42,16 @@ const ControlLecheroMensual = () => {
     const [mostrarGrafico, setMostrarGrafico] = useState(false);
     const [datosAnuales, setDatosAnuales] = useState([]);
     const [modalCurva, setModalCurva] = useState({ show: false, animalId: null });
+
+    useEffect(() => {
+        const handleOpenCurva = (e) => {
+            if (e.detail?.animalId) {
+                setModalCurva({ show: true, animalId: e.detail.animalId });
+            }
+        };
+        window.addEventListener('openCurvaModal', handleOpenCurva);
+        return () => window.removeEventListener('openCurvaModal', handleOpenCurva);
+    }, []);
 
     const MESES = [
         'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',

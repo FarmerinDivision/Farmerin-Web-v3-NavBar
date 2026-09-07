@@ -4,11 +4,12 @@ import AssistantHeader from './AssistantHeader';
 import AssistantChat from './AssistantChat';
 import AssistantInput from './AssistantInput';
 import SupportDerivationModal from './SupportDerivationModal';
+import FichaAnimal from '../layout/fichaAnimal';
 import styles from '../../styles/Assistant.module.scss';
 import { FaRobot } from 'react-icons/fa';
 
 const AssistantWidget = () => {
-  const { isOpen, isMinimized, toggleAssistant, context } = useAssistant();
+  const { isOpen, isMinimized, toggleAssistant, context, selectedFichaAnimal, setSelectedFichaAnimal } = useAssistant();
   const sectionTitle = context?.sectionTitle || 'Farmerin';
 
   return (
@@ -52,6 +53,17 @@ const AssistantWidget = () => {
 
       {/* Support Derivation Modal */}
       <SupportDerivationModal />
+
+      {/* Ficha Animal Modal */}
+      {selectedFichaAnimal && (
+        <FichaAnimal
+          animal={selectedFichaAnimal}
+          show={Boolean(selectedFichaAnimal)}
+          setShow={(show) => {
+            if (!show) setSelectedFichaAnimal(null);
+          }}
+        />
+      )}
     </>
   );
 };

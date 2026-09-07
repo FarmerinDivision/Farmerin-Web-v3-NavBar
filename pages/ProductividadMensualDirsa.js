@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { FirebaseContext } from '../firebase2';
 import Layout from '../components/layout/layout';
 import { Modal } from 'react-bootstrap';
@@ -51,6 +51,17 @@ const ProductividadMensualDirsa = () => {
     const [showCurvaModal, setShowCurvaModal] = useState(false);
     const [animalSeleccionado, setAnimalSeleccionado] = useState(null);
     const [ordenLitros, setOrdenLitros] = useState(null);
+
+    useEffect(() => {
+        const handleOpenCurva = (e) => {
+            if (e.detail?.animalId) {
+                setAnimalSeleccionado(e.detail.animalId);
+                setShowCurvaModal(true);
+            }
+        };
+        window.addEventListener('openCurvaModal', handleOpenCurva);
+        return () => window.removeEventListener('openCurvaModal', handleOpenCurva);
+    }, []);
 
     const MESES = [
         'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',

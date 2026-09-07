@@ -197,6 +197,8 @@ export const AssistantProvider = ({ children }) => {
     }
   };
 
+  const [selectedFichaAnimal, setSelectedFichaAnimal] = useState(null);
+
   const handleNavigate = (path) => {
     if (path) {
       router.push(path);
@@ -213,6 +215,8 @@ export const AssistantProvider = ({ children }) => {
         messages,
         initialOptions,
         isSupportModalOpen,
+        selectedFichaAnimal,
+        setSelectedFichaAnimal,
         toggleAssistant,
         minimizeAssistant,
         closeAssistant,

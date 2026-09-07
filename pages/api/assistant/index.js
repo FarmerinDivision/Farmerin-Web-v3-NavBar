@@ -50,6 +50,30 @@ export default async function handler(req, res) {
       });
     }
 
+    // ── AWAITING PRODUCTION DATE INPUT INTERCEPTOR (PRODUCCIÓN) ──────────────
+    if (searchMode === 'AWAITING_PROD_DATE') {
+      const searchResult = await executeProductionDateSearch(searchMode, rawQuery, context);
+      return res.status(200).json(resJson(searchResult, context));
+    }
+
+    // ── AWAITING PRODUCTION ANIMAL RP / eRP INPUT INTERCEPTOR (PRODUCCIÓN) ──
+    if (searchMode && (searchMode.startsWith('AWAITING_PROD_RP:') || searchMode.startsWith('AWAITING_PROD_ERP:'))) {
+      const searchResult = await executeProductionAnimalSearch(searchMode, rawQuery, context);
+      return res.status(200).json(resJson(searchResult, context));
+    }
+
+    // ── AWAITING DIRSA EVENT RP / eRP INPUT INTERCEPTOR (REPORTE DIRSA) ────────
+    if (searchMode && (searchMode.startsWith('AWAITING_DIRSA_EVENT_RP:') || searchMode.startsWith('AWAITING_DIRSA_EVENT_ERP:'))) {
+      const searchResult = await executeDirsaAnimalEventSearch(searchMode, rawQuery, context);
+      return res.status(200).json(resJson(searchResult, context));
+    }
+
+    // ── AWAITING EVENT RP / eRP / DATE INPUT INTERCEPTOR (PARTE DIARIO) ─────────
+    if (searchMode && (searchMode.startsWith('AWAITING_EVENT_RP:') || searchMode.startsWith('AWAITING_EVENT_ERP:') || searchMode.startsWith('AWAITING_EVENT_DATE:'))) {
+      const searchResult = await executeAnimalEventSearch(searchMode, rawQuery, context);
+      return res.status(200).json(resJson(searchResult, context));
+    }
+
     // ── AWAITING RP / eRP INPUT INTERCEPTOR ──────────────────────────────────
     if (searchMode === 'AWAITING_RP' || searchMode === 'AWAITING_ERP') {
       if (!isAnimalSearchAllowed(context.section, context.screen)) {
@@ -71,6 +95,154 @@ export default async function handler(req, res) {
 
     // ── ANIMAL SEARCH INTENT INTERCEPTORS ──────────────────────────────────────
     const intentResult = analyzeIntent(resolvedQuery, context);
+
+    // ── PRODUCCIÓN DATE SEARCH INTENT INTERCEPTOR ─────────────────────────────
+    if (intentResult.intent === 'buscar_produccion_fecha_inicio') {
+      return res.status(200).json(resJson({
+        intent: 'buscar_produccion_fecha_inicio',
+        responseText: 'Escribí la fecha que querés consultar en formato dd/mm/yyyy.',
+        searchMode: 'AWAITING_PROD_DATE',
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
+
+    // ── PRODUCCIÓN ANIMAL SEARCH INTENT INTERCEPTORS ─────────────────────────
+    if (intentResult.intent === 'buscar_produccion_animal_inicio') {
+      const listaMeses = [
+        'Todos los meses',
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre'
+      ];
+
+      return res.status(200).json(resJson({
+        intent: 'buscar_produccion_animal_inicio',
+        responseText: '¿De qué mes querés consultar la producción?',
+        searchMode: null,
+        suggestedActions: [
+          ...listaMeses.map(m => ({ label: m, type: 'query', text: m === 'Todos los meses' ? 'Todos los meses' : `Mes: ${m}` })),
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
+
+    if (intentResult.intent === 'seleccionar_mes_produccion') {
+      const mes = intentResult.mes || 'Todos los meses';
+      return res.status(200).json(resJson({
+        intent: 'seleccionar_mes_produccion',
+        responseText: '¿Querés buscar el animal por RP o por eRP?',
+        searchMode: null,
+        suggestedActions: [
+          { label: 'RP (caravana)', type: 'query', text: `Buscar producción por RP para mes: ${mes}` },
+          { label: 'eRP (botón electrónico)', type: 'query', text: `Buscar producción por eRP para mes: ${mes}` },
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
+
+    if (intentResult.intent === 'buscar_produccion_por_rp') {
+      const mes = intentResult.mes || 'Todos los meses';
+      return res.status(200).json(resJson({
+        intent: 'buscar_produccion_por_rp',
+        responseText: 'Escribí el RP del animal que querés consultar.',
+        searchMode: `AWAITING_PROD_RP:${mes}`,
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
+
+    if (intentResult.intent === 'buscar_produccion_por_erp') {
+      const mes = intentResult.mes || 'Todos los meses';
+      return res.status(200).json(resJson({
+        intent: 'buscar_produccion_por_erp',
+        responseText: 'Escribí el eRP del animal que querés consultar.',
+        searchMode: `AWAITING_PROD_ERP:${mes}`,
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
+
+    // ── PARTE DIARIO & REPORTE DIRSA EVENT SEARCH INTENT INTERCEPTORS ─────────
+    if (intentResult.intent === 'buscar_evento_inicio') {
+      const listaEventos = [
+        'Aborto',
+        'Aborto inicio de lactancia',
+        'Alta',
+        'Alta vaquillona',
+        'Baja',
+        'Celo',
+        'Cambio eRP',
+        'Parto',
+        'Rechazo',
+        'Secado',
+        'Servicio',
+        'Tacto',
+        'Tratamiento'
+      ];
+
+      return res.status(200).json(resJson({
+        intent: 'buscar_evento_inicio',
+        responseText: 'Seleccioná el evento que querés consultar:',
+        searchMode: null,
+        suggestedActions: [
+          ...listaEventos.map(ev => ({ label: ev, type: 'query', text: `Evento: ${ev}` })),
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
+
+    if (intentResult.intent === 'seleccionar_tipo_evento') {
+      const eventType = intentResult.eventType || 'Evento';
+      return res.status(200).json(resJson({
+        intent: 'seleccionar_tipo_evento',
+        responseText: '¿Querés buscar el animal por RP o por eRP?',
+        searchMode: null,
+        suggestedActions: [
+          { label: 'RP (caravana)', type: 'query', text: `Buscar por RP para evento: ${eventType}` },
+          { label: 'eRP (botón electrónico)', type: 'query', text: `Buscar por eRP para evento: ${eventType}` },
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
+
+    if (intentResult.intent === 'buscar_evento_por_rp') {
+      const eventType = intentResult.eventType || 'Evento';
+      const isDirsa = context.section === 'dirsa' || context.screen === 'reporte_eventos';
+      return res.status(200).json(resJson({
+        intent: 'buscar_evento_por_rp',
+        responseText: 'Escribí el RP del animal que querés consultar.',
+        searchMode: isDirsa ? `AWAITING_DIRSA_EVENT_RP:${eventType}` : `AWAITING_EVENT_RP:${eventType}`,
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
+
+    if (intentResult.intent === 'buscar_evento_por_erp') {
+      const eventType = intentResult.eventType || 'Evento';
+      const isDirsa = context.section === 'dirsa' || context.screen === 'reporte_eventos';
+      return res.status(200).json(resJson({
+        intent: 'buscar_evento_por_erp',
+        responseText: 'Escribí el eRP del animal que querés consultar.',
+        searchMode: isDirsa ? `AWAITING_DIRSA_EVENT_ERP:${eventType}` : `AWAITING_EVENT_ERP:${eventType}`,
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      }, context));
+    }
 
     if (intentResult.intent === 'buscar_animal_inicio') {
       if (!isAnimalSearchAllowed(context.section, context.screen)) {
@@ -596,6 +768,21 @@ export default async function handler(req, res) {
           { label: '¿Qué información muestra?', type: 'query', text: '¿Qué información muestra la sección Producción?' },
           { label: 'Reiniciar preguntas', type: 'reset_login' }
         ]
+      }, context));
+    }
+
+    if (intentResult.intent === 'ver_datos_detallados') {
+      const options = getInitialOptionsForSection(context.section, context);
+      const mappedOptions = options.map(opt => ({
+        label: opt.label,
+        type: opt.action,
+        text: opt.text
+      }));
+      return res.status(200).json(resJson({
+        intent: 'ver_datos_detallados',
+        responseText: 'Si querés ver información más detallada, deberás buscar la información en el apartado correspondiente. Allí podrás analizar todos los datos y también visualizar un gráfico con la evolución de la producción.',
+        searchMode: null,
+        suggestedActions: mappedOptions
       }, context));
     }
 
@@ -2028,15 +2215,337 @@ function handleInformativeQuery(query, qLower, context, docs) {
     }, context);
   }
 
+  // Herramientas: Monitor de Ingreso, Control de Ingreso, Control de Turnos
+  if (section === 'herramientas') {
+    const screen = (context?.screen || '').toLowerCase();
+    const options = getInitialOptionsForSection(section, context);
+    const mappedOptions = options.map(opt => ({
+      label: opt.label,
+      type: opt.action || 'query',
+      text: opt.text
+    }));
+
+    if (screen === 'monitor_ingreso') {
+      return resJson({
+        intent: 'consulta_informativa',
+        responseText: 'Estás en la sección **Monitor de Ingreso**. Desde aquí podés llevar un control en tiempo real de los animales que van ingresando al tambo. Seleccioná alguna de las opciones para obtener más información:',
+        suggestedActions: mappedOptions
+      }, context);
+    }
+
+    if (screen === 'control_ingreso') {
+      return resJson({
+        intent: 'consulta_informativa',
+        responseText: 'Estás en la sección **Control de Ingreso**. Desde aquí podés monitorear el estado de lectura de las caravanas y botones electrónicos durante cada turno de ordeñe. Seleccioná alguna de las opciones para obtener más información:',
+        suggestedActions: mappedOptions
+      }, context);
+    }
+
+    if (screen === 'control_turnos') {
+      return resJson({
+        intent: 'consulta_informativa',
+        responseText: 'Estás en la sección **Control de Turnos**. Desde aquí podés controlar los ingresos de los animales al tambo durante los turnos de la mañana y de la tarde. Seleccioná alguna de las opciones para obtener más información:',
+        suggestedActions: mappedOptions
+      }, context);
+    }
+
+    return resJson({
+      intent: 'consulta_informativa',
+      responseText: 'Estás en el módulo de **Herramientas** de Farmerin. Seleccioná alguna de las opciones disponibles para obtener más información:',
+      suggestedActions: mappedOptions
+    }, context);
+  }
+
+  // Configuración: Listados, Alta Masiva, Actualización Masiva
+  if (section === 'configuracion') {
+    const screen = (context?.screen || '').toLowerCase();
+    const options = getInitialOptionsForSection(section, context);
+    const mappedOptions = options.map(opt => ({
+      label: opt.label,
+      type: opt.action || 'query',
+      text: opt.text
+    }));
+
+    if (screen === 'listados') {
+      return resJson({
+        intent: 'consulta_informativa',
+        responseText: 'Estás en la sección **Listados**. Desde aquí podés crear, ver y administrar tus listados (Servicios, Tratamientos, Enfermedades y Motivos de Baja). Seleccioná alguna de las opciones para obtener más información:',
+        suggestedActions: mappedOptions
+      }, context);
+    }
+
+    if (screen === 'alta_masiva') {
+      return resJson({
+        intent: 'consulta_informativa',
+        responseText: 'Estás en la sección **Alta Masiva**. Desde aquí podés dar de alta una gran cantidad de animales de manera rápida mediante la importación de un archivo Excel. Seleccioná alguna de las opciones para obtener más información:',
+        suggestedActions: mappedOptions
+      }, context);
+    }
+
+    if (screen === 'actualizacion_masiva') {
+      return resJson({
+        intent: 'consulta_informativa',
+        responseText: 'Estás en la sección **Actualización Masiva**. Desde aquí podés actualizar datos de una gran cantidad de animales de forma rápida y sencilla. Seleccioná alguna de las opciones para obtener más información:',
+        suggestedActions: mappedOptions
+      }, context);
+    }
+
+    return resJson({
+      intent: 'consulta_informativa',
+      responseText: 'Estás en el módulo de **Configuración** de Farmerin. Seleccioná alguna de las opciones disponibles para obtener más información:',
+      suggestedActions: mappedOptions
+    }, context);
+  }
+
+  // Reportes: Gestión de Remitos (otros screens de reportes ya se manejan por intent handlers anteriores)
+  if (section === 'reportes') {
+    const screen = (context?.screen || '').toLowerCase();
+    const options = getInitialOptionsForSection(section, context);
+    const mappedOptions = options.map(opt => ({
+      label: opt.label,
+      type: opt.action || 'query',
+      text: opt.text
+    }));
+
+    if (screen === 'gestion_remitos') {
+      return resJson({
+        intent: 'consulta_informativa',
+        responseText: 'Estás en la sección **Gestión de Remitos**. Desde aquí podés consultar todos los remitos de ración cargados en el sistema. Seleccioná alguna de las opciones para obtener más información:',
+        suggestedActions: mappedOptions
+      }, context);
+    }
+
+    return resJson({
+      intent: 'consulta_informativa',
+      responseText: `Estás en la sección **${context?.sectionTitle || 'Reportes'}** de Farmerin. Seleccioná alguna de las opciones disponibles para obtener más información:`,
+      suggestedActions: mappedOptions
+    }, context);
+  }
+
+  // Final catch-all: use section title if available, otherwise generic
+  const fallbackTitle = context?.sectionTitle || 'Farmerin';
+  const fallbackOptions = getInitialOptionsForSection(section, context);
+  const fallbackMapped = fallbackOptions.map(opt => ({
+    label: opt.label,
+    type: opt.action || 'query',
+    text: opt.text
+  }));
+
   return resJson({
     intent: 'consulta_informativa',
-    responseText: 'En la sección **Tambos** podés administrar tus establecimientos, consultar horarios de ordeñe y configurar la conexión con tus equipos de medición.',
-    suggestedActions: [
-      { label: '¿Cómo creo un tambo?', type: 'query', text: '¿Cómo creo un tambo?' },
-      { label: '¿Para qué sirve el Link?', type: 'query', text: '¿Para qué sirve el Link?' }
-    ]
+    responseText: `Estás en la sección **${fallbackTitle}**. Seleccioná alguna de las opciones disponibles para obtener más información:`,
+    suggestedActions: fallbackMapped
   }, context);
 }
+
+// ── FUNCIONES AUXILIARES PARA CONTROL NUTRICIONAL ────────────────────────────
+// Replican exactamente la lógica de utils/alimentacionControl.js y
+// utils/explicarDecisionAlimentacion.js para uso en entorno CJS del API.
+// NO se duplica lógica de cálculo: se aplica el mismo algoritmo.
+
+function _esPorLactancia(um) {
+  if (!um) return false;
+  const normalizado = String(um).trim();
+  return normalizado === 'Dias Lactancia' || normalizado === 'Días Lactancia';
+}
+
+function _parseFechaPartoControl(fparto) {
+  if (!fparto) return null;
+  if (fparto instanceof Date && !Number.isNaN(fparto.getTime())) return fparto;
+  if (typeof fparto === 'object' && fparto.seconds) {
+    return new Date(fparto.seconds * 1000);
+  }
+  if (typeof fparto === 'string') {
+    const normalizada = fparto.trim();
+    if (normalizada.includes('/')) {
+      const partes = normalizada.split('/');
+      if (partes[0]?.length === 2 && partes[1]?.length === 2 && partes[2]?.length === 4) {
+        const [dia, mes, anio] = partes;
+        return new Date(`${anio}-${mes}-${dia}`);
+      }
+      if (partes[0]?.length === 4) {
+        return new Date(normalizada.replace(/\//g, '-'));
+      }
+    }
+    if (normalizada.includes('-')) return new Date(normalizada);
+  }
+  return null;
+}
+
+function _calcularDiasLactanciaControl(animal) {
+  const partoDate = _parseFechaPartoControl(animal.fparto);
+  if (partoDate && !Number.isNaN(partoDate.getTime())) {
+    return Math.floor((Date.now() - partoDate.getTime()) / (1000 * 60 * 60 * 24));
+  }
+  return parseInt(animal.diasLact, 10) || 0;
+}
+
+function _calcularLitrosUCControl(animal) {
+  let litrosUC = Math.round(parseFloat(animal.uc));
+  if (Number.isNaN(litrosUC)) litrosUC = 5;
+  return litrosUC;
+}
+
+function _normalizarCondicionControl(param) {
+  return param.condicion ?? param.cond ?? 'entre';
+}
+
+function _reglaCumpleCondicionControl(param, diasLact, litrosUC) {
+  const condicion = _normalizarCondicionControl(param);
+  const minVal = parseInt(param.min, 10);
+  const maxVal = parseInt(param.max, 10);
+  const um = param.um;
+  if (_esPorLactancia(um)) {
+    if (condicion === 'entre') return diasLact >= minVal && diasLact <= maxVal;
+    if (condicion === 'menor') return diasLact <= minVal;
+    if (condicion === 'mayor') return diasLact >= maxVal;
+    return false;
+  }
+  if (condicion === 'entre') return litrosUC >= minVal && litrosUC <= maxVal;
+  if (condicion === 'menor') return litrosUC <= minVal;
+  if (condicion === 'mayor') return litrosUC >= maxVal;
+  return false;
+}
+
+function _parametroCorrespondeAlAnimalControl(param, animal) {
+  if (param.categoria !== animal.categoria) return false;
+  const grupoAnimal = animal.grupo ?? 0;
+  if (
+    param.grupo !== undefined &&
+    param.grupo !== null &&
+    Number(param.grupo) !== Number(grupoAnimal)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function _normalizarParametrosControlAPI(docs) {
+  const flat = [];
+  docs.forEach((doc) => {
+    const data = doc.data ? doc.data() : doc;
+    if (data.control === false) return;
+    if (Array.isArray(data.parametros)) {
+      const grupo = data.grupo ?? 0;
+      data.parametros.forEach((cat) => {
+        (cat.rodeos || []).forEach((r) => {
+          flat.push({
+            grupo,
+            categoria: cat.categoria,
+            orden: r.orden ?? 0,
+            rodeo: r.rodeo ?? r.orden,
+            condicion: r.condicion ?? r.cond ?? 'entre',
+            min: r.min,
+            max: r.max,
+            um: r.um,
+            racion: r.racion,
+          });
+        });
+      });
+      return;
+    }
+    if (data.categoria && data.um) {
+      flat.push({
+        grupo: data.grupo ?? 0,
+        categoria: data.categoria,
+        orden: data.orden ?? 0,
+        rodeo: data.rodeo ?? data.orden,
+        condicion: data.condicion ?? data.cond ?? 'entre',
+        min: data.min,
+        max: data.max,
+        um: data.um,
+        racion: data.racion,
+      });
+    }
+  });
+  return flat.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+}
+
+function _encontrarParametroAplicadoControl(animal, parametrosFlat) {
+  const diasLact = _calcularDiasLactanciaControl(animal);
+  const litrosUC = _calcularLitrosUCControl(animal);
+  const candidatos = parametrosFlat
+    .filter((p) => _parametroCorrespondeAlAnimalControl(p, animal))
+    .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+  for (let i = 0; i < candidatos.length; i += 1) {
+    const p = candidatos[i];
+    if (_reglaCumpleCondicionControl(p, diasLact, litrosUC)) {
+      return { parametro: p, diasLact, litrosUC };
+    }
+  }
+  return { parametro: null, diasLact, litrosUC };
+}
+
+function _formatReglaControl(condicion, min, max, um) {
+  const minVal = parseInt(min, 10);
+  const maxVal = parseInt(max, 10);
+  if (_esPorLactancia(um)) {
+    if (condicion === 'entre') return `${minVal}–${maxVal} días`;
+    if (condicion === 'menor') return `≤ ${minVal} días`;
+    if (condicion === 'mayor') return `≥ ${maxVal} días`;
+    return `${minVal}–${maxVal} días`;
+  }
+  if (condicion === 'entre') return `${minVal}–${maxVal} litros`;
+  if (condicion === 'menor') return `≤ ${minVal} litros`;
+  if (condicion === 'mayor') return `≥ ${maxVal} litros`;
+  return `${minVal}–${maxVal} litros`;
+}
+
+function _criterioLabelControl(um) {
+  if (_esPorLactancia(um)) return 'Días de Lactancia';
+  return 'Producción (Último Control)';
+}
+
+function _valorLabelControl(um, diasLact, litrosUC) {
+  if (_esPorLactancia(um)) return `${diasLact} días`;
+  return `${litrosUC} litros`;
+}
+
+function _explicarDecisionAlimentacionControl(animal, parametrosFlat) {
+  const { parametro, diasLact, litrosUC } = _encontrarParametroAplicadoControl(animal, parametrosFlat);
+
+  if (parametro) {
+    const condicion = parametro.condicion ?? parametro.cond ?? 'entre';
+    const racionParametro = parseInt(parametro.racion, 10) || 0;
+    const sugerido = parseInt(animal.sugerido, 10) || racionParametro;
+    const decisionBase = {
+      criterio: _criterioLabelControl(parametro.um),
+      valor: _valorLabelControl(parametro.um, diasLact, litrosUC),
+      regla: _formatReglaControl(condicion, parametro.min, parametro.max, parametro.um),
+      resultado: racionParametro || sugerido,
+      um: parametro.um,
+      sinParametro: false,
+    };
+    if (animal.racionManual) {
+      return { modo: 'Manual', titulo: 'Ración asignada manualmente.', ...decisionBase };
+    }
+    return { modo: 'Automático', titulo: 'El sistema calculó esta ración.', ...decisionBase };
+  }
+
+  // Sin parámetro encontrado
+  const sugerido = parseInt(animal.sugerido, 10) || 0;
+  if (animal.racionManual) {
+    return {
+      modo: 'Manual',
+      titulo: 'Ración asignada manualmente.',
+      criterio: null,
+      valor: `${diasLact} días · ${litrosUC} litros`,
+      regla: null,
+      resultado: sugerido,
+      sinParametro: true,
+    };
+  }
+  return {
+    modo: 'Automático',
+    titulo: 'El sistema calculó esta ración.',
+    criterio: '—',
+    valor: `${diasLact} días · ${litrosUC} litros`,
+    regla: 'No se encontró un parámetro que coincida con las condiciones actuales',
+    resultado: sugerido,
+    sinParametro: true,
+  };
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function executeAnimalSearch(searchMode, searchInput, context) {
   if (!context?.tamboId) {
@@ -2110,16 +2619,50 @@ async function executeAnimalSearch(searchMode, searchInput, context) {
 
     const screen = (context.screen || '').toLowerCase();
     const section = (context.section || '').toLowerCase();
+
+    // ── CONTROL NUTRICIONAL: cargar parámetros para calcular criterio/regla ──
+    if (screen === 'control_nutricion' || section === 'control') {
+      try {
+        let snapParam;
+        try {
+          snapParam = await firebase.db
+            .collection('parametro')
+            .where('idtambo', '==', context.tamboId)
+            .orderBy('grupo')
+            .get();
+        } catch (errOrder) {
+          snapParam = await firebase.db
+            .collection('parametro')
+            .where('idtambo', '==', context.tamboId)
+            .get();
+        }
+        const docsParam = snapParam.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        animalEncontrado._parametrosFlat = _normalizarParametrosControlAPI(docsParam);
+      } catch (errParam) {
+        console.error('Error cargando parámetros para Control Nutricional en bot:', errParam);
+        animalEncontrado._parametrosFlat = [];
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const responseText = formatAnimalInfoForSection(animalEncontrado, screen, section);
+
+    const suggestedActions = [
+      {
+        label: 'Ver ficha',
+        type: 'ver_ficha',
+        animal: animalEncontrado,
+        animalId: animalEncontrado.id
+      },
+      { label: 'Buscar otro animal', type: 'query', text: '¿Deseás buscar un animal en específico?' },
+      { label: 'Reiniciar preguntas', type: 'reset_login' }
+    ];
 
     return {
       intent: 'busqueda_animal_exito',
       responseText,
       searchMode: null,
-      suggestedActions: [
-        { label: 'Buscar otro animal', type: 'query', text: '¿Deseás buscar un animal en específico?' },
-        { label: 'Reiniciar preguntas', type: 'reset_login' }
-      ]
+      suggestedActions
     };
   } catch (err) {
     console.error('Error al buscar animal en Firestore:', err);
@@ -2132,6 +2675,483 @@ async function executeAnimalSearch(searchMode, searchInput, context) {
       ]
     };
   }
+}
+
+async function executeAnimalEventSearch(searchMode, searchInput, context) {
+  if (!context?.tamboId) {
+    return {
+      intent: 'busqueda_animal_sin_tambo',
+      responseText: 'No tenés un tambo seleccionado actualmente. Por favor, seleccioná un tambo para poder realizar la búsqueda.',
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+
+  // --- PASO A: El usuario acaba de ingresar el RP o eRP ---
+  if (searchMode.startsWith('AWAITING_EVENT_RP:') || searchMode.startsWith('AWAITING_EVENT_ERP:')) {
+    const isRp = searchMode.startsWith('AWAITING_EVENT_RP:');
+    const selectedEvent = searchMode.split(':')[1]?.trim() || 'Evento';
+    const queryTerm = (searchInput || '').trim().toLowerCase();
+
+    if (!queryTerm) {
+      return {
+        intent: 'busqueda_animal_vacia',
+        responseText: isRp
+          ? 'No ingresaste ningún RP. Escribí el RP del animal que querés consultar.'
+          : 'No ingresaste ningún eRP. Escribí el eRP del animal que querés consultar.',
+        searchMode,
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    }
+
+    try {
+      const snapshot = await firebase.db.collection('animal')
+        .where('idtambo', '==', context.tamboId)
+        .where('fbaja', '==', '')
+        .get();
+
+      let animalEncontrado = null;
+
+      snapshot.forEach(doc => {
+        if (animalEncontrado) return;
+        const data = doc.data();
+
+        if (isRp) {
+          const val = data.rp !== undefined && data.rp !== null ? String(data.rp).trim().toLowerCase() : '';
+          if (val === queryTerm) {
+            animalEncontrado = { id: doc.id, ...data };
+          }
+        } else {
+          const val = data.erp !== undefined && data.erp !== null ? String(data.erp).trim().toLowerCase() : '';
+          if (val === queryTerm) {
+            animalEncontrado = { id: doc.id, ...data };
+          }
+        }
+      });
+
+      if (!animalEncontrado) {
+        const mensajeNoEncontrado = isRp
+          ? 'No encontré ningún animal con ese RP. ¿Querés intentarlo nuevamente?'
+          : 'No encontré ningún animal con ese eRP. ¿Querés intentarlo nuevamente?';
+
+        return {
+          intent: 'busqueda_animal_no_encontrado',
+          responseText: mensajeNoEncontrado,
+          searchMode: null,
+          suggestedActions: [
+            { label: 'RP (caravana)', type: 'query', text: `Buscar por RP para evento: ${selectedEvent}` },
+            { label: 'eRP (botón electrónico)', type: 'query', text: `Buscar por eRP para evento: ${selectedEvent}` },
+            { label: 'Reiniciar preguntas', type: 'reset_login' }
+          ]
+        };
+      }
+
+      // Animal encontrado -> Pedir la fecha en formato DD/MM/YYYY
+      return {
+        intent: 'pedir_fecha_evento',
+        responseText: `Escribí la fecha del evento en formato DD/MM/YYYY (ejemplo: 03/09/2026).`,
+        searchMode: `AWAITING_EVENT_DATE:${animalEncontrado.id}:${selectedEvent}`,
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    } catch (err) {
+      console.error('Error al consultar animal en Firestore:', err);
+      return {
+        intent: 'busqueda_animal_error',
+        responseText: 'Ocurrió un error al consultar la base de datos para buscar el animal. Por favor, intentá nuevamente.',
+        searchMode: null,
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    }
+  }
+
+  // --- PASO B: El usuario ingresó la fecha (DD/MM/YYYY) ---
+  if (searchMode.startsWith('AWAITING_EVENT_DATE:')) {
+    const parts = searchMode.split(':');
+    const animalId = parts[1];
+    const selectedEvent = parts[2] || 'Evento';
+    const userEnteredDate = (searchInput || '').trim();
+
+    try {
+      const docAnimal = await firebase.db.collection('animal').doc(animalId).get();
+      if (!docAnimal.exists) {
+        return {
+          intent: 'busqueda_animal_no_encontrado',
+          responseText: 'No se encontró la información del animal. Por favor, intentá nuevamente.',
+          searchMode: null,
+          suggestedActions: [
+            { label: 'Buscar otro evento', type: 'query', text: '¿Querés buscar un evento en específico de un animal?' },
+            { label: 'Reiniciar preguntas', type: 'reset_login' }
+          ]
+        };
+      }
+
+      const animalEncontrado = { id: docAnimal.id, ...docAnimal.data() };
+      const snapshotEventos = await firebase.db.collection('animal').doc(animalId).collection('eventos').get();
+      const val = (v) => (v !== undefined && v !== null && v !== '') ? String(v).trim() : 'Este campo no tiene un valor en la base de datos';
+
+      const normalizarTipo = (t) => {
+        const n = (t || '').trim().toLowerCase();
+        if (n === 'aborto inicia lactancia' || n === 'aborto inicio de lactancia') return 'aborto inicio de lactancia';
+        if (n === 'alta vaquillona') return 'alta vaquillona';
+        return n;
+      };
+
+      const targetTipoNorm = normalizarTipo(selectedEvent);
+
+      const eventosCoincidentes = [];
+      snapshotEventos.docs.forEach(doc => {
+        const data = doc.data();
+        const tipoEvento = (data.tipo || '').trim();
+        const nombreUsuario = (data.usuario || '').trim();
+        const esDirsa = nombreUsuario.toLowerCase().endsWith('- dirsa');
+
+        // Excluir Control Lechero y Dirsa como en Parte Diario
+        if (tipoEvento === 'Control Lechero' || esDirsa) {
+          return;
+        }
+
+        if (normalizarTipo(tipoEvento) === targetTipoNorm) {
+          let fevento;
+          if (data.fecha) {
+            if (typeof data.fecha.toDate === 'function') {
+              fevento = format(data.fecha.toDate(), 'dd/MM/yyyy');
+            } else if (data.fecha instanceof Date) {
+              fevento = format(data.fecha, 'dd/MM/yyyy');
+            } else {
+              try {
+                fevento = format(new Date(data.fecha), 'dd/MM/yyyy');
+              } catch (e) {
+                fevento = String(data.fecha);
+              }
+            }
+          } else {
+            fevento = '';
+          }
+
+          // Filtrar por la fecha ingresada por el usuario (formato DD/MM/YYYY)
+          if (fevento === userEnteredDate) {
+            eventosCoincidentes.push({
+              id: doc.id,
+              tipo: tipoEvento || selectedEvent,
+              fevento: fevento || 'Este campo no tiene un valor en la base de datos',
+              rawFecha: data.fecha,
+              usuario: data.usuario ? data.usuario.trim() : 'Este campo no tiene un valor en la base de datos'
+            });
+          }
+        }
+      });
+
+      if (eventosCoincidentes.length === 0) {
+        return {
+          intent: 'busqueda_evento_no_encontrado',
+          responseText: `No encontré el evento **${selectedEvent}** para este animal en la fecha **${userEnteredDate}**.`,
+          searchMode: null,
+          suggestedActions: [
+            { label: 'Ver ficha', type: 'ver_ficha', animal: animalEncontrado, animalId: animalEncontrado.id },
+            { label: 'Buscar otro evento', type: 'query', text: '¿Querés buscar un evento en específico de un animal?' },
+            { label: 'Reiniciar preguntas', type: 'reset_login' }
+          ]
+        };
+      }
+
+      let responseText = '';
+      if (eventosCoincidentes.length === 1) {
+        const ev = eventosCoincidentes[0];
+        responseText = [
+          '### Evento del animal',
+          '',
+          `* **RP:** ${val(animalEncontrado.rp)}`,
+          `* **eRP:** ${val(animalEncontrado.erp)}`,
+          `* **Evento:** ${ev.tipo}`,
+          `* **Fecha:** ${ev.fevento}`,
+          `* **Usuario:** ${ev.usuario}`
+        ].join('\n');
+      } else {
+        const items = eventosCoincidentes.map((ev, idx) => [
+          `**Registro ${idx + 1}**`,
+          `* **RP:** ${val(animalEncontrado.rp)}`,
+          `* **eRP:** ${val(animalEncontrado.erp)}`,
+          `* **Evento:** ${ev.tipo}`,
+          `* **Fecha:** ${ev.fevento}`,
+          `* **Usuario:** ${ev.usuario}`
+        ].join('\n'));
+
+        responseText = [
+          `### Eventos encontrados en ${userEnteredDate} (${eventosCoincidentes.length})`,
+          '',
+          items.join('\n\n')
+        ].join('\n');
+      }
+
+      return {
+        intent: 'busqueda_evento_exito',
+        responseText,
+        searchMode: null,
+        suggestedActions: [
+          { label: 'Ver ficha', type: 'ver_ficha', animal: animalEncontrado, animalId: animalEncontrado.id },
+          { label: 'Buscar otro evento', type: 'query', text: '¿Querés buscar un evento en específico de un animal?' },
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    } catch (err) {
+      console.error('Error al buscar evento por fecha en Firestore:', err);
+      return {
+        intent: 'busqueda_evento_error',
+        responseText: 'Ocurrió un error al consultar la base de datos para buscar el evento del animal. Por favor, intentá nuevamente.',
+        searchMode: null,
+        suggestedActions: [
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    }
+  }
+
+  return {
+    intent: 'busqueda_evento_error',
+    responseText: 'Ocurrió un error inesperado al procesar la búsqueda de eventos. Por favor, intentá nuevamente.',
+    searchMode: null,
+    suggestedActions: [
+      { label: 'Reiniciar preguntas', type: 'reset_login' }
+    ]
+  };
+}
+
+async function executeDirsaAnimalEventSearch(searchMode, searchInput, context) {
+  if (!context?.tamboId) {
+    return {
+      intent: 'busqueda_animal_sin_tambo',
+      responseText: 'No tenés un tambo seleccionado actualmente. Por favor, seleccioná un tambo para poder realizar la búsqueda.',
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+
+  const isRp = searchMode.startsWith('AWAITING_DIRSA_EVENT_RP:');
+  const selectedEvent = searchMode.split(':')[1]?.trim() || 'Evento';
+  const queryTerm = (searchInput || '').trim().toLowerCase();
+
+  if (!queryTerm) {
+    return {
+      intent: 'busqueda_animal_vacia',
+      responseText: isRp
+        ? 'No ingresaste ningún RP. Escribí el RP del animal que querés consultar.'
+        : 'No ingresaste ningún eRP. Escribí el eRP del animal que querés consultar.',
+      searchMode,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+
+  try {
+    const snapshot = await firebase.db.collection('animal')
+      .where('idtambo', '==', context.tamboId)
+      .where('fbaja', '==', '')
+      .get();
+
+    let animalEncontrado = null;
+
+    snapshot.forEach(doc => {
+      if (animalEncontrado) return;
+      const data = doc.data();
+
+      if (isRp) {
+        const val = data.rp !== undefined && data.rp !== null ? String(data.rp).trim().toLowerCase() : '';
+        if (val === queryTerm) {
+          animalEncontrado = { id: doc.id, ...data };
+        }
+      } else {
+        const val = data.erp !== undefined && data.erp !== null ? String(data.erp).trim().toLowerCase() : '';
+        if (val === queryTerm) {
+          animalEncontrado = { id: doc.id, ...data };
+        }
+      }
+    });
+
+    if (!animalEncontrado) {
+      const mensajeNoEncontrado = isRp
+        ? 'No encontré ningún animal con ese RP. ¿Querés intentarlo nuevamente?'
+        : 'No encontré ningún animal con ese eRP. ¿Querés intentarlo nuevamente?';
+
+      return {
+        intent: 'busqueda_animal_no_encontrado',
+        responseText: mensajeNoEncontrado,
+        searchMode: null,
+        suggestedActions: [
+          { label: 'RP (caravana)', type: 'query', text: `Buscar por RP para evento: ${selectedEvent}` },
+          { label: 'eRP (botón electrónico)', type: 'query', text: `Buscar por eRP para evento: ${selectedEvent}` },
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    }
+
+    // Animal encontrado -> Buscar eventos en subcolección reutilizando lógica exacta de reporteDirsa.js
+    const snapshotEventos = await firebase.db.collection('animal').doc(animalEncontrado.id).collection('eventos').get();
+    const nuevosEventos = [];
+
+    const normalizarTipo = (t) => {
+      const n = (t || '').trim().toLowerCase();
+      if (n === 'aborto inicia lactancia' || n === 'aborto inicio de lactancia') return 'aborto inicio de lactancia';
+      if (n === 'alta vaquillona') return 'alta vaquillona';
+      return n;
+    };
+
+    const targetTipoNorm = normalizarTipo(selectedEvent);
+
+    snapshotEventos.docs.forEach(doc => {
+      const data = doc.data();
+
+      // Exclusión exacta de reporteDirsa.js
+      if (
+        data.tipo === 'Control Lechero' ||
+        data.tipo === 'Control Lechero mediante planilla Dirsa'
+      ) {
+        return;
+      }
+
+      let fevento;
+      try {
+        if (data.fecha && typeof data.fecha.toDate === 'function') {
+          fevento = format(data.fecha.toDate(), 'dd/MM/yyyy');
+        } else if (data.fecha instanceof Date) {
+          fevento = format(data.fecha, 'dd/MM/yyyy');
+        } else {
+          fevento = format(new Date(data.fecha), 'dd/MM/yyyy');
+        }
+      } catch (error) {
+        fevento = 'error';
+      }
+
+      let erpStr = '';
+      try {
+        erpStr = animalEncontrado.erp ? animalEncontrado.erp.toString() : '';
+      } catch (error) {
+        erpStr = '';
+      }
+
+      const e = {
+        id: doc.id,
+        animal: animalEncontrado,
+        rp: animalEncontrado.rp,
+        erp: erpStr,
+        fevento: fevento,
+        ...data
+      };
+
+      // Filtro exacto de reporteDirsa.js: usuario debe incluir ' - Dirsa'
+      if (typeof e.usuario === 'string' && e.usuario.includes(' - Dirsa')) {
+        if (normalizarTipo(e.tipo) === targetTipoNorm) {
+          nuevosEventos.push(e);
+        }
+      }
+    });
+
+    // Deduplicación idéntica a eliminarEventosDuplicados de reporteDirsa.js
+    const eventosFiltrados = eliminarEventosDuplicadosDirsa(nuevosEventos);
+
+    if (eventosFiltrados.length === 0) {
+      return {
+        intent: 'busqueda_evento_no_encontrado',
+        responseText: `No encontré el evento **${selectedEvent}** para este animal.`,
+        searchMode: null,
+        suggestedActions: [
+          { label: 'Ver ficha', type: 'ver_ficha', animal: animalEncontrado, animalId: animalEncontrado.id },
+          { label: 'Buscar otro evento', type: 'query', text: '¿Querés buscar un evento en específico de un animal?' },
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    }
+
+    const val = (v) => (v !== undefined && v !== null && v !== '') ? String(v).trim() : 'Sin dato';
+
+    let responseText = '';
+    if (eventosFiltrados.length === 1) {
+      const ev = eventosFiltrados[0];
+      responseText = [
+        '**Animal**',
+        '',
+        `* **RP:** ${val(animalEncontrado.rp)}`,
+        `* **eRP:** ${val(animalEncontrado.erp)}`,
+        `* **Evento:** ${ev.tipo}`,
+        `* **Fecha:** ${ev.fevento}`,
+        `* **Usuario:** ${ev.usuario}`
+      ].join('\n');
+    } else {
+      const items = eventosFiltrados.map((ev, idx) => [
+        `**Registro ${idx + 1}**`,
+        `* **RP:** ${val(animalEncontrado.rp)}`,
+        `* **eRP:** ${val(animalEncontrado.erp)}`,
+        `* **Evento:** ${ev.tipo}`,
+        `* **Fecha:** ${ev.fevento}`,
+        `* **Usuario:** ${ev.usuario}`
+      ].join('\n'));
+
+      responseText = [
+        `**Animal** (${eventosFiltrados.length} eventos de ${selectedEvent})`,
+        '',
+        items.join('\n\n')
+      ].join('\n');
+    }
+
+    return {
+      intent: 'busqueda_evento_exito',
+      responseText,
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Ver ficha', type: 'ver_ficha', animal: animalEncontrado, animalId: animalEncontrado.id },
+        { label: 'Buscar otro evento', type: 'query', text: '¿Querés buscar un evento en específico de un animal?' },
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  } catch (err) {
+    console.error('Error al buscar evento Dirsa en Firestore:', err);
+    return {
+      intent: 'busqueda_evento_error',
+      responseText: 'Ocurrió un error al consultar la base de datos para buscar el evento del animal. Por favor, intentá nuevamente.',
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+}
+
+function eliminarEventosDuplicadosDirsa(eventos) {
+  const mapa = new Map();
+  eventos.forEach(evento => {
+    let fechaMillis;
+    if (evento.fecha?.toDate) {
+      fechaMillis = evento.fecha.toDate().setHours(0, 0, 0, 0);
+    } else if (evento.fecha instanceof Date) {
+      fechaMillis = evento.fecha.setHours(0, 0, 0, 0);
+    } else if (typeof evento.fecha === 'number') {
+      const d = new Date(evento.fecha);
+      fechaMillis = d.setHours(0, 0, 0, 0);
+    } else {
+      try {
+        const partes = (evento.fevento || '').split('/');
+        const d = new Date(`${partes[2]}-${partes[1]}-${partes[0]}`);
+        fechaMillis = d.setHours(0, 0, 0, 0);
+      } catch {
+        fechaMillis = evento.fevento;
+      }
+    }
+    const clave = `${fechaMillis}-${evento.rp}-${evento.tipo}`;
+    if (!mapa.has(clave)) {
+      mapa.set(clave, evento);
+    }
+  });
+  return Array.from(mapa.values());
 }
 
 function formatAnimalInfoForSection(animal, screen, section) {
@@ -2169,23 +3189,25 @@ function formatAnimalInfoForSection(animal, screen, section) {
       }
     }
 
+    const val = (v) => (v !== undefined && v !== null && v !== '') ? v : 'Este campo no tiene un valor en la base de datos';
+
     return [
       '### Información del animal',
       '',
-      `* **RP:** ${animal.rp ?? '—'}`,
-      `* **eRP:** ${animal.erp ?? '—'}`,
-      `* **Grupo:** ${animal.grupo ?? '—'}`,
-      `* **Categoría:** ${animal.categoria ?? '—'}`,
-      `* **Rodeo:** ${animal.rodeo ?? '—'}`,
-      `* **EstRep:** ${animal.estrep ?? '—'}`,
-      `* **EstPro:** ${animal.estpro ?? '—'}`,
-      `* **Lactancia:** ${animal.lactancia ?? '—'}`,
-      `* **UC:** ${animal.uc ?? '—'}`,
-      `* **CA:** ${animal.ca ?? '—'}`,
-      `* **Días Lactancia:** ${diasLact}`,
-      `* **Ración:** ${animal.racion ?? '—'}`,
-      `* **N° Servicio:** ${animal.nservicio ?? '—'}`,
-      `* **Fecha Servicio:** ${fserFormatted || '—'}`
+      `* **RP:** ${val(animal.rp)}`,
+      `* **eRP:** ${val(animal.erp)}`,
+      `* **Grupo:** ${val(animal.grupo)}`,
+      `* **Categoría:** ${val(animal.categoria)}`,
+      `* **Rodeo:** ${val(animal.rodeo)}`,
+      `* **EstRep:** ${val(animal.estrep)}`,
+      `* **EstPro:** ${val(animal.estpro)}`,
+      `* **Lact:** ${val(animal.lactancia)}`,
+      `* **LeUc:** ${val(animal.uc)}`,
+      `* **LeCa:** ${val(animal.ca)}`,
+      `* **Días Lact:** ${diasLact !== undefined && diasLact !== null ? diasLact : 'Este campo no tiene un valor en la base de datos'}`,
+      `* **Ración:** ${val(animal.racion)}`,
+      `* **NServ:** ${val(animal.nservicio)}`,
+      `* **FServ:** ${fserFormatted || 'Este campo no tiene un valor en la base de datos'}`
     ].join('\n');
   }
 
@@ -2217,15 +3239,36 @@ function formatAnimalInfoForSection(animal, screen, section) {
 
   // 5. Control Nutricional (/control -> screen 'control_nutricion')
   if (screen === 'control_nutricion' || section === 'control') {
+    const parametrosFlat = animal._parametrosFlat || [];
+    const exp = _explicarDecisionAlimentacionControl(animal, parametrosFlat);
+
+    const criterioTexto = exp.criterio || '[INFORMACIÓN NO ENCONTRADA]';
+    const reglaTexto = exp.regla || '[INFORMACIÓN NO ENCONTRADA]';
+
+    // Mostrar Días o Litros según el criterio, no ambos
+    const esDias = exp.criterio === 'Días de Lactancia';
+    const labelValor = esDias ? 'Días de lactancia' : 'Litros (último control)';
+    const valorTexto = exp.valor || '[INFORMACIÓN NO ENCONTRADA]';
+
+    const racionParametroTexto = (exp.resultado !== undefined && exp.resultado !== null && !exp.sinParametro)
+      ? `${exp.resultado} kg`
+      : '[INFORMACIÓN NO ENCONTRADA]';
+
+    const modoTexto = exp.modo || (animal.racionManual ? 'Manual' : 'Automático');
+
     return [
       '### Información del animal',
       '',
       `* **RP:** ${animal.rp ?? '—'}`,
-      `* **Grupo:** ${animal.grupo ?? '—'}`,
       `* **Categoría:** ${animal.categoria ?? '—'}`,
+      `* **Grupo:** ${animal.grupo ?? '—'}`,
       `* **Rodeo:** ${animal.rodeo ?? '—'}`,
-      `* **Ración:** ${animal.racion ?? '—'} kg`,
-      `* **Modo Ración:** ${animal.racionManual ? 'Manual' : 'Automático'}`
+      `* **Ración animal:** ${animal.racion ?? '—'} kg`,
+      `* **Criterio:** ${criterioTexto}`,
+      `* **Regla aplicada:** ${reglaTexto}`,
+      `* **${labelValor}:** ${valorTexto}`,
+      `* **Ración del parámetro:** ${racionParametroTexto}`,
+      `* **Modo:** ${modoTexto}`
     ].join('\n');
   }
 
@@ -2277,6 +3320,364 @@ function formatAnimalInfoForSection(animal, screen, section) {
     `* **EstRep:** ${animal.estrep ?? '—'}`,
     `* **Categoría:** ${animal.categoria ?? '—'}`
   ].join('\n');
+}
+
+async function executeProductionDateSearch(searchMode, searchInput, context) {
+  if (!context?.tamboId) {
+    return {
+      intent: 'busqueda_produccion_sin_tambo',
+      responseText: 'No tenés un tambo seleccionado actualmente. Por favor, seleccioná un tambo para poder realizar la búsqueda.',
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+
+  const rawInput = (searchInput || '').trim();
+
+  // Validar formato obligatorio dd/mm/yyyy
+  const regexFecha = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const match = rawInput.match(regexFecha);
+
+  if (!match) {
+    return {
+      intent: 'busqueda_produccion_fecha_invalida',
+      responseText: 'Por favor, ingresá la fecha en formato dd/mm/yyyy. Por ejemplo: 04/09/2026.',
+      searchMode: 'AWAITING_PROD_DATE',
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+
+  const [, dayStr, monthStr, yearStr] = match;
+  const dayNum = parseInt(dayStr, 10);
+  const monthNum = parseInt(monthStr, 10);
+  const yearNum = parseInt(yearStr, 10);
+
+  if (monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) {
+    return {
+      intent: 'busqueda_produccion_fecha_invalida',
+      responseText: 'Por favor, ingresá la fecha en formato dd/mm/yyyy. Por ejemplo: 04/09/2026.',
+      searchMode: 'AWAITING_PROD_DATE',
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+
+  try {
+    const strIsoDate = `${yearStr}-${monthStr}-${dayStr}`;
+    const inicio = firebase.fechaTimeStamp(strIsoDate);
+    const fin = firebase.fechaTimeStamp(strIsoDate + 'T23:59:59');
+
+    const snapshot = await firebase.db.collection('tambo')
+      .doc(context.tamboId)
+      .collection('produccion')
+      .where('fecha', '>=', inicio)
+      .where('fecha', '<=', fin)
+      .get();
+
+    if (snapshot.empty) {
+      return {
+        intent: 'busqueda_produccion_fecha_no_encontrada',
+        responseText: 'No encontré datos de producción para la fecha seleccionada.',
+        searchMode: 'AWAITING_PROD_DATE',
+        suggestedActions: [
+          { label: 'Ingresar otra fecha', type: 'query', text: 'Escribí la fecha que querés consultar en formato dd/mm/yyyy.' },
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    }
+
+    const docData = snapshot.docs[0].data();
+
+    const val = (v) => (v !== undefined && v !== null && v !== '') ? String(v).trim() : '[INFORMACIÓN NO ENCONTRADA]';
+
+    const prodM = val(docData.prodM);
+    const prodT = val(docData.prodT);
+    const produccion = val(docData.produccion);
+
+    const prodNum = parseFloat(docData.produccion);
+    const descNum = parseFloat(docData.descarte) || 0;
+    const guaNum = parseFloat(docData.guachera) || 0;
+
+    const entregadosVal = docData.entregados !== undefined && docData.entregados !== null
+      ? String(docData.entregados).trim()
+      : (!isNaN(prodNum) ? String(prodNum - descNum - guaNum) : '[INFORMACIÓN NO ENCONTRADA]');
+
+    const vacasEnOrd = val(docData.animalesEnOrd);
+
+    const animales = parseFloat(docData.animalesEnOrd);
+    const prodIndv = (!isNaN(animales) && animales !== 0 && !isNaN(prodNum))
+      ? parseFloat((prodNum / animales).toFixed(1))
+      : '[INFORMACIÓN NO ENCONTRADA]';
+
+    const fechaFormateada = `${dayStr}/${monthStr}/${yearStr}`;
+
+    const responseText = [
+      '### Datos de Producción',
+      '',
+      `* **Fecha:** ${fechaFormateada}`,
+      `* **prodM:** ${prodM}`,
+      `* **prodT:** ${prodT}`,
+      `* **Produccion:** ${produccion}`,
+      `* **Entregados:** ${entregadosVal}`,
+      `* **Vacas en ordeñe:** ${vacasEnOrd}`,
+      `* **Prod individual:** ${prodIndv}`,
+      '',
+      '¿Querés ver datos más detallados?'
+    ].join('\n');
+
+    return {
+      intent: 'busqueda_produccion_fecha_exito',
+      responseText,
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Ver datos detallados', type: 'query', text: 'Ver datos detallados' },
+        { label: 'Buscar otra fecha', type: 'query', text: '¿Querés buscar la producción de un día en específico?' },
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  } catch (err) {
+    console.error('Error al consultar producción por fecha en Firestore:', err);
+    return {
+      intent: 'busqueda_produccion_fecha_error',
+      responseText: 'Ocurrió un error al consultar la base de datos para buscar la producción del día. Por favor, intentá nuevamente.',
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+}
+
+async function executeProductionAnimalSearch(searchMode, searchInput, context) {
+  if (!context?.tamboId) {
+    return {
+      intent: 'busqueda_animal_sin_tambo',
+      responseText: 'No tenés un tambo seleccionado actualmente. Por favor, seleccioná un tambo para poder realizar la búsqueda.',
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+
+  const isRp = searchMode.startsWith('AWAITING_PROD_RP:');
+  const selectedMes = searchMode.split(':')[1]?.trim() || 'Todos los meses';
+  const queryTerm = (searchInput || '').trim().toLowerCase();
+
+  if (!queryTerm) {
+    return {
+      intent: 'busqueda_animal_vacia',
+      responseText: isRp
+        ? 'No ingresaste ningún RP. Escribí el RP del animal que querés consultar.'
+        : 'No ingresaste ningún eRP. Escribí el eRP del animal que querés consultar.',
+      searchMode,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
+
+  try {
+    // 1. Buscar animal por idtambo y RP/eRP
+    const snapshot = await firebase.db.collection('animal')
+      .where('idtambo', '==', context.tamboId)
+      .where('fbaja', '==', '')
+      .get();
+
+    let animalEncontrado = null;
+
+    snapshot.forEach(doc => {
+      if (animalEncontrado) return;
+      const data = doc.data();
+
+      if (isRp) {
+        const val = data.rp !== undefined && data.rp !== null ? String(data.rp).trim().toLowerCase() : '';
+        if (val === queryTerm) {
+          animalEncontrado = { id: doc.id, ...data };
+        }
+      } else {
+        const val = data.erp !== undefined && data.erp !== null ? String(data.erp).trim().toLowerCase() : '';
+        if (val === queryTerm) {
+          animalEncontrado = { id: doc.id, ...data };
+        }
+      }
+    });
+
+    if (!animalEncontrado) {
+      const mensajeNoEncontrado = isRp
+        ? 'No encontré ningún animal con ese RP. ¿Querés intentarlo nuevamente?'
+        : 'No encontré ningún animal con ese eRP. ¿Querés intentarlo nuevamente?';
+
+      return {
+        intent: 'busqueda_animal_no_encontrado',
+        responseText: mensajeNoEncontrado,
+        searchMode: null,
+        suggestedActions: [
+          { label: 'RP (caravana)', type: 'query', text: `Buscar producción por RP para mes: ${selectedMes}` },
+          { label: 'eRP (botón electrónico)', type: 'query', text: `Buscar producción por eRP para mes: ${selectedMes}` },
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    }
+
+    // 2. Animal encontrado -> Buscar registros de producción (Control Lechero) para el mes seleccionado y el año en curso
+    const anioActual = new Date().getFullYear();
+    const MESES_LIST = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+
+    let startDate, endDate;
+    const mesLower = selectedMes.toLowerCase();
+
+    if (mesLower === 'todos los meses' || mesLower === 'todos') {
+      startDate = new Date(anioActual, 0, 1);
+      endDate = new Date(anioActual + 1, 0, 1);
+    } else {
+      const mesIndex = MESES_LIST.indexOf(mesLower);
+      if (mesIndex !== -1) {
+        startDate = new Date(anioActual, mesIndex, 1);
+        endDate = new Date(anioActual, mesIndex + 1, 1);
+      } else {
+        startDate = new Date(anioActual, 0, 1);
+        endDate = new Date(anioActual + 1, 0, 1);
+      }
+    }
+
+    const strStart = format(startDate, 'yyyy-MM-dd');
+    const strEnd = format(endDate, 'yyyy-MM-dd');
+
+    const timestampStart = firebase.fechaTimeStamp(strStart);
+    const timestampEnd = firebase.fechaTimeStamp(strEnd);
+
+    // Consulta de eventos en la subcolección eventos del animal encontrado
+    const snapEventos = await firebase.db.collection('animal')
+      .doc(animalEncontrado.id)
+      .collection('eventos')
+      .where('fecha', '>=', timestampStart)
+      .where('fecha', '<', timestampEnd)
+      .get();
+
+    const registrosValidos = snapEventos.docs
+      .map(doc => {
+        const ev = doc.data();
+        if (!ev.fecha) return null;
+
+        const tipoLower = (ev.tipo || '').toLowerCase();
+        if (!tipoLower.includes('control lechero')) {
+          return null;
+        }
+
+        const detalleOriginal = ev.detalle || '';
+        const detalleLower = detalleOriginal.toLowerCase();
+
+        if (
+          detalleLower.includes('no se actualizó') ||
+          detalleLower.includes('casilla estaba vacía')
+        ) {
+          return null;
+        }
+
+        const matchL = detalleOriginal.match(/(\d+)/);
+        const litrosParsed = matchL ? parseInt(matchL[1]) : null;
+
+        let fevento;
+        if (typeof ev.fecha.toDate === 'function') {
+          fevento = format(ev.fecha.toDate(), 'dd/MM/yyyy');
+        } else if (ev.fecha instanceof Date) {
+          fevento = format(ev.fecha, 'dd/MM/yyyy');
+        } else {
+          try {
+            fevento = format(new Date(ev.fecha), 'dd/MM/yyyy');
+          } catch (e) {
+            fevento = String(ev.fecha);
+          }
+        }
+
+        return {
+          id: doc.id,
+          fecha: fevento,
+          detalle: detalleOriginal,
+          litros: litrosParsed
+        };
+      })
+      .filter(Boolean);
+
+    if (registrosValidos.length === 0) {
+      return {
+        intent: 'busqueda_produccion_no_encontrada',
+        responseText: 'No encontré datos de producción para este animal en el período seleccionado.',
+        searchMode: null,
+        suggestedActions: [
+          { label: 'Seleccionar otro mes', type: 'query', text: '¿De qué mes querés consultar la producción?' },
+          { label: 'Buscar otro animal', type: 'query', text: '¿Necesitás buscar la producción de un animal en específico?' },
+          { label: 'Reiniciar preguntas', type: 'reset_login' }
+        ]
+      };
+    }
+
+    const rpVal = animalEncontrado.rp !== undefined && animalEncontrado.rp !== null && String(animalEncontrado.rp).trim() !== ''
+      ? String(animalEncontrado.rp).trim()
+      : (animalEncontrado.RP !== undefined && animalEncontrado.RP !== null && String(animalEncontrado.RP).trim() !== '' ? String(animalEncontrado.RP).trim() : '[INFORMACIÓN NO ENCONTRADA]');
+
+    const erpVal = animalEncontrado.erp !== undefined && animalEncontrado.erp !== null && String(animalEncontrado.erp).trim() !== ''
+      ? String(animalEncontrado.erp).trim()
+      : (animalEncontrado.eRP !== undefined && animalEncontrado.eRP !== null && String(animalEncontrado.eRP).trim() !== '' ? String(animalEncontrado.eRP).trim() : (animalEncontrado.ERP !== undefined && animalEncontrado.ERP !== null && String(animalEncontrado.ERP).trim() !== '' ? String(animalEncontrado.ERP).trim() : '[INFORMACIÓN NO ENCONTRADA]'));
+
+    let responseText = '';
+    if (registrosValidos.length === 1) {
+      const reg = registrosValidos[0];
+      responseText = [
+        '### Datos de Producción',
+        '',
+        `* **RP:** ${rpVal}`,
+        `* **eRP:** ${erpVal}`,
+        `* **Fecha:** ${reg.fecha || '[INFORMACIÓN NO ENCONTRADA]'}`,
+        `* **Litros:** ${reg.litros !== null ? `${reg.litros} L` : '[INFORMACIÓN NO ENCONTRADA]'}`
+      ].join('\n');
+    } else {
+      const items = registrosValidos.map((reg, idx) => [
+        `**Registro ${idx + 1}**`,
+        `* **RP:** ${rpVal}`,
+        `* **eRP:** ${erpVal}`,
+        `* **Fecha:** ${reg.fecha || '[INFORMACIÓN NO ENCONTRADA]'}`,
+        `* **Litros:** ${reg.litros !== null ? `${reg.litros} L` : '[INFORMACIÓN NO ENCONTRADA]'}`
+      ].join('\n'));
+
+      responseText = [
+        `### Datos de Producción (${registrosValidos.length} registros)`,
+        '',
+        items.join('\n\n')
+      ].join('\n');
+    }
+
+    return {
+      intent: 'busqueda_produccion_exito',
+      responseText,
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Ver curva', type: 'ver_curva', animalId: animalEncontrado.id },
+        { label: 'Seleccionar otro mes', type: 'query', text: '¿De qué mes querés consultar la producción?' },
+        { label: 'Buscar otro animal', type: 'query', text: '¿Necesitás buscar la producción de un animal en específico?' },
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  } catch (err) {
+    console.error('Error al buscar producción del animal en Firestore:', err);
+    return {
+      intent: 'busqueda_produccion_error',
+      responseText: 'Ocurrió un error al consultar la base de datos para buscar la producción del animal. Por favor, intentá nuevamente.',
+      searchMode: null,
+      suggestedActions: [
+        { label: 'Reiniciar preguntas', type: 'reset_login' }
+      ]
+    };
+  }
 }
 
 function resJson(data, context) {
